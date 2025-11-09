@@ -1,13 +1,14 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { GlassCard } from '@/components/ui/glass-card';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Car, Bike, Truck, Bus, Zap, Target, TrendingUp, Shield } from 'lucide-react';
 import { Navbar } from '@/components/navbar';
 import { useLanguage } from '@/contexts/language-context';
+import { motion } from 'framer-motion';
 
 const categoryIcons: Record<LicenseCategory, React.ReactNode> = {
   A: <Bike className="w-8 h-8" />,
@@ -27,35 +28,40 @@ export default function HomePage() {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
+      <motion.section 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative overflow-hidden"
+      >
         {/* Background Effects */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background"></div>
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
         
-        <div className="container relative mx-auto px-4 py-20 md:py-32">
-          <div className="max-w-4xl mx-auto text-center">
+        <div className="container relative mx-auto px-6 py-24 md:py-32 max-w-7xl">
+          <div className="max-w-4xl mx-auto text-center space-y-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8">
               <Zap className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium text-primary">{t('home.hero.badge')}</span>
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
+            <h1 className="text-5xl md:text-7xl font-bold leading-tight">
               {t('home.hero.title')}
-              <span className="block text-primary">{t('home.hero.titleAccent')}</span>
+              <span className="block text-primary mt-2">{t('home.hero.titleAccent')}</span>
             </h1>
             
-            <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               {t('home.hero.description')}
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild className="text-lg h-14 px-8 shadow-lg shadow-primary/20">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <Button size="lg" asChild className="h-12 px-8 text-base font-semibold shadow-lg shadow-primary/20">
                 <Link href="/register">
                   {t('home.hero.startLearning')}
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="text-lg h-14 px-8">
+              <Button size="lg" variant="outline" asChild className="h-12 px-8 text-base font-semibold">
                 <Link href="#categories">
                   {t('home.hero.browseCategories')}
                 </Link>
@@ -63,99 +69,95 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Features Section */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <Card className="border-primary/20 bg-card/50 backdrop-blur">
-            <CardHeader>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Target className="w-6 h-6 text-primary" />
-              </div>
-              <CardTitle>{t('features.comprehensive.title')}</CardTitle>
-              <CardDescription>
-                {t('features.comprehensive.desc')}
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          <Card className="border-primary/20 bg-card/50 backdrop-blur">
-            <CardHeader>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <TrendingUp className="w-6 h-6 text-primary" />
-              </div>
-              <CardTitle>{t('features.progress.title')}</CardTitle>
-              <CardDescription>
-                {t('features.progress.desc')}
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          <Card className="border-primary/20 bg-card/50 backdrop-blur">
-            <CardHeader>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Shield className="w-6 h-6 text-primary" />
-              </div>
-              <CardTitle>{t('features.guaranteed.title')}</CardTitle>
-              <CardDescription>
-                {t('features.guaranteed.desc')}
-              </CardDescription>
-            </CardHeader>
-          </Card>
+      <section className="container mx-auto px-6 py-20 max-w-7xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { icon: Target, title: t('features.comprehensive.title'), desc: t('features.comprehensive.desc') },
+            { icon: TrendingUp, title: t('features.progress.title'), desc: t('features.progress.desc') },
+            { icon: Shield, title: t('features.guaranteed.title'), desc: t('features.guaranteed.desc') }
+          ].map((feature, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              viewport={{ once: true }}
+            >
+              <GlassCard hover className="p-6 h-full">
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+                  <feature.icon className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {feature.desc}
+                </p>
+              </GlassCard>
+            </motion.div>
+          ))}
         </div>
       </section>
 
       {/* Categories Grid */}
-      <section id="categories" className="container mx-auto px-4 py-20">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('categories.title')}</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+      <section id="categories" className="container mx-auto px-6 py-20 max-w-7xl">
+        <div className="text-center mb-12 space-y-4">
+          <h2 className="text-4xl font-bold">{t('categories.title')}</h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             {t('categories.description')}
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {categories.map((category) => (
-            <Card 
-              key={category} 
-              className="group hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 bg-card/50 backdrop-blur"
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {categories.map((category, i) => (
+            <motion.div
+              key={category}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              viewport={{ once: true }}
+              whileHover={{ scale: 1.02 }}
             >
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl group-hover:from-primary/30 group-hover:to-primary/20 transition-all">
+              <GlassCard className="p-6 group cursor-pointer h-full">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                     {categoryIcons[category]}
                   </div>
                   <div>
-                    <CardTitle className="text-2xl group-hover:text-primary transition-colors">{CATEGORY_INFO[category].name}</CardTitle>
-                    <CardDescription>{CATEGORY_INFO[category].description}</CardDescription>
+                    <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
+                      {CATEGORY_INFO[category].name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {CATEGORY_INFO[category].description}
+                    </p>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
                 <Button className="w-full shadow-lg shadow-primary/20" asChild>
                   <Link href={`/category/${category.toLowerCase()}`}>
                     {t('categories.startPractice')}
                   </Link>
                 </Button>
-              </CardContent>
-            </Card>
+              </GlassCard>
+            </motion.div>
           ))}
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border/40 bg-card/30 backdrop-blur-sm mt-20">
-        <div className="container mx-auto px-4 py-12">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl overflow-hidden border border-primary/30">
+      <footer className="border-t border-white/10 bg-black/20 backdrop-blur-sm mt-20">
+        <div className="container mx-auto px-6 py-12 max-w-7xl">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl overflow-hidden border border-primary/30">
                 <Image 
                   src="/logo-white.png" 
                   alt="DriveWise Logo" 
-                  width={32} 
-                  height={32}
+                  width={40} 
+                  height={40}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <span className="font-bold">DriveWise</span>
+              <span className="text-lg font-semibold">DriveWise</span>
             </div>
             <p className="text-sm text-muted-foreground">
               &copy; 2024 DriveWise. Kosovo's Premier Driving Theory Platform.

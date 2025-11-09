@@ -4,10 +4,12 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { createClient } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import { isAdmin } from '@/lib/admin';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -90,8 +92,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(user);
   };
 
+  const isUserAdmin = isAdmin(user?.id);
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin: isUserAdmin, signIn, signUp, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

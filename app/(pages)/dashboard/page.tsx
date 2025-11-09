@@ -1,36 +1,188 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
-import { Trophy, Target, TrendingUp, Clock, Award, Zap, Play, BarChart3 } from 'lucide-react';
+import { Trophy, Target, Award, Zap, Play, CheckCircle, XCircle, Eye } from 'lucide-react';
 import { Navbar } from '@/components/navbar';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLanguage } from '@/contexts/language-context';
+import { motion } from 'framer-motion';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 export default function DashboardPage() {
   const { t } = useLanguage();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalTests: 0,
+    averageScore: 0,
+    bestScore: 0,
+    testsThisWeek: 0,
+    streak: 0,
+    passedTests: 0,
+    failedTests: 0,
+  });
+  const [progressData, setProgressData] = useState<any[]>([]);
+  const [recentTests, setRecentTests] = useState<any[]>([]);
+  const [selectedTest, setSelectedTest] = useState<any>(null);
+  const [testDetails, setTestDetails] = useState<any>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
+  const fetchTestDetails = async (testId: string) => {
+    setLoadingDetails(true);
+    try {
+      // Fetch test attempt answers
+      const { data: answers, error } = await supabase
+        .from('test_attempt_answers')
+        .select(`
+          *,
+          question:questions(
+            id,
+            question_text,
+            option_a,
+            option_b,
+            option_c,
+            correct_answer,
+            image_url
+          )
+        `)
+        .eq('test_attempt_id', testId);
+
+      if (error) {
+        console.error('Error fetching test details:', error);
+        return;
+      }
+
+      setTestDetails(answers);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
   useEffect(() => {
-    const getUser = async () => {
+    const fetchDashboardData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         router.push('/login');
         return;
       }
       setUser(user);
+
+      // Fetch test attempts
+      const { data: attempts, error } = await supabase
+        .from('test_attempts')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('completed_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching test attempts:', error);
+        setLoading(false);
+        return;
+      }
+
+      if (attempts && attempts.length > 0) {
+        // Calculate stats
+        const totalTests = attempts.length;
+        const totalScore = attempts.reduce((sum, test) => sum + test.percentage, 0);
+        const averageScore = Math.round(totalScore / totalTests);
+        const bestScore = Math.max(...attempts.map(test => test.percentage));
+        const passedTests = attempts.filter(test => test.percentage >= 80).length;
+        const failedTests = totalTests - passedTests;
+
+        // Calculate tests this week
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const testsThisWeek = attempts.filter(test => 
+          new Date(test.completed_at) >= oneWeekAgo
+        ).length;
+
+        // Calculate streak (consecutive days with tests)
+        const testDates = attempts.map(test => 
+          new Date(test.completed_at).toDateString()
+        );
+        const uniqueDates = [...new Set(testDates)].sort((a, b) => 
+          new Date(b).getTime() - new Date(a).getTime()
+        );
+        
+        let streak = 0;
+        const today = new Date().toDateString();
+        if (uniqueDates[0] === today || uniqueDates[0] === new Date(Date.now() - 86400000).toDateString()) {
+          streak = 1;
+          for (let i = 1; i < uniqueDates.length; i++) {
+            const prevDate = new Date(uniqueDates[i - 1]);
+            const currDate = new Date(uniqueDates[i]);
+            const diffDays = Math.floor((prevDate.getTime() - currDate.getTime()) / 86400000);
+            if (diffDays === 1) {
+              streak++;
+            } else {
+              break;
+            }
+          }
+        }
+
+        setStats({
+          totalTests,
+          averageScore,
+          bestScore,
+          testsThisWeek,
+          streak,
+          passedTests,
+          failedTests,
+        });
+
+        // Prepare progress data (last 7 days)
+        const last7Days = [];
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateStr = date.toDateString();
+          const dayTests = attempts.filter(test => 
+            new Date(test.completed_at).toDateString() === dateStr
+          );
+          const avgScore = dayTests.length > 0
+            ? Math.round(dayTests.reduce((sum, test) => sum + test.percentage, 0) / dayTests.length)
+            : 0;
+          
+          last7Days.push({
+            date: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
+            score: avgScore,
+          });
+        }
+        setProgressData(last7Days);
+
+        // Prepare recent tests (last 4)
+        const recent = attempts.slice(0, 4).map(test => ({
+          id: test.id,
+          category: test.category,
+          testNumber: 1, // You might want to extract this from test_set_id
+          score: test.percentage,
+          date: new Date(test.completed_at).toLocaleDateString(),
+          passed: test.percentage >= 80,
+        }));
+        setRecentTests(recent);
+      }
+
       setLoading(false);
     };
 
-    getUser();
+    fetchDashboardData();
   }, [router, supabase]);
 
   if (loading) {
@@ -44,130 +196,103 @@ export default function DashboardPage() {
     );
   }
 
-  // Mock data - will be replaced with real data from Supabase
-  const stats = {
-    totalTests: 24,
-    averageScore: 87,
-    bestScore: 98,
-    testsThisWeek: 8,
-    hoursStudied: 12.5,
-    streak: 5,
-  };
+  const categories = Object.keys(CATEGORY_INFO) as LicenseCategory[];
 
-  const progressData = [
-    { date: 'Mon', score: 75 },
-    { date: 'Tue', score: 82 },
-    { date: 'Wed', score: 78 },
-    { date: 'Thu', score: 85 },
-    { date: 'Fri', score: 90 },
-    { date: 'Sat', score: 87 },
-    { date: 'Sun', score: 92 },
-  ];
-
-  const categoryData = [
-    { category: 'Category B', tests: 12, avgScore: 88 },
-    { category: 'Category A', tests: 8, avgScore: 85 },
-    { category: 'Category C', tests: 4, avgScore: 82 },
-  ];
-
-  const performanceData = [
-    { name: 'Passed', value: 20, color: 'hsl(var(--primary))' },
-    { name: 'Failed', value: 4, color: 'hsl(var(--destructive))' },
-  ];
-
-  const recentTests = [
-    { id: 1, category: 'B', testNumber: 5, score: 92, date: '2024-11-09', passed: true },
-    { id: 2, category: 'B', testNumber: 4, score: 87, date: '2024-11-08', passed: true },
-    { id: 3, category: 'A', testNumber: 3, score: 85, date: '2024-11-07', passed: true },
-    { id: 4, category: 'B', testNumber: 3, score: 78, date: '2024-11-06', passed: false },
-  ];
+  // Show empty state if no tests taken yet
+  const hasData = stats.totalTests > 0;
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-6">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="container mx-auto px-8 py-12 max-w-7xl"
+      >
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold mb-1">
+        <div className="mb-12 space-y-3">
+          <h1 className="text-3xl font-bold">
             {t('dashboard.welcome')}, <span className="text-primary">{user?.email?.split('@')[0]}</span>
           </h1>
           <p className="text-sm text-muted-foreground">{t('dashboard.subtitle')}</p>
         </div>
 
+        {/* Empty State */}
+        {!hasData && (
+          <GlassCard className="p-12 text-center mb-12">
+            <Trophy className="w-16 h-16 text-primary mx-auto mb-4 opacity-50" />
+            <h2 className="text-2xl font-bold mb-2">No Tests Yet</h2>
+            <p className="text-muted-foreground mb-6">
+              Start taking tests to see your progress and statistics here
+            </p>
+            <Button asChild className="shadow-lg shadow-primary/20">
+              <Link href="/">Browse Categories</Link>
+            </Button>
+          </GlassCard>
+        )}
+
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          <Card className="border-primary/20 bg-gradient-to-br from-card to-card/50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
-              <CardTitle className="text-xs font-medium">{t('dashboard.totalTests')}</CardTitle>
-              <Trophy className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              <div className="text-2xl font-bold">{stats.totalTests}</div>
-              <p className="text-xs text-muted-foreground">
-                <span className="text-primary">+{stats.testsThisWeek}</span> {t('dashboard.thisWeek')}
-              </p>
-            </CardContent>
-          </Card>
+        {hasData && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {[
+              { icon: Trophy, label: t('dashboard.totalTests'), value: stats.totalTests, subtitle: `+${stats.testsThisWeek} ${t('dashboard.thisWeek')}`, delay: 0.1 },
+              { icon: Target, label: t('dashboard.avgScore'), value: `${stats.averageScore}%`, subtitle: `${stats.averageScore >= 80 ? 'Great job!' : 'Keep practicing'}`, delay: 0.2 },
+              { icon: Award, label: t('dashboard.bestScore'), value: `${stats.bestScore}%`, subtitle: t('dashboard.personalBest'), delay: 0.3 },
+              { icon: Zap, label: t('dashboard.streak'), value: `${stats.streak} ${stats.streak === 1 ? 'day' : 'days'}`, subtitle: t('dashboard.keepGoing'), delay: 0.4 },
+            ].map((stat, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: stat.delay }}
+            >
+              <GlassCard className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  <stat.icon className="w-5 h-5 text-primary" />
+                </div>
+                <p className="text-2xl font-bold mb-1">{stat.value}</p>
+                <p className="text-xs text-muted-foreground">{stat.subtitle}</p>
+              </GlassCard>
+            </motion.div>
+          ))}
+          </div>
+        )}
 
-          <Card className="border-primary/20 bg-gradient-to-br from-card to-card/50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
-              <CardTitle className="text-xs font-medium">{t('dashboard.avgScore')}</CardTitle>
-              <Target className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              <div className="text-2xl font-bold">{stats.averageScore}%</div>
-              <p className="text-xs text-muted-foreground">
-                <span className="text-primary">+5%</span> {t('dashboard.lastWeek')}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-primary/20 bg-gradient-to-br from-card to-card/50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
-              <CardTitle className="text-xs font-medium">{t('dashboard.bestScore')}</CardTitle>
-              <Award className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              <div className="text-2xl font-bold">{stats.bestScore}%</div>
-              <p className="text-xs text-muted-foreground">
-                {t('dashboard.personalBest')}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-primary/20 bg-gradient-to-br from-card to-card/50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
-              <CardTitle className="text-xs font-medium">{t('dashboard.streak')}</CardTitle>
-              <Zap className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              <div className="text-2xl font-bold">{stats.streak} {t('dashboard.days')}</div>
-              <p className="text-xs text-muted-foreground">
-                {t('dashboard.keepGoing')}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        {hasData && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           {/* Progress Chart */}
-          <Card className="lg:col-span-2 border-primary/20">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">{t('dashboard.weeklyProgress')}</CardTitle>
-              <CardDescription className="text-xs">{t('dashboard.weeklyProgressDesc')}</CardDescription>
-            </CardHeader>
-            <CardContent className="pb-4">
-              <ResponsiveContainer width="100%" height={220}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="lg:col-span-2"
+          >
+            <GlassCard className="p-6">
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold mb-1">{t('dashboard.weeklyProgress')}</h2>
+                <p className="text-sm text-muted-foreground">{t('dashboard.weeklyProgressDesc')}</p>
+              </div>
+              <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={progressData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
-                  <YAxis stroke="hsl(var(--muted-foreground))" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    fontSize={12}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))" 
+                    fontSize={12}
+                  />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      borderRadius: '12px',
+                      padding: '8px 12px'
                     }}
                   />
                   <Line 
@@ -175,40 +300,47 @@ export default function DashboardPage() {
                     dataKey="score" 
                     stroke="hsl(var(--primary))" 
                     strokeWidth={3}
-                    dot={{ fill: 'hsl(var(--primary))', r: 5 }}
+                    dot={{ fill: 'hsl(var(--primary))', r: 4 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
+            </GlassCard>
+          </motion.div>
 
-          {/* Performance Pie Chart */}
-          <Card className="border-primary/20">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">{t('dashboard.passRate')}</CardTitle>
-              <CardDescription className="text-xs">{t('dashboard.passRateDesc')}</CardDescription>
-            </CardHeader>
-            <CardContent className="pb-4">
-              <ResponsiveContainer width="100%" height={220}>
+          {/* Pass Rate Pie Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <GlassCard className="p-6">
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold mb-1">{t('dashboard.passRate')}</h2>
+                <p className="text-sm text-muted-foreground">{t('dashboard.passRateDesc')}</p>
+              </div>
+              <ResponsiveContainer width="100%" height={240}>
                 <PieChart>
                   <Pie
-                    data={performanceData}
+                    data={[
+                      { name: 'Passed', value: stats.passedTests, color: 'hsl(var(--primary))' },
+                      { name: 'Failed', value: stats.failedTests, color: 'hsl(var(--destructive))' }
+                    ]}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
-                    outerRadius={100}
+                    outerRadius={90}
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {performanceData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
+                    <Cell fill="hsl(var(--primary))" />
+                    <Cell fill="hsl(var(--destructive))" />
                   </Pie>
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      borderRadius: '12px',
+                      padding: '8px 12px'
                     }}
                   />
                 </PieChart>
@@ -216,114 +348,184 @@ export default function DashboardPage() {
               <div className="flex justify-center gap-6 mt-4">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-primary"></div>
-                  <span className="text-sm">{t('dashboard.passed')} (83%)</span>
+                  <span className="text-sm font-medium">Passed ({Math.round((stats.passedTests / stats.totalTests) * 100)}%)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-destructive"></div>
-                  <span className="text-sm">{t('dashboard.failed')} (17%)</span>
+                  <span className="text-sm font-medium">Failed ({Math.round((stats.failedTests / stats.totalTests) * 100)}%)</span>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </GlassCard>
+          </motion.div>
+          </div>
+        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-          {/* Category Performance */}
-          <Card className="border-primary/20">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">{t('dashboard.categoryPerformance')}</CardTitle>
-              <CardDescription className="text-xs">{t('dashboard.categoryPerformanceDesc')}</CardDescription>
-            </CardHeader>
-            <CardContent className="pb-4">
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={categoryData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="category" stroke="hsl(var(--muted-foreground))" />
-                  <YAxis stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Bar dataKey="tests" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Recent Tests */}
-          <Card className="border-primary/20">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">{t('dashboard.recentTests')}</CardTitle>
-              <CardDescription className="text-xs">{t('dashboard.recentTestsDesc')}</CardDescription>
-            </CardHeader>
-            <CardContent className="pb-4">
-              <div className="space-y-2">
-                {recentTests.map((test) => (
-                  <div
-                    key={test.id}
-                    className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:border-primary/50 transition-colors bg-card/50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold ${
-                        test.passed ? 'bg-primary/20 text-primary' : 'bg-destructive/20 text-destructive'
-                      }`}>
-                        {test.category}
-                      </div>
-                      <div>
-                        <p className="font-medium">{t('test.test')} {test.testNumber}</p>
-                        <p className="text-sm text-muted-foreground">{test.date}</p>
-                      </div>
+        {/* Recent Tests */}
+        {hasData && recentTests.length > 0 && (
+          <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="mb-12"
+        >
+          <GlassCard className="p-8">
+            <h2 className="text-xl font-semibold mb-6">{t('dashboard.recentTests')}</h2>
+            <div className="space-y-4">
+              {recentTests.map((test) => (
+                <div
+                  key={test.id}
+                  className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 hover:border-primary/30 transition-colors"
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                      test.passed ? 'bg-green-500/10' : 'bg-red-500/10'
+                    }`}>
+                      {test.passed ? (
+                        <CheckCircle className="w-6 h-6 text-green-500" />
+                      ) : (
+                        <XCircle className="w-6 h-6 text-red-500" />
+                      )}
                     </div>
-                    <div className="text-right">
-                      <p className={`text-2xl font-bold ${
-                        test.passed ? 'text-primary' : 'text-destructive'
-                      }`}>
-                        {test.score}%
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {test.passed ? t('dashboard.passed') : t('dashboard.failed')}
-                      </p>
+                    <div className="flex-1">
+                      <p className="font-medium">Category {test.category} - Test #{test.testNumber}</p>
+                      <p className="text-sm text-muted-foreground">{test.date}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg">{t('dashboard.continuelearning')}</CardTitle>
-            <CardDescription className="text-xs">{t('dashboard.pickUpWhere')}</CardDescription>
-          </CardHeader>
-          <CardContent className="pb-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Button asChild className="h-auto py-4 flex-col gap-2 shadow-lg shadow-primary/20">
-                <Link href="/category/b">
-                  <Play className="w-5 h-5" />
-                  <span className="text-sm">{t('dashboard.continueCategoryB')}</span>
-                </Link>
-              </Button>
-              <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2">
-                <Link href="/">
-                  <BarChart3 className="w-5 h-5" />
-                  <span className="text-sm">{t('dashboard.browseCategories')}</span>
-                </Link>
-              </Button>
-              <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2">
-                <Link href="/category/a">
-                  <Target className="w-5 h-5" />
-                  <span className="text-sm">{t('dashboard.startNewCategory')}</span>
-                </Link>
-              </Button>
+                  <div className="flex items-center gap-4">
+                    <p className={`text-2xl font-bold ${test.passed ? 'text-green-500' : 'text-red-500'}`}>
+                      {test.score}%
+                    </p>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedTest(test);
+                            fetchTestDetails(test.id);
+                          }}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Review
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Test Review - Category {test.category}</DialogTitle>
+                          <DialogDescription>
+                            Score: {test.score}% - {test.passed ? 'Passed' : 'Failed'} - {test.date}
+                          </DialogDescription>
+                        </DialogHeader>
+                        {loadingDetails ? (
+                          <div className="flex items-center justify-center py-8">
+                            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                          </div>
+                        ) : testDetails && testDetails.length > 0 ? (
+                          <div className="space-y-4 mt-4">
+                            {testDetails.map((answer: any, index: number) => (
+                              <div
+                                key={answer.id}
+                                className={`p-4 rounded-xl border ${
+                                  answer.is_correct
+                                    ? 'border-green-500/20 bg-green-500/5'
+                                    : 'border-red-500/20 bg-red-500/5'
+                                }`}
+                              >
+                                <div className="flex items-start gap-3 mb-3">
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                    answer.is_correct ? 'bg-green-500/20' : 'bg-red-500/20'
+                                  }`}>
+                                    {answer.is_correct ? (
+                                      <CheckCircle className="w-5 h-5 text-green-500" />
+                                    ) : (
+                                      <XCircle className="w-5 h-5 text-red-500" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="font-medium mb-2">Question {index + 1}</p>
+                                    <p className="text-sm mb-3">{answer.question?.question_text}</p>
+                                    <div className="space-y-2">
+                                      <div className={`p-2 rounded-lg text-sm ${
+                                        answer.question?.correct_answer === 'A'
+                                          ? 'bg-green-500/10 border border-green-500/20'
+                                          : 'bg-muted/50'
+                                      }`}>
+                                        <span className="font-semibold">A:</span> {answer.question?.option_a}
+                                      </div>
+                                      <div className={`p-2 rounded-lg text-sm ${
+                                        answer.question?.correct_answer === 'B'
+                                          ? 'bg-green-500/10 border border-green-500/20'
+                                          : 'bg-muted/50'
+                                      }`}>
+                                        <span className="font-semibold">B:</span> {answer.question?.option_b}
+                                      </div>
+                                      <div className={`p-2 rounded-lg text-sm ${
+                                        answer.question?.correct_answer === 'C'
+                                          ? 'bg-green-500/10 border border-green-500/20'
+                                          : 'bg-muted/50'
+                                      }`}>
+                                        <span className="font-semibold">C:</span> {answer.question?.option_c}
+                                      </div>
+                                    </div>
+                                    {!answer.is_correct && (
+                                      <p className="text-sm text-red-500 mt-2">
+                                        ✗ Your answer was incorrect. Correct answer: {answer.question?.correct_answer}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-center text-muted-foreground py-8">No details available</p>
+                        )}
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </GlassCard>
+          </motion.div>
+        )}
+
+        {/* Continue Learning */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+        >
+          <GlassCard className="p-8 bg-gradient-to-br from-primary/10 via-transparent to-transparent">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-2">{t('dashboard.quickStart')}</h2>
+              <p className="text-sm text-muted-foreground">Choose a category to continue your learning journey</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {categories.slice(0, 4).map((category) => (
+                <Button
+                  key={category}
+                  asChild
+                  variant="outline"
+                  className="h-auto py-6 flex-col gap-3 hover:border-primary hover:bg-primary/5 transition-all"
+                >
+                  <Link href={`/category/${category.toLowerCase()}`}>
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
+                      <Play className="w-6 h-6 text-primary" />
+                    </div>
+                    <span className="font-semibold">
+                      {CATEGORY_INFO[category].name}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Start practicing
+                    </span>
+                  </Link>
+                </Button>
+              ))}
+            </div>
+          </GlassCard>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

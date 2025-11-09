@@ -13,7 +13,7 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const { language, setLanguage } = useLanguage();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const pathname = usePathname();
 
   const handleLanguageChange = (lang: 'sq' | 'en') => {
@@ -68,17 +68,32 @@ export function Navbar() {
               )}
             </Link>
             {user && (
-              <Link
-                href="/dashboard"
-                className={`text-sm font-semibold transition-all duration-200 relative group/link ${
-                  isActive('/dashboard') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
-                }`}
-              >
-                Dashboard
-                {isActive('/dashboard') && (
-                  <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
+              <>
+                <Link
+                  href="/dashboard"
+                  className={`text-sm font-semibold transition-all duration-200 relative group/link ${
+                    isActive('/dashboard') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
+                  }`}
+                >
+                  Dashboard
+                  {isActive('/dashboard') && (
+                    <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
+                  )}
+                </Link>
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className={`text-sm font-semibold transition-all duration-200 relative group/link ${
+                      isActive('/admin') || pathname.startsWith('/admin') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
+                    }`}
+                  >
+                    Admin
+                    {(isActive('/admin') || pathname.startsWith('/admin')) && (
+                      <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
+                    )}
+                  </Link>
                 )}
-              </Link>
+              </>
             )}
           </div>
 
@@ -177,15 +192,28 @@ export function Navbar() {
                 Home
               </Link>
               {user && (
-                <Link
-                  href="/dashboard"
-                  className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                    isActive('/dashboard') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
+                <>
+                  <Link
+                    href="/dashboard"
+                    className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                      isActive('/dashboard') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  {isAdmin && (
+                    <Link
+                      href="/admin"
+                      className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                        isActive('/admin') || pathname.startsWith('/admin') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                      }`}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Admin
+                    </Link>
+                  )}
+                </>
               )}
               
               {/* Mobile Language Switcher */}
