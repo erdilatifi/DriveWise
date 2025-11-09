@@ -20,13 +20,26 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { motion } from 'framer-motion';
 import { useCreateQuestion, QuestionInput } from '@/hooks/use-questions';
 import { toast } from 'sonner';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, FileJson } from 'lucide-react';
 import Link from 'next/link';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { createClient } from '@/utils/supabase/client';
 
 export default function NewQuestionPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
+  const supabase = createClient();
   const createQuestion = useCreateQuestion();
+  const [jsonImportOpen, setJsonImportOpen] = useState(false);
+  const [jsonInput, setJsonInput] = useState('');
+  const [importing, setImporting] = useState(false);
 
   const [formData, setFormData] = useState<QuestionInput>({
     category: 'B',
@@ -63,6 +76,60 @@ export default function NewQuestionPage() {
     }
   };
 
+  const handleJsonImport = async () => {
+    if (!jsonInput.trim()) {
+      toast.error('Please enter JSON data');
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const questions = JSON.parse(jsonInput);
+      
+      if (!Array.isArray(questions)) {
+        toast.error('JSON must be an array of questions');
+        return;
+      }
+
+      // Validate and insert questions
+      const validQuestions = questions.map((q: any) => {
+        if (!q.category || !q.test_number || !q.question_text || !q.option_a || !q.option_b || !q.option_c || !q.correct_answer) {
+          throw new Error('Each question must have: category, test_number, question_text, option_a, option_b, option_c, correct_answer');
+        }
+        return {
+          category: q.category.toUpperCase(),
+          test_number: parseInt(q.test_number),
+          question_text: q.question_text,
+          option_a: q.option_a,
+          option_b: q.option_b,
+          option_c: q.option_c,
+          correct_answer: q.correct_answer.toUpperCase(),
+          image_url: q.image_url || null,
+        };
+      });
+
+      const { error } = await supabase
+        .from('admin_questions')
+        .insert(validQuestions);
+
+      if (error) {
+        console.error('Error importing questions:', error);
+        toast.error(`Failed to import questions: ${error.message}`);
+        return;
+      }
+
+      toast.success(`Successfully imported ${validQuestions.length} questions`);
+      setJsonInput('');
+      setJsonImportOpen(false);
+      router.push('/admin/questions');
+    } catch (error: any) {
+      toast.error(error.message || 'Invalid JSON format');
+      console.error(error);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -90,14 +157,91 @@ export default function NewQuestionPage() {
       >
         {/* Header */}
         <div className="mb-8">
-          <Button variant="ghost" asChild className="mb-4">
-            <Link href="/admin/questions">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Questions
-            </Link>
-          </Button>
-          <h1 className="text-3xl font-bold">Add New Question</h1>
-          <p className="text-sm text-muted-foreground">Create a new quiz question</p>
+          <div className="flex gap-2 mb-4">
+            <Button variant="ghost" asChild>
+              <Link href="/admin">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Admin Dashboard
+              </Link>
+            </Button>
+            <span className="text-muted-foreground">/</span>
+            <Button variant="ghost" asChild>
+              <Link href="/admin/questions">
+                Questions
+              </Link>
+            </Button>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Add New Question</h1>
+              <p className="text-sm text-muted-foreground">Create a new quiz question or import multiple via JSON</p>
+            </div>
+            <Dialog open={jsonImportOpen} onOpenChange={setJsonImportOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="shadow-lg shadow-primary/20">
+                  <FileJson className="w-4 h-4 mr-2" />
+                  Import JSON
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Import Questions from JSON</DialogTitle>
+                  <DialogDescription>
+                    Paste JSON array of questions. Image URL is optional.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Example format:</p>
+                    <pre className="bg-muted p-3 rounded-lg text-xs overflow-x-auto">
+{`[
+  {
+    "category": "B",
+    "test_number": 1,
+    "question_text": "What does a red light mean?",
+    "option_a": "Stop",
+    "option_b": "Go",
+    "option_c": "Slow down",
+    "correct_answer": "A",
+    "image_url": "https://example.com/image.jpg"
+  },
+  {
+    "category": "B",
+    "test_number": 1,
+    "question_text": "What is the speed limit?",
+    "option_a": "30 km/h",
+    "option_b": "50 km/h",
+    "option_c": "70 km/h",
+    "correct_answer": "B"
+  }
+]`}
+                    </pre>
+                  </div>
+                  <Textarea
+                    placeholder="Paste your JSON here..."
+                    value={jsonInput}
+                    onChange={(e) => setJsonInput(e.target.value)}
+                    className="min-h-[300px] font-mono text-sm"
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => setJsonImportOpen(false)}
+                      disabled={importing}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleJsonImport}
+                      disabled={importing}
+                    >
+                      {importing ? 'Importing...' : 'Import Questions'}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Form */}

@@ -48,18 +48,7 @@ export default function DashboardPage() {
       // Fetch test attempt answers
       const { data: answers, error } = await supabase
         .from('test_attempt_answers')
-        .select(`
-          *,
-          question:questions(
-            id,
-            question_text,
-            option_a,
-            option_b,
-            option_c,
-            correct_answer,
-            image_url
-          )
-        `)
+        .select('*')
         .eq('test_attempt_id', testId);
 
       if (error) {
@@ -67,7 +56,34 @@ export default function DashboardPage() {
         return;
       }
 
-      setTestDetails(answers);
+      if (!answers || answers.length === 0) {
+        setTestDetails([]);
+        return;
+      }
+
+      // Fetch question details separately from admin_questions
+      const questionIds = answers.map(a => a.question_id);
+      const { data: questions, error: questionsError } = await supabase
+        .from('admin_questions')
+        .select('*')
+        .in('id', questionIds);
+
+      if (questionsError) {
+        console.error('Error fetching questions:', questionsError);
+        setTestDetails(answers);
+        return;
+      }
+
+      // Merge answers with question details
+      const detailedAnswers = answers.map(answer => {
+        const question = questions?.find(q => q.id === answer.question_id);
+        return {
+          ...answer,
+          question: question || null,
+        };
+      });
+
+      setTestDetails(detailedAnswers);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -84,6 +100,22 @@ export default function DashboardPage() {
       }
       setUser(user);
 
+      // Ensure user profile exists
+      const { data: existingProfile } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (!existingProfile) {
+        // Create profile if it doesn't exist
+        await supabase.from('user_profiles').insert({
+          id: user.id,
+          email: user.email || '',
+          full_name: user.user_metadata?.full_name || '',
+        });
+      }
+
       // Fetch test attempts
       const { data: attempts, error } = await supabase
         .from('test_attempts')
@@ -92,7 +124,25 @@ export default function DashboardPage() {
         .order('completed_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching test attempts:', error);
+        console.error('❌ ERROR FETCHING TEST ATTEMPTS');
+        console.error('Error:', error);
+        
+        if (error.code === '42P01') {
+          alert('⚠️ Database tables missing!\n\nRun database.sql in Supabase SQL Editor.');
+        }
+        
+        // Show empty state
+        setStats({ 
+          totalTests: 0, 
+          averageScore: 0, 
+          bestScore: 0, 
+          testsThisWeek: 0,
+          streak: 0,
+          passedTests: 0, 
+          failedTests: 0 
+        });
+        setProgressData([]);
+        setRecentTests([]);
         setLoading(false);
         return;
       }
@@ -171,7 +221,7 @@ export default function DashboardPage() {
         const recent = attempts.slice(0, 4).map(test => ({
           id: test.id,
           category: test.category,
-          testNumber: 1, // You might want to extract this from test_set_id
+          testNumber: test.test_number || '1', // Get from database
           score: test.percentage,
           date: new Date(test.completed_at).toLocaleDateString(),
           passed: test.percentage >= 80,
@@ -387,7 +437,13 @@ export default function DashboardPage() {
                       )}
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium">Category {test.category} - Test #{test.testNumber}</p>
+                      <p className="font-medium">
+                        Category {test.category} - {
+                          test.testNumber === 'mixed' ? 'Mixed Test' : 
+                          test.testNumber === 'personalized' ? 'Personalized Test' :
+                          `Test #${test.testNumber}`
+                        }
+                      </p>
                       <p className="text-sm text-muted-foreground">{test.date}</p>
                     </div>
                   </div>
@@ -443,35 +499,48 @@ export default function DashboardPage() {
                                   </div>
                                   <div className="flex-1">
                                     <p className="font-medium mb-2">Question {index + 1}</p>
-                                    <p className="text-sm mb-3">{answer.question?.question_text}</p>
-                                    <div className="space-y-2">
-                                      <div className={`p-2 rounded-lg text-sm ${
-                                        answer.question?.correct_answer === 'A'
-                                          ? 'bg-green-500/10 border border-green-500/20'
-                                          : 'bg-muted/50'
-                                      }`}>
-                                        <span className="font-semibold">A:</span> {answer.question?.option_a}
-                                      </div>
-                                      <div className={`p-2 rounded-lg text-sm ${
-                                        answer.question?.correct_answer === 'B'
-                                          ? 'bg-green-500/10 border border-green-500/20'
-                                          : 'bg-muted/50'
-                                      }`}>
-                                        <span className="font-semibold">B:</span> {answer.question?.option_b}
-                                      </div>
-                                      <div className={`p-2 rounded-lg text-sm ${
-                                        answer.question?.correct_answer === 'C'
-                                          ? 'bg-green-500/10 border border-green-500/20'
-                                          : 'bg-muted/50'
-                                      }`}>
-                                        <span className="font-semibold">C:</span> {answer.question?.option_c}
-                                      </div>
-                                    </div>
-                                    {!answer.is_correct && (
-                                      <p className="text-sm text-red-500 mt-2">
-                                        ✗ Your answer was incorrect. Correct answer: {answer.question?.correct_answer}
-                                      </p>
+                                    <p className="text-sm mb-3">{answer.question?.question_text || 'Question not found'}</p>
+                                    {answer.question?.image_url && (
+                                      <img 
+                                        src={answer.question.image_url} 
+                                        alt="Question" 
+                                        className="w-full max-w-sm rounded-lg mb-3 border border-border"
+                                      />
                                     )}
+                                    <div className="space-y-2">
+                                      {['A', 'B', 'C'].map((option) => {
+                                        const isCorrect = answer.question?.correct_answer === option;
+                                        const isSelected = answer.selected_answer === option;
+                                        const optionText = answer.question?.[`option_${option.toLowerCase()}`];
+                                        
+                                        return (
+                                          <div 
+                                            key={option}
+                                            className={`p-3 rounded-lg text-sm border ${
+                                              isCorrect
+                                                ? 'bg-green-500/10 border-green-500/30'
+                                                : isSelected && !isCorrect
+                                                ? 'bg-red-500/10 border-red-500/30'
+                                                : 'bg-muted/50 border-transparent'
+                                            }`}
+                                          >
+                                            <div className="flex items-center gap-2">
+                                              <span className="font-semibold">{option}:</span>
+                                              <span className="flex-1">{optionText}</span>
+                                              {isCorrect && (
+                                                <span className="text-green-500 text-xs font-semibold">✓ Correct</span>
+                                              )}
+                                              {isSelected && !isCorrect && (
+                                                <span className="text-red-500 text-xs font-semibold">✗ Your answer</span>
+                                              )}
+                                              {isSelected && isCorrect && (
+                                                <span className="text-green-500 text-xs font-semibold">✓ Your answer</span>
+                                              )}
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
                                   </div>
                                 </div>
                               </div>

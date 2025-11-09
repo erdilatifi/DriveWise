@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import Link from 'next/link';
-import { Play, Clock, CheckCircle, Target } from 'lucide-react';
+import { Play, Clock, CheckCircle, Target, Shuffle, Brain } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { useLanguage } from '@/contexts/language-context';
@@ -92,6 +92,64 @@ export default function CategoryPage({ params }: CategoryPageProps) {
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        {/* Mixed Test Button */}
+        <div className="mt-12 max-w-2xl mx-auto">
+          <Card className="bg-gradient-to-br from-primary/10 via-card to-card border-primary/30 shadow-lg shadow-primary/10">
+            <CardContent className="p-8">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <Shuffle className="w-8 h-8 text-primary" />
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <h3 className="text-xl font-bold mb-2">Mixed Question Test</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Challenge yourself with random questions from all tests in this category. Perfect for comprehensive practice!
+                  </p>
+                </div>
+                <Button 
+                  size="lg" 
+                  className="shadow-lg shadow-primary/20 flex-shrink-0" 
+                  asChild
+                >
+                  <Link href={`/test/${category.toLowerCase()}/mixed`}>
+                    <Shuffle className="w-4 h-4 mr-2" />
+                    Start Mixed Test
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Personalized Test Button */}
+        <div className="mt-6 max-w-2xl mx-auto">
+          <Card className="bg-gradient-to-br from-purple-500/10 via-card to-card border-purple-500/30 shadow-lg shadow-purple-500/10">
+            <CardContent className="p-8">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="w-16 h-16 bg-purple-500/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <Brain className="w-8 h-8 text-purple-500" />
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <h3 className="text-xl font-bold mb-2">Personalized Test</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Practice questions you got wrong! Focuses on your weak areas to improve faster. Smart learning!
+                  </p>
+                </div>
+                <Button 
+                  size="lg" 
+                  className="shadow-lg shadow-purple-500/20 bg-purple-600 hover:bg-purple-700 flex-shrink-0" 
+                  asChild
+                >
+                  <Link href={`/test/${category.toLowerCase()}/personalized`}>
+                    <Brain className="w-4 h-4 mr-2" />
+                    Start Personalized
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
     </div>

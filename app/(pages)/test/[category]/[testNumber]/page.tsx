@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -8,137 +8,173 @@ import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
-// Mock question data - will be replaced with real API calls
-const mockQuestions = [
-  {
-    id: '1',
-    question: 'What does a red octagonal sign mean?',
-    options: [
-      { id: 'a', text: 'Yield' },
-      { id: 'b', text: 'Stop' },
-      { id: 'c', text: 'No Entry' },
-      { id: 'd', text: 'Speed Limit' },
-    ],
-    correctAnswer: 'b',
-  },
-  {
-    id: '2',
-    question: 'What is the maximum speed limit in urban areas?',
-    options: [
-      { id: 'a', text: '40 km/h' },
-      { id: 'b', text: '50 km/h' },
-      { id: 'c', text: '60 km/h' },
-      { id: 'd', text: '70 km/h' },
-    ],
-    correctAnswer: 'b',
-  },
-  {
-    id: '3',
-    question: 'When must you use your headlights?',
-    options: [
-      { id: 'a', text: 'Only at night' },
-      { id: 'b', text: 'During rain and fog' },
-      { id: 'c', text: 'At night and in poor visibility' },
-      { id: 'd', text: 'Never during the day' },
-    ],
-    correctAnswer: 'c',
-  },
-  {
-    id: '4',
-    question: 'What should you do at a yellow traffic light?',
-    options: [
-      { id: 'a', text: 'Speed up to pass' },
-      { id: 'b', text: 'Stop if safe to do so' },
-      { id: 'c', text: 'Continue without slowing' },
-      { id: 'd', text: 'Honk your horn' },
-    ],
-    correctAnswer: 'b',
-  },
-  {
-    id: '5',
-    question: 'What is the minimum following distance in good conditions?',
-    options: [
-      { id: 'a', text: '1 second' },
-      { id: 'b', text: '2 seconds' },
-      { id: 'c', text: '3 seconds' },
-      { id: 'd', text: '5 seconds' },
-    ],
-    correctAnswer: 'c',
-  },
-  {
-    id: '6',
-    question: 'When are you allowed to use your horn in urban areas?',
-    options: [
-      { id: 'a', text: 'Anytime' },
-      { id: 'b', text: 'Only in emergencies' },
-      { id: 'c', text: 'To greet friends' },
-      { id: 'd', text: 'When angry at other drivers' },
-    ],
-    correctAnswer: 'b',
-  },
-  {
-    id: '7',
-    question: 'What does a triangular sign with a red border indicate?',
-    options: [
-      { id: 'a', text: 'Information' },
-      { id: 'b', text: 'Warning' },
-      { id: 'c', text: 'Prohibition' },
-      { id: 'd', text: 'Mandatory action' },
-    ],
-    correctAnswer: 'b',
-  },
-  {
-    id: '8',
-    question: 'When must you wear a seatbelt?',
-    options: [
-      { id: 'a', text: 'Only on highways' },
-      { id: 'b', text: 'Only in the front seat' },
-      { id: 'c', text: 'At all times while driving' },
-      { id: 'd', text: 'Only during long trips' },
-    ],
-    correctAnswer: 'c',
-  },
-  {
-    id: '9',
-    question: 'What is the legal blood alcohol limit for drivers?',
-    options: [
-      { id: 'a', text: '0.0%' },
-      { id: 'b', text: '0.3%' },
-      { id: 'c', text: '0.5%' },
-      { id: 'd', text: '0.8%' },
-    ],
-    correctAnswer: 'a',
-  },
-  {
-    id: '10',
-    question: 'Who has priority at an unmarked intersection?',
-    options: [
-      { id: 'a', text: 'The larger vehicle' },
-      { id: 'b', text: 'The vehicle from the right' },
-      { id: 'c', text: 'The vehicle from the left' },
-      { id: 'd', text: 'The faster vehicle' },
-    ],
-    correctAnswer: 'b',
-  },
-];
+interface Question {
+  id: string;
+  question_text: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  correct_answer: string;
+  image_url?: string;
+}
 
 export default function TestPage() {
   const params = useParams();
   const router = useRouter();
+  const supabase = createClient();
   const category = (params.category as string).toUpperCase() as LicenseCategory;
   const testNumber = params.testNumber as string;
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showResults, setShowResults] = useState(false);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [startTime] = useState(Date.now());
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/login');
+          return;
+        }
+        setUserId(user.id);
+
+        // Check test type
+        const isMixed = testNumber === 'mixed';
+        const isPersonalized = testNumber === 'personalized';
+
+        if (isPersonalized) {
+          // First, get user's test attempts for this category
+          const { data: testAttempts } = await supabase
+            .from('test_attempts')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('category', category);
+
+          const testAttemptIds = testAttempts?.map(t => t.id) || [];
+
+          // Fetch questions user got wrong
+          let wrongQuestionIds: string[] = [];
+          
+          if (testAttemptIds.length > 0) {
+            const { data: wrongAnswers, error: answersError } = await supabase
+              .from('test_attempt_answers')
+              .select('question_id')
+              .eq('is_correct', false)
+              .in('test_attempt_id', testAttemptIds);
+
+            if (answersError) {
+              console.error('Error fetching wrong answers:', answersError);
+            }
+
+            // Get unique question IDs
+            wrongQuestionIds = [...new Set(wrongAnswers?.map(a => a.question_id) || [])];
+          }
+          
+          let personalizedQuestions = [];
+
+          if (wrongQuestionIds.length > 0) {
+            // Fetch the actual questions
+            const { data: wrongQuestions, error: questionsError } = await supabase
+              .from('admin_questions')
+              .select('*')
+              .in('id', wrongQuestionIds)
+              .eq('category', category);
+
+            if (questionsError) {
+              console.error('Error fetching questions:', questionsError);
+            } else {
+              personalizedQuestions = wrongQuestions || [];
+            }
+          }
+
+          // If we don't have enough questions (need 10), fill with random
+          if (personalizedQuestions.length < 10) {
+            const { data: allQuestions, error: allError } = await supabase
+              .from('admin_questions')
+              .select('*')
+              .eq('category', category);
+
+            if (!allError && allQuestions) {
+              // Filter out questions we already have
+              const existingIds = personalizedQuestions.map(q => q.id);
+              const availableQuestions = allQuestions.filter(q => !existingIds.includes(q.id));
+              
+              // Shuffle and add needed amount
+              const shuffled = availableQuestions.sort(() => 0.5 - Math.random());
+              const needed = 10 - personalizedQuestions.length;
+              personalizedQuestions = [...personalizedQuestions, ...shuffled.slice(0, needed)];
+            }
+          }
+
+          // Shuffle final list and take 10
+          const finalQuestions = personalizedQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
+          setQuestions(finalQuestions);
+
+        } else if (isMixed) {
+          // Fetch random questions from all tests in this category
+          const { data, error } = await supabase
+            .from('admin_questions')
+            .select('*')
+            .eq('category', category);
+
+          if (error) {
+            console.error('Error fetching questions:', error);
+            return;
+          }
+
+          if (data && data.length > 0) {
+            // Shuffle and take 10 random questions
+            const shuffled = data.sort(() => 0.5 - Math.random());
+            const randomQuestions = shuffled.slice(0, Math.min(10, data.length));
+            setQuestions(randomQuestions);
+          } else {
+            console.warn('No questions found for this category');
+          }
+        } else {
+          // Fetch questions for specific test number
+          const { data, error } = await supabase
+            .from('admin_questions')
+            .select('*')
+            .eq('category', category)
+            .eq('test_number', parseInt(testNumber));
+
+          if (error) {
+            console.error('Error fetching questions:', error);
+            return;
+          }
+
+          if (data && data.length > 0) {
+            setQuestions(data);
+          } else {
+            console.warn('No questions found for this test');
+          }
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, [category, testNumber, router, supabase]);
 
   const categoryInfo = CATEGORY_INFO[category];
-  const totalQuestions = mockQuestions.length;
-  const progress = ((currentQuestion + 1) / totalQuestions) * 100;
+  const totalQuestions = questions.length;
+  const progress = totalQuestions > 0 ? ((currentQuestion + 1) / totalQuestions) * 100 : 0;
 
   const handleAnswer = (value: string) => {
-    setAnswers({ ...answers, [mockQuestions[currentQuestion].id]: value });
+    if (questions.length > 0) {
+      setAnswers({ ...answers, [questions[currentQuestion].id]: value });
+    }
   };
 
   const handleNext = () => {
@@ -153,23 +189,141 @@ export default function TestPage() {
     }
   };
 
-  const handleSubmit = () => {
-    setShowResults(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userId) return;
+
+    try {
+      // Calculate score
+      const score = calculateScore();
+      const timeElapsed = Math.floor((Date.now() - startTime) / 1000);
+
+      // Ensure user profile exists before saving test
+      const { data: existingProfile } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (!existingProfile) {
+        // Create profile if it doesn't exist
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('user_profiles').insert({
+            id: user.id,
+            email: user.email || '',
+            full_name: user.user_metadata?.full_name || '',
+          });
+        }
+      }
+
+      // Save test attempt
+      const { data: testAttempt, error: attemptError } = await supabase
+        .from('test_attempts')
+        .insert({
+          user_id: userId,
+          category: category,
+          test_number: testNumber, // Save test number (1-10 or 'mixed' or 'personalized')
+          score: score.correct,
+          total_questions: score.total,
+          percentage: score.percentage,
+          time_taken_seconds: timeElapsed,
+          completed_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (attemptError) {
+        console.error('❌ ERROR SAVING TEST ATTEMPT!');
+        console.error('Error:', attemptError);
+        console.error('Error code:', attemptError.code);
+        console.error('Make sure database.sql has been run in Supabase!');
+        setShowResults(true);
+        return;
+      }
+
+      // Save individual answers
+      if (testAttempt) {
+        console.log('Test attempt saved successfully:', testAttempt.id);
+        console.log('Number of questions to save:', questions.length);
+        
+        const answersToSave = questions.map((q) => ({
+          test_attempt_id: testAttempt.id,
+          question_id: q.id,
+          selected_answer: answers[q.id] || null,
+          is_correct: answers[q.id] === q.correct_answer,
+        }));
+
+        console.log('Sample answer to save:', answersToSave[0]);
+
+        const { data: savedAnswers, error: answersError } = await supabase
+          .from('test_attempt_answers')
+          .insert(answersToSave)
+          .select();
+
+        if (answersError) {
+          console.error('❌ ERROR SAVING ANSWERS!');
+          console.error('Error:', answersError);
+          console.error('Error code:', answersError.code);
+          console.error('Test score was saved, but answers could not be saved for review.');
+        } else {
+          console.log('✅ Answers saved successfully:', savedAnswers?.length || 0);
+        }
+      }
+
+      setShowResults(true);
+    } catch (error) {
+      console.error('Error submitting test:', error);
+      setShowResults(true);
+    }
   };
 
   const calculateScore = () => {
     let correct = 0;
-    mockQuestions.forEach((q) => {
-      if (answers[q.id] === q.correctAnswer) {
+    questions.forEach((q) => {
+      if (answers[q.id] === q.correct_answer) {
         correct++;
       }
     });
     return {
       correct,
       total: totalQuestions,
-      percentage: Math.round((correct / totalQuestions) * 100),
+      percentage: totalQuestions > 0 ? Math.round((correct / totalQuestions) * 100) : 0,
     };
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading test questions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>No Questions Available</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">
+              There are no questions available for this test yet.
+            </p>
+            <Button asChild>
+              <Link href={`/category/${category.toLowerCase()}`}>
+                Back to Tests
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (showResults) {
     const score = calculateScore();
@@ -208,7 +362,11 @@ export default function TestPage() {
                   {passed ? 'Congratulations!' : 'Keep Practicing!'}
                 </CardTitle>
                 <p className="text-muted-foreground text-lg">
-                  {categoryInfo.name} - Test {testNumber}
+                  {categoryInfo.name} - {
+                    testNumber === 'mixed' ? 'Mixed Question Test' : 
+                    testNumber === 'personalized' ? 'Personalized Test' :
+                    `Test ${testNumber}`
+                  }
                 </p>
               </div>
             </CardHeader>
@@ -245,12 +403,11 @@ export default function TestPage() {
                     Back to Tests
                   </Link>
                 </Button>
-                <Button 
+                <Button
                   className="flex-1"
                   onClick={() => {
-                    setCurrentQuestion(0);
-                    setAnswers({});
-                    setShowResults(false);
+                    // Reload page to reset everything
+                    window.location.reload();
                   }}
                 >
                   Retry Test
@@ -263,8 +420,14 @@ export default function TestPage() {
     );
   }
 
-  const question = mockQuestions[currentQuestion];
+  const question = questions[currentQuestion];
   const currentAnswer = answers[question.id];
+
+  const options = [
+    { id: 'A', text: question.option_a },
+    { id: 'B', text: question.option_b },
+    { id: 'C', text: question.option_c },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -296,15 +459,28 @@ export default function TestPage() {
         <Card className="max-w-3xl mx-auto border-primary/20 bg-card/95 backdrop-blur-xl shadow-xl shadow-primary/5">
           <CardHeader>
             <div className="text-sm text-primary font-medium mb-3">
-              {categoryInfo.name} - Test {testNumber}
+              {categoryInfo.name} - {
+                testNumber === 'mixed' ? 'Mixed Question Test' : 
+                testNumber === 'personalized' ? 'Personalized Test' :
+                `Test ${testNumber}`
+              }
             </div>
-            <CardTitle className="text-2xl md:text-3xl">{question.question}</CardTitle>
+            <CardTitle className="text-2xl md:text-3xl">{question.question_text}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {question.image_url && (
+              <div className="w-full max-w-md mx-auto mb-6">
+                <img
+                  src={question.image_url}
+                  alt="Question illustration"
+                  className="w-full h-auto rounded-lg border border-border"
+                />
+              </div>
+            )}
             <RadioGroup value={currentAnswer} onValueChange={handleAnswer}>
-              {question.options.map((option) => (
+              {options.map((option) => (
                 <RadioGroupItem key={option.id} value={option.id}>
-                  <span className="font-medium mr-2">{option.id.toUpperCase()}.</span>
+                  <span className="font-medium mr-2">{option.id}.</span>
                   {option.text}
                 </RadioGroupItem>
               ))}
@@ -345,7 +521,7 @@ export default function TestPage() {
             <div className="border-t pt-4">
               <p className="text-sm text-muted-foreground mb-3">Quick Navigation</p>
               <div className="grid grid-cols-10 gap-2">
-                {mockQuestions.map((q, idx) => (
+                {questions.map((q, idx) => (
                   <button
                     key={q.id}
                     onClick={() => setCurrentQuestion(idx)}

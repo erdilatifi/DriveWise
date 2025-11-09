@@ -8,7 +8,7 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { Plus, Search, Edit, Trash2, Filter } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Filter, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQuestions, useDeleteQuestion } from '@/hooks/use-questions';
 import { toast } from 'sonner';
@@ -19,12 +19,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 export default function QuestionsPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const { data: questions, isLoading, error } = useQuestions(categoryFilter || undefined);
   const deleteQuestion = useDeleteQuestion();
@@ -52,14 +63,25 @@ export default function QuestionsPage() {
     q.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Pagination calculations
+  const totalPages = filteredQuestions ? Math.ceil(filteredQuestions.length / itemsPerPage) : 0;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedQuestions = filteredQuestions?.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, categoryFilter]);
+
   // Group questions by category
-  const questionsByCategory = filteredQuestions?.reduce((acc, question) => {
+  const questionsByCategory = paginatedQuestions?.reduce((acc, question) => {
     if (!acc[question.category]) {
       acc[question.category] = [];
     }
     acc[question.category].push(question);
     return acc;
-  }, {} as Record<string, typeof filteredQuestions>);
+  }, {} as Record<string, typeof paginatedQuestions>);
 
   const categories = questionsByCategory ? Object.keys(questionsByCategory).sort() : [];
 
@@ -101,6 +123,14 @@ export default function QuestionsPage() {
         transition={{ duration: 0.5 }}
         className="container mx-auto px-6 py-8 max-w-7xl"
       >
+        {/* Back Button */}
+        <Button variant="ghost" asChild className="mb-4">
+          <Link href="/admin">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Admin Dashboard
+          </Link>
+        </Button>
+
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
@@ -243,6 +273,51 @@ export default function QuestionsPage() {
             </GlassCard>
           )}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-8 flex justify-center">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  // Show first page, last page, current page, and pages around current
+                  if (
+                    page === 1 ||
+                    page === totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  ) {
+                    return (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(page)}
+                          isActive={currentPage === page}
+                          className="cursor-pointer"
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  } else if (page === currentPage - 2 || page === currentPage + 2) {
+                    return <PaginationEllipsis key={page} />;
+                  }
+                  return null;
+                })}
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </motion.div>
     </div>
   );

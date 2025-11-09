@@ -113,12 +113,20 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
       >
         {/* Header */}
         <div className="mb-8">
-          <Button variant="ghost" asChild className="mb-4">
-            <Link href="/admin/questions">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Questions
-            </Link>
-          </Button>
+          <div className="flex gap-2 mb-4">
+            <Button variant="ghost" asChild>
+              <Link href="/admin">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Admin Dashboard
+              </Link>
+            </Button>
+            <span className="text-muted-foreground">/</span>
+            <Button variant="ghost" asChild>
+              <Link href="/admin/questions">
+                Questions
+              </Link>
+            </Button>
+          </div>
           <h1 className="text-3xl font-bold">Edit Question</h1>
           <p className="text-sm text-muted-foreground">Update question details</p>
         </div>
