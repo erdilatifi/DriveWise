@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,10 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
+import { toast } from 'sonner';
+
+// Lazy load Image for better performance
+const Image = dynamic(() => import('next/image'), { ssr: false });
 
 export default function LoginPage() {
   const { t } = useLanguage();
@@ -35,7 +39,15 @@ export default function LoginPage() {
     const { error: signInError } = await signIn(email, password);
 
     if (signInError) {
-      setError(signInError.message || 'Failed to login');
+      const errorMessage = signInError.message || 'Failed to login';
+      setError(errorMessage);
+      
+      // Only show toast for non-blocked errors (blocked errors are handled in auth context)
+      if (!errorMessage.includes('blocked')) {
+        toast.error('Login Failed', {
+          description: errorMessage,
+        });
+      }
     }
 
     setLoading(false);
@@ -91,7 +103,15 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">{t('auth.password')}</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">{t('auth.password')}</Label>
+                <Link 
+                  href="/forgot-password" 
+                  className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <Input
                 id="password"
                 type="password"

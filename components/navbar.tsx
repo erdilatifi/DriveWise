@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -12,9 +12,19 @@ import { useAuth } from '@/contexts/auth-context';
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { language, setLanguage } = useLanguage();
   const { user, signOut, isAdmin } = useAuth();
   const pathname = usePathname();
+
+  // Handle scroll behavior
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleLanguageChange = (lang: 'sq' | 'en') => {
     setLanguage(lang);
@@ -29,7 +39,12 @@ export function Navbar() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-card/80 backdrop-blur-xl shadow-lg shadow-black/20">
+    <nav className={`fixed left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${
+      scrolled ? 'top-0 w-full' : 'top-4 w-[90%]'
+    }`}>
+      <div className={`bg-card/95 backdrop-blur-xl border border-border/40 shadow-lg shadow-black/20 transition-all duration-300 ${
+        scrolled ? 'rounded-none border-t-0 border-x-0' : 'rounded-2xl'
+      }`}>
       <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">
           {/* Logo */}
@@ -67,33 +82,29 @@ export function Navbar() {
                 <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
               )}
             </Link>
-            {user && (
-              <>
-                <Link
-                  href="/dashboard"
-                  className={`text-sm font-semibold transition-all duration-200 relative group/link ${
-                    isActive('/dashboard') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
-                  }`}
-                >
-                  Dashboard
-                  {isActive('/dashboard') && (
-                    <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
-                  )}
-                </Link>
-                {isAdmin && (
-                  <Link
-                    href="/admin"
-                    className={`text-sm font-semibold transition-all duration-200 relative group/link ${
-                      isActive('/admin') || pathname.startsWith('/admin') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
-                    }`}
-                  >
-                    Admin
-                    {(isActive('/admin') || pathname.startsWith('/admin')) && (
-                      <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
-                    )}
-                  </Link>
+            <Link
+              href="/dashboard"
+              className={`text-sm font-semibold transition-all duration-200 relative group/link ${
+                isActive('/dashboard') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
+              }`}
+            >
+              Dashboard
+              {isActive('/dashboard') && (
+                <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
+              )}
+            </Link>
+            {user && isAdmin && (
+              <Link
+                href="/admin"
+                className={`text-sm font-semibold transition-all duration-200 relative group/link ${
+                  isActive('/admin') || pathname.startsWith('/admin') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
+                }`}
+              >
+                Admin
+                {(isActive('/admin') || pathname.startsWith('/admin')) && (
+                  <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
                 )}
-              </>
+              </Link>
             )}
           </div>
 
@@ -191,29 +202,25 @@ export function Navbar() {
               >
                 Home
               </Link>
-              {user && (
-                <>
-                  <Link
-                    href="/dashboard"
-                    className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                      isActive('/dashboard') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
-                    }`}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  {isAdmin && (
-                    <Link
-                      href="/admin"
-                      className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                        isActive('/admin') || pathname.startsWith('/admin') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
-                      }`}
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Admin
-                    </Link>
-                  )}
-                </>
+              <Link
+                href="/dashboard"
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  isActive('/dashboard') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+              {user && isAdmin && (
+                <Link
+                  href="/admin"
+                  className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                    isActive('/admin') || pathname.startsWith('/admin') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Admin
+                </Link>
               )}
               
               {/* Mobile Language Switcher */}
@@ -265,6 +272,7 @@ export function Navbar() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </nav>
   );

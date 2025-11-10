@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
+import { ADMIN_USER_ID } from '@/lib/admin';
 import {
   Dialog,
   DialogContent,
@@ -29,11 +30,32 @@ export default function StatsPage() {
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
+  interface UserData {
+    id: string;
+    email: string;
+    full_name: string | null;
+    created_at: string;
+    is_blocked: boolean;
+    is_admin?: boolean;
+    test_attempts_count: number;
+  }
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const usersPerPage = 20;
+
+  // Debounce search to avoid excessive queries
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1); // Reset to first page on search
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
@@ -89,29 +111,71 @@ export default function StatsPage() {
     },
   });
 
-  // Fetch users
+  // Fetch users with optimized query
   const { data: usersData, isLoading: usersLoading } = useQuery({
-    queryKey: ['admin-users', searchQuery, page],
+    queryKey: ['admin-users', debouncedSearch, page],
     queryFn: async () => {
       const from = (page - 1) * usersPerPage;
       const to = from + usersPerPage - 1;
 
-      let query = supabase
+      // First, get user count for pagination (optimized with head: true)
+      // Exclude admin user from the list
+      let countQuery = supabase
         .from('user_profiles')
-        .select('*, test_attempts(count)', { count: 'exact' })
+        .select('*', { count: 'exact', head: true })
+        .neq('id', ADMIN_USER_ID);
+
+      if (debouncedSearch) {
+        countQuery = countQuery.or(`email.ilike.%${debouncedSearch}%,full_name.ilike.%${debouncedSearch}%`);
+      }
+
+      const { count } = await countQuery;
+
+      // Then fetch only the users we need without expensive joins
+      // Exclude admin user from the list
+      let dataQuery = supabase
+        .from('user_profiles')
+        .select('id, email, full_name, created_at, is_blocked')
+        .neq('id', ADMIN_USER_ID)
         .order('created_at', { ascending: false })
         .range(from, to);
 
-      if (searchQuery) {
-        query = query.ilike('email', `%${searchQuery}%`);
+      if (debouncedSearch) {
+        dataQuery = dataQuery.or(`email.ilike.%${debouncedSearch}%,full_name.ilike.%${debouncedSearch}%`);
       }
 
-      const { data, error, count } = await query;
+      const { data, error } = await dataQuery;
 
       if (error) throw error;
 
-      return { users: data || [], total: count || 0 };
+      // Fetch test attempt counts separately for visible users only
+      if (data && data.length > 0) {
+        const userIds = data.map(u => u.id);
+        const { data: attemptCounts } = await supabase
+          .from('test_attempts')
+          .select('user_id')
+          .in('user_id', userIds);
+
+        // Count attempts per user
+        const countsByUser = attemptCounts?.reduce((acc, attempt) => {
+          acc[attempt.user_id] = (acc[attempt.user_id] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>) || {};
+
+        // Add counts to users
+        const usersWithCounts: UserData[] = data.map(user => ({
+          ...user,
+          test_attempts_count: countsByUser[user.id] || 0,
+          is_admin: false, // Default value, update if you have this field
+        }));
+
+        return { users: usersWithCounts, total: count || 0 };
+      }
+
+      return { users: [] as UserData[], total: count || 0 };
     },
+    staleTime: 30000, // Cache for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
   // Delete user mutation
@@ -157,12 +221,12 @@ export default function StatsPage() {
     },
   });
 
-  const handleDeleteUser = (user: any) => {
+  const handleDeleteUser = (user: UserData) => {
     setSelectedUser(user);
     setDeleteDialogOpen(true);
   };
 
-  const handleBlockUser = (user: any) => {
+  const handleBlockUser = (user: UserData) => {
     setSelectedUser(user);
     setBlockDialogOpen(true);
   };
@@ -200,7 +264,7 @@ export default function StatsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-28">
       <Navbar />
 
       <motion.div
@@ -317,12 +381,9 @@ export default function StatsPage() {
             <div className="w-full md:w-64 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search by email..."
+                placeholder="Search by email or name..."
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setPage(1);
-                }}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -335,13 +396,13 @@ export default function StatsPage() {
           ) : usersData && usersData.users.length > 0 ? (
             <>
               <div className="space-y-2">
-                {usersData.users.map((userData: any, index: number) => (
+                {usersData.users.map((userData: UserData, index: number) => (
                   <motion.div
                     key={userData.id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="flex items-center justify-between p-4 rounded-xl border border-white/10 hover:border-primary/30 transition-colors bg-white/5"
+                    className="flex items-center justify-between p-4 rounded-xl border border-border hover:border-primary/30 transition-colors bg-card/50"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
@@ -351,7 +412,7 @@ export default function StatsPage() {
                         <div>
                           <p className="font-medium">{userData.email}</p>
                           <p className="text-sm text-muted-foreground">
-                            {userData.full_name || 'No name set'} • {userData.test_attempts?.[0]?.count || 0} tests taken
+                            {userData.full_name || 'No name set'} • {userData.test_attempts_count || 0} tests taken
                             {userData.is_blocked && <span className="ml-2 text-red-500">• Blocked</span>}
                             {userData.is_admin && <span className="ml-2 text-yellow-500">• Admin</span>}
                           </p>
@@ -445,7 +506,7 @@ export default function StatsPage() {
           <h2 className="text-lg font-semibold mb-6">Questions by Category</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {Object.entries(stats?.categoryCounts || {}).map(([category, count]) => (
-              <div key={category} className="text-center p-4 rounded-xl bg-white/5 border border-white/10">
+              <div key={category} className="text-center p-4 rounded-xl bg-card/50 border border-border">
                 <p className="text-2xl font-bold text-primary mb-1">{count}</p>
                 <p className="text-sm text-muted-foreground">Category {category}</p>
               </div>

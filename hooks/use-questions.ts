@@ -10,6 +10,7 @@ export interface Question {
   option_b: string;
   option_c: string;
   correct_answer: 'A' | 'B' | 'C';
+  correct_answers?: ('A' | 'B' | 'C')[]; // Multiple correct answers support
   image_url?: string;
   created_at: string;
   updated_at: string;
@@ -23,6 +24,7 @@ export interface QuestionInput {
   option_b: string;
   option_c: string;
   correct_answer: 'A' | 'B' | 'C';
+  correct_answers?: ('A' | 'B' | 'C')[]; // Multiple correct answers support
   image_url?: string;
 }
 
@@ -78,17 +80,36 @@ export function useCreateQuestion() {
 
   return useMutation({
     mutationFn: async (question: QuestionInput) => {
+      console.log('Creating question with data:', question);
+      
       const { data, error } = await supabase
         .from('admin_questions')
         .insert([question])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase create error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+        });
+        throw new Error(error.message || error.details || 'Failed to create question');
+      }
+      
+      if (!data) {
+        throw new Error('No data returned from insert operation');
+      }
+      
+      console.log('Question created successfully:', data);
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['questions'] });
+    },
+    onError: (error) => {
+      console.error('Mutation error:', error);
     },
   });
 }
@@ -100,6 +121,8 @@ export function useUpdateQuestion() {
 
   return useMutation({
     mutationFn: async ({ id, ...question }: Partial<Question> & { id: string }) => {
+      console.log('Updating question:', id, question);
+      
       const { data, error } = await supabase
         .from('admin_questions')
         .update(question)
@@ -107,12 +130,29 @@ export function useUpdateQuestion() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase update error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+        });
+        throw new Error(error.message || error.details || 'Failed to update question');
+      }
+      
+      if (!data) {
+        throw new Error('No data returned from update operation');
+      }
+      
+      console.log('Question updated successfully:', data);
       return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['questions'] });
       queryClient.invalidateQueries({ queryKey: ['question', data.id] });
+    },
+    onError: (error) => {
+      console.error('Update mutation error:', error);
     },
   });
 }
@@ -129,7 +169,10 @@ export function useDeleteQuestion() {
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase delete error:', error);
+        throw new Error(error.message || 'Failed to delete question');
+      }
       return id;
     },
     onSuccess: () => {

@@ -1,6 +1,6 @@
 // Database types for DriveWise
 
-export type LicenseCategory = 'A' | 'B' | 'C1' | 'C' | 'CE' | 'D';
+export type LicenseCategory = 'A' | 'B' | 'C' | 'D';
 export type LanguageCode = 'sq' | 'en';
 
 export interface Question {
@@ -152,9 +152,7 @@ export interface TestAttemptAnswerWithQuestion extends TestAttemptAnswer {
 export const CATEGORY_INFO: Record<LicenseCategory, { name: string; description: string }> = {
   A: { name: 'Category A', description: 'Motorcycles' },
   B: { name: 'Category B', description: 'Cars' },
-  C1: { name: 'Category C1', description: 'Light Trucks' },
   C: { name: 'Category C', description: 'Trucks' },
-  CE: { name: 'Category CE', description: 'Trucks with Trailer' },
   D: { name: 'Category D', description: 'Buses' },
 };
 

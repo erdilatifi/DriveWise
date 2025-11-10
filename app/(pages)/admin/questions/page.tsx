@@ -28,6 +28,16 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function QuestionsPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -35,6 +45,8 @@ export default function QuestionsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState<{ id: string; text: string } | null>(null);
   const itemsPerPage = 10;
 
   const { data: questions, isLoading, error } = useQuestions(categoryFilter || undefined);
@@ -46,15 +58,28 @@ export default function QuestionsPage() {
     }
   }, [user, isAdmin, authLoading, router]);
 
-  const handleDelete = async (id: string, questionText: string) => {
-    if (confirm(`Are you sure you want to delete this question?\n\n"${questionText.substring(0, 100)}..."`)) {
-      try {
-        await deleteQuestion.mutateAsync(id);
-        toast.success('Question deleted successfully');
-      } catch (error) {
-        toast.error('Failed to delete question');
-        console.error(error);
-      }
+  const openDeleteDialog = (id: string, questionText: string) => {
+    setQuestionToDelete({ id, text: questionText });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!questionToDelete) return;
+
+    try {
+      await deleteQuestion.mutateAsync(questionToDelete.id);
+      toast.success('Question deleted successfully');
+      setDeleteDialogOpen(false);
+      setQuestionToDelete(null);
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Unknown error occurred';
+      toast.error(`Failed to delete question: ${errorMessage}`);
+      console.error('Error deleting question:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        fullError: error,
+      });
     }
   };
 
@@ -114,7 +139,7 @@ export default function QuestionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-28">
       <Navbar />
 
       <motion.div
@@ -169,8 +194,6 @@ export default function QuestionsPage() {
                   <SelectItem value="A">Category A</SelectItem>
                   <SelectItem value="B">Category B</SelectItem>
                   <SelectItem value="C">Category C</SelectItem>
-                  <SelectItem value="C1">Category C1</SelectItem>
-                  <SelectItem value="CE">Category CE</SelectItem>
                   <SelectItem value="D">Category D</SelectItem>
                 </SelectContent>
               </Select>
@@ -208,7 +231,7 @@ export default function QuestionsPage() {
                   {questionsByCategory[category].map((question) => (
                     <div
                       key={question.id}
-                      className="p-4 rounded-xl border border-white/10 hover:border-primary/30 transition-colors bg-white/5"
+                      className="p-4 rounded-xl border border-border bg-card/50 hover:border-primary/30 transition-colors"
                     >
                       <div className="flex flex-col md:flex-row justify-between gap-4">
                         <div className="flex-1">
@@ -245,7 +268,7 @@ export default function QuestionsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDelete(question.id, question.question_text)}
+                            onClick={() => openDeleteDialog(question.id, question.question_text)}
                             disabled={deleteQuestion.isPending}
                             className="flex-1 md:flex-none text-destructive hover:text-destructive"
                           >
@@ -319,6 +342,38 @@ export default function QuestionsPage() {
           </div>
         )}
       </motion.div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Question</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this question?
+              <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border">
+                <p className="text-sm font-medium text-foreground line-clamp-3">
+                  {questionToDelete?.text}
+                </p>
+              </div>
+              <p className="mt-3 text-destructive font-medium">
+                This action cannot be undone.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleteQuestion.isPending}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {deleteQuestion.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

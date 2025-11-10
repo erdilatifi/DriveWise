@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, CheckSquare } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 
@@ -17,6 +18,7 @@ interface Question {
   option_b: string;
   option_c: string;
   correct_answer: string;
+  correct_answers?: string[]; // Multiple correct answers support
   image_url?: string;
 }
 
@@ -28,7 +30,7 @@ export default function TestPage() {
   const testNumber = params.testNumber as string;
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [showResults, setShowResults] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -173,7 +175,13 @@ export default function TestPage() {
 
   const handleAnswer = (value: string) => {
     if (questions.length > 0) {
-      setAnswers({ ...answers, [questions[currentQuestion].id]: value });
+      const question = questions[currentQuestion];
+      // Always use array mode for multiple selection
+      const currentAnswers = (answers[question.id] as string[]) || [];
+      const newAnswers = currentAnswers.includes(value)
+        ? currentAnswers.filter(a => a !== value)
+        : [...currentAnswers, value];
+      setAnswers({ ...answers, [question.id]: newAnswers });
     }
   };
 
@@ -247,12 +255,33 @@ export default function TestPage() {
         console.log('Test attempt saved successfully:', testAttempt.id);
         console.log('Number of questions to save:', questions.length);
         
-        const answersToSave = questions.map((q) => ({
-          test_attempt_id: testAttempt.id,
-          question_id: q.id,
-          selected_answer: answers[q.id] || null,
-          is_correct: answers[q.id] === q.correct_answer,
-        }));
+        const answersToSave = questions.map((q) => {
+          const userAnswer = answers[q.id];
+          const correctAnswers = q.correct_answers && q.correct_answers.length > 0 
+            ? q.correct_answers 
+            : [q.correct_answer];
+          
+          // Check if answer is correct
+          let isCorrect = false;
+          if (Array.isArray(userAnswer)) {
+            isCorrect = userAnswer.length === correctAnswers.length && 
+                       userAnswer.every(a => correctAnswers.includes(a));
+          } else {
+            isCorrect = correctAnswers.includes(userAnswer);
+          }
+          
+          // Convert answer to string for database
+          const selectedAnswerString = Array.isArray(userAnswer) 
+            ? userAnswer.join(',') 
+            : userAnswer || null;
+          
+          return {
+            test_attempt_id: testAttempt.id,
+            question_id: q.id,
+            selected_answer: selectedAnswerString,
+            is_correct: isCorrect,
+          };
+        });
 
         console.log('Sample answer to save:', answersToSave[0]);
 
@@ -281,8 +310,23 @@ export default function TestPage() {
   const calculateScore = () => {
     let correct = 0;
     questions.forEach((q) => {
-      if (answers[q.id] === q.correct_answer) {
-        correct++;
+      const userAnswer = answers[q.id];
+      const correctAnswers = q.correct_answers && q.correct_answers.length > 0 
+        ? q.correct_answers 
+        : [q.correct_answer];
+      
+      // Check if answer is correct
+      if (Array.isArray(userAnswer)) {
+        // Multiple answers - must match exactly
+        if (userAnswer.length === correctAnswers.length && 
+            userAnswer.every(a => correctAnswers.includes(a))) {
+          correct++;
+        }
+      } else {
+        // Single answer
+        if (correctAnswers.includes(userAnswer)) {
+          correct++;
+        }
       }
     });
     return {
@@ -456,7 +500,7 @@ export default function TestPage() {
 
       {/* Question */}
       <div className="container mx-auto px-4 py-8">
-        <Card className="max-w-3xl mx-auto border-primary/20 bg-card/95 backdrop-blur-xl shadow-xl shadow-primary/5">
+        <Card className={`${question.image_url ? 'max-w-6xl' : 'max-w-3xl'} mx-auto border-primary/20 bg-card/95 backdrop-blur-xl shadow-xl shadow-primary/5`}>
           <CardHeader>
             <div className="text-sm text-primary font-medium mb-3">
               {categoryInfo.name} - {
@@ -468,23 +512,59 @@ export default function TestPage() {
             <CardTitle className="text-2xl md:text-3xl">{question.question_text}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {question.image_url && (
-              <div className="w-full max-w-md mx-auto mb-6">
-                <img
-                  src={question.image_url}
-                  alt="Question illustration"
-                  className="w-full h-auto rounded-lg border border-border"
-                />
+            {/* Side-by-side layout when image exists */}
+            <div className={question.image_url ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : ""}>
+              {/* Image Section */}
+              {question.image_url && (
+                <div className="flex flex-col">
+                  <div className="relative rounded-xl overflow-hidden border-2 border-border shadow-lg">
+                    <img
+                      src={question.image_url}
+                      alt="Question illustration"
+                      className="w-full h-auto object-contain bg-muted/30"
+                      style={{ maxHeight: '400px' }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center mt-2">Question Image</p>
+                </div>
+              )}
+
+              {/* Options Section - Always use checkboxes for multiple selection */}
+              <div className="flex flex-col justify-center">
+                <div className="space-y-3">
+                  {options.map((option) => {
+                    const isSelected = Array.isArray(currentAnswer) 
+                      ? currentAnswer.includes(option.id)
+                      : currentAnswer === option.id;
+                    return (
+                      <div
+                        key={option.id}
+                        className={`flex items-center space-x-3 p-4 rounded-lg border transition-colors cursor-pointer ${
+                          isSelected
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                        onClick={() => handleAnswer(option.id)}
+                      >
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                          isSelected
+                            ? 'border-primary bg-primary'
+                            : 'border-border'
+                        }`}>
+                          {isSelected && (
+                            <CheckSquare className="w-4 h-4 text-primary-foreground" />
+                          )}
+                        </div>
+                        <Label className="cursor-pointer flex-1 font-medium">
+                          <span className="font-semibold mr-2">{option.id}.</span>
+                          {option.text}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            )}
-            <RadioGroup value={currentAnswer} onValueChange={handleAnswer}>
-              {options.map((option) => (
-                <RadioGroupItem key={option.id} value={option.id}>
-                  <span className="font-medium mr-2">{option.id}.</span>
-                  {option.text}
-                </RadioGroupItem>
-              ))}
-            </RadioGroup>
+            </div>
 
             <div className="flex gap-3">
               <Button
@@ -517,25 +597,70 @@ export default function TestPage() {
               )}
             </div>
 
-            {/* Question Navigator */}
-            <div className="border-t pt-4">
-              <p className="text-sm text-muted-foreground mb-3">Quick Navigation</p>
-              <div className="grid grid-cols-10 gap-2">
-                {questions.map((q, idx) => (
-                  <button
-                    key={q.id}
-                    onClick={() => setCurrentQuestion(idx)}
-                    className={`aspect-square rounded-md text-sm font-medium transition-colors ${
-                      idx === currentQuestion
-                        ? 'bg-primary text-primary-foreground'
-                        : answers[q.id]
-                        ? 'bg-primary/20 text-primary'
-                        : 'bg-secondary hover:bg-secondary/80'
-                    }`}
-                  >
-                    {idx + 1}
-                  </button>
-                ))}
+            {/* Question Navigator - Smart Pagination */}
+            <div className="border-t pt-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-muted-foreground">Question {currentQuestion + 1} of {totalQuestions}</p>
+                <div className="flex items-center gap-1">
+                  <span className={`w-2 h-2 rounded-full ${answers[question.id] ? 'bg-primary' : 'bg-secondary'}`} />
+                  <span className="text-xs text-muted-foreground">
+                    {Object.keys(answers).length}/{totalQuestions} answered
+                  </span>
+                </div>
+              </div>
+              
+              {/* Compact scrollable navigation */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 5))}
+                  disabled={currentQuestion === 0}
+                  className="p-1 rounded hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ArrowLeft className="w-3 h-3" />
+                </button>
+                
+                <div className="flex-1 overflow-x-auto scrollbar-hide">
+                  <div className="flex gap-1">
+                    {questions.map((q, idx) => {
+                      // Show current question and 4 on each side
+                      const distance = Math.abs(idx - currentQuestion);
+                      if (distance > 4 && idx !== 0 && idx !== totalQuestions - 1) return null;
+                      
+                      // Show ellipsis
+                      if (distance === 5) {
+                        return (
+                          <span key={`ellipsis-${idx}`} className="px-1 text-xs text-muted-foreground">
+                            ...
+                          </span>
+                        );
+                      }
+                      
+                      return (
+                        <button
+                          key={q.id}
+                          onClick={() => setCurrentQuestion(idx)}
+                          className={`min-w-[28px] h-7 px-2 rounded text-xs font-medium transition-colors whitespace-nowrap ${
+                            idx === currentQuestion
+                              ? 'bg-primary text-primary-foreground'
+                              : answers[q.id]
+                              ? 'bg-primary/20 text-primary'
+                              : 'bg-secondary hover:bg-secondary/80'
+                          }`}
+                        >
+                          {idx + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                <button
+                  onClick={() => setCurrentQuestion(Math.min(totalQuestions - 1, currentQuestion + 5))}
+                  disabled={currentQuestion === totalQuestions - 1}
+                  className="p-1 rounded hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ArrowRight className="w-3 h-3" />
+                </button>
               </div>
             </div>
           </CardContent>

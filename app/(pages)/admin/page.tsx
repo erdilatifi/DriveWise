@@ -36,7 +36,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-28">
       <Navbar />
 
       <motion.div
@@ -112,14 +112,6 @@ export default function AdminPage() {
             </GlassCard>
           </motion.div>
         </div>
-
-        {/* Recent Activity */}
-        <GlassCard className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
-          <p className="text-sm text-muted-foreground">
-            No recent activity to display.
-          </p>
-        </GlassCard>
       </motion.div>
     </div>
   );

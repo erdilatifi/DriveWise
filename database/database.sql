@@ -26,7 +26,7 @@ ALTER TABLE IF EXISTS study_materials DISABLE ROW LEVEL SECURITY;
 DO $$ 
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'license_category') THEN
-        CREATE TYPE license_category AS ENUM ('A', 'B', 'C1', 'C', 'CE', 'D');
+        CREATE TYPE license_category AS ENUM ('A', 'B', 'C', 'D');
     END IF;
 END $$;
 
@@ -81,7 +81,7 @@ ON CONFLICT (id) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS admin_questions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  category VARCHAR(10) NOT NULL CHECK (category IN ('A', 'B', 'C', 'C1', 'CE', 'D')),
+  category VARCHAR(10) NOT NULL CHECK (category IN ('A', 'B', 'C', 'D')),
   test_number INTEGER NOT NULL CHECK (test_number BETWEEN 1 AND 10),
   question_text TEXT NOT NULL,
   option_a TEXT NOT NULL,
@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS test_attempt_answers (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   test_attempt_id UUID REFERENCES test_attempts(id) ON DELETE CASCADE,
   question_id UUID REFERENCES admin_questions(id),
-  selected_answer VARCHAR(1),
+  selected_answer VARCHAR(10), -- Supports multiple answers like "A,B,C"
   is_correct BOOLEAN NOT NULL,
   answered_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

@@ -1,74 +1,45 @@
+"use client"
+
 import * as React from "react"
+import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
+import { CircleIcon } from "lucide-react"
+
 import { cn } from "@/lib/utils"
 
-interface RadioGroupProps extends React.HTMLAttributes<HTMLDivElement> {
-  value?: string;
-  onValueChange?: (value: string) => void;
+function RadioGroup({
+  className,
+  ...props
+}: React.ComponentProps<typeof RadioGroupPrimitive.Root>) {
+  return (
+    <RadioGroupPrimitive.Root
+      data-slot="radio-group"
+      className={cn("grid gap-3", className)}
+      {...props}
+    />
+  )
 }
 
-const RadioGroup = React.forwardRef<HTMLDivElement, RadioGroupProps>(
-  ({ className, value, onValueChange, children, ...props }, ref) => {
-    return (
-      <div
-        ref={ref}
-        className={cn("grid gap-2", className)}
-        role="radiogroup"
-        {...props}
+function RadioGroupItem({
+  className,
+  ...props
+}: React.ComponentProps<typeof RadioGroupPrimitive.Item>) {
+  return (
+    <RadioGroupPrimitive.Item
+      data-slot="radio-group-item"
+      className={cn(
+        "border-input text-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 aspect-square size-4 shrink-0 rounded-full border shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      )}
+      {...props}
+    >
+      <RadioGroupPrimitive.Indicator
+        data-slot="radio-group-indicator"
+        className="relative flex items-center justify-center"
       >
-        {React.Children.map(children, (child) => {
-          if (React.isValidElement<RadioGroupItemProps>(child)) {
-            return React.cloneElement(child, {
-              checked: child.props.value === value,
-              onClick: () => onValueChange?.(child.props.value),
-            });
-          }
-          return child;
-        })}
-      </div>
-    );
-  }
-);
-RadioGroup.displayName = "RadioGroup";
-
-interface RadioGroupItemProps extends React.HTMLAttributes<HTMLDivElement> {
-  value: string;
-  checked?: boolean;
+        <CircleIcon className="fill-primary absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2" />
+      </RadioGroupPrimitive.Indicator>
+    </RadioGroupPrimitive.Item>
+  )
 }
 
-const RadioGroupItem = React.forwardRef<HTMLDivElement, RadioGroupItemProps>(
-  ({ className, value, checked, children, ...props }, ref) => {
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "flex items-center space-x-3 space-y-0 rounded-lg border p-4 cursor-pointer transition-colors",
-          checked
-            ? "border-primary bg-primary/5"
-            : "border-border hover:bg-accent",
-          className
-        )}
-        role="radio"
-        aria-checked={checked}
-        tabIndex={0}
-        {...props}
-      >
-        <div
-          className={cn(
-            "aspect-square h-4 w-4 rounded-full border border-primary ring-offset-background",
-            checked && "bg-primary"
-          )}
-        >
-          {checked && (
-            <div className="flex items-center justify-center">
-              <div className="h-2 w-2 rounded-full bg-primary-foreground" />
-            </div>
-          )}
-        </div>
-        <div className="flex-1">{children}</div>
-      </div>
-    );
-  }
-);
-RadioGroupItem.displayName = "RadioGroupItem";
-
-export { RadioGroup, RadioGroupItem };
+export { RadioGroup, RadioGroupItem }

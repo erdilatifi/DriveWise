@@ -10,7 +10,7 @@ export function GlassCard({ children, className, hover = false, ...props }: Glas
   return (
     <div
       className={cn(
-        "rounded-xl bg-white/5 backdrop-blur-xl border border-white/10",
+        "rounded-xl bg-card/50 backdrop-blur-xl border border-border",
         "shadow-[0_8px_24px_rgba(0,0,0,0.35)]",
         hover && "transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_32px_rgba(0,0,0,0.45)]",
         className

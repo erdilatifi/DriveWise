@@ -71,18 +71,68 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.question_text || !formData.option_a || !formData.option_b || !formData.option_c) {
-      toast.error('Please fill in all required fields');
+    // Comprehensive validation
+    const errors: string[] = [];
+    
+    if (!formData.question_text?.trim()) {
+      errors.push('Question text is required');
+    }
+    if (!formData.option_a?.trim()) {
+      errors.push('Option A is required');
+    }
+    if (!formData.option_b?.trim()) {
+      errors.push('Option B is required');
+    }
+    if (!formData.option_c?.trim()) {
+      errors.push('Option C is required');
+    }
+    if (!formData.correct_answer) {
+      errors.push('Please select the correct answer');
+    }
+    if (!['A', 'B', 'C'].includes(formData.correct_answer)) {
+      errors.push('Correct answer must be A, B, or C');
+    }
+    if (!formData.category) {
+      errors.push('Category is required');
+    }
+    if (!formData.test_number || formData.test_number < 1 || formData.test_number > 10) {
+      errors.push('Test number must be between 1 and 10');
+    }
+
+    if (errors.length > 0) {
+      toast.error(errors[0]);
+      console.error('Validation errors:', errors);
       return;
     }
 
+    // Log what we're updating
+    console.log('Updating question:', {
+      id,
+      category: formData.category,
+      test_number: formData.test_number,
+      correct_answer: formData.correct_answer,
+    });
+
     try {
-      await updateQuestion.mutateAsync({ id, ...formData });
-      toast.success('Question updated successfully');
-      router.push('/admin/questions');
-    } catch (error) {
-      toast.error('Failed to update question');
-      console.error(error);
+      const result = await updateQuestion.mutateAsync({ id, ...formData });
+      console.log('Question updated successfully:', result);
+      toast.success('Question updated successfully!');
+      
+      // Small delay to show success message
+      setTimeout(() => {
+        router.push('/admin/questions');
+      }, 500);
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Unknown error occurred';
+      toast.error(`Failed to update question: ${errorMessage}`);
+      console.error('Error updating question:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+        formData: formData,
+        fullError: error,
+      });
     }
   };
 
@@ -102,7 +152,7 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-28">
       <Navbar />
 
       <motion.div
@@ -149,8 +199,6 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
                     <SelectItem value="A">Category A</SelectItem>
                     <SelectItem value="B">Category B</SelectItem>
                     <SelectItem value="C">Category C</SelectItem>
-                    <SelectItem value="C1">Category C1</SelectItem>
-                    <SelectItem value="CE">Category CE</SelectItem>
                     <SelectItem value="D">Category D</SelectItem>
                   </SelectContent>
                 </Select>
@@ -222,26 +270,39 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
             </div>
 
             {/* Correct Answer */}
-            <div className="space-y-2">
-              <Label>Correct Answer *</Label>
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Correct Answer *</Label>
+              <p className="text-sm text-muted-foreground">Select which option is the correct answer</p>
               <RadioGroup
                 value={formData.correct_answer}
-                onValueChange={(value) => setFormData({ ...formData, correct_answer: value as 'A' | 'B' | 'C' })}
-                className="flex gap-4"
+                onValueChange={(value) => {
+                  console.log('Selected correct answer:', value);
+                  setFormData({ ...formData, correct_answer: value as 'A' | 'B' | 'C' });
+                }}
+                className="flex flex-col gap-3"
               >
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/50 transition-colors">
                   <RadioGroupItem value="A" id="correct_a" />
-                  <Label htmlFor="correct_a" className="cursor-pointer">Option A</Label>
+                  <Label htmlFor="correct_a" className="cursor-pointer flex-1 font-medium">
+                    Option A {formData.correct_answer === 'A' && <span className="text-primary ml-2">✓ Selected</span>}
+                  </Label>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/50 transition-colors">
                   <RadioGroupItem value="B" id="correct_b" />
-                  <Label htmlFor="correct_b" className="cursor-pointer">Option B</Label>
+                  <Label htmlFor="correct_b" className="cursor-pointer flex-1 font-medium">
+                    Option B {formData.correct_answer === 'B' && <span className="text-primary ml-2">✓ Selected</span>}
+                  </Label>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/50 transition-colors">
                   <RadioGroupItem value="C" id="correct_c" />
-                  <Label htmlFor="correct_c" className="cursor-pointer">Option C</Label>
+                  <Label htmlFor="correct_c" className="cursor-pointer flex-1 font-medium">
+                    Option C {formData.correct_answer === 'C' && <span className="text-primary ml-2">✓ Selected</span>}
+                  </Label>
                 </div>
               </RadioGroup>
+              <p className="text-xs text-muted-foreground">
+                Currently selected: <span className="font-semibold text-primary">Option {formData.correct_answer}</span>
+              </p>
             </div>
 
             {/* Image URL (Optional) */}

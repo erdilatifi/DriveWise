@@ -30,7 +30,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
   const mockTests = Array.from({ length: 10 }, (_, i) => i + 1);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-28">
       <Navbar />
 
       {/* Category Header */}
@@ -62,35 +62,51 @@ export default function CategoryPage({ params }: CategoryPageProps) {
         </div>
       </section>
 
-      {/* Mock Tests Grid */}
+      {/* Mock Tests Grid - Premium Design */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">{t('category.selectTest')}</h2>
           <p className="text-muted-foreground">{t('category.selectTestDesc')}</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-7xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
           {mockTests.map((testNumber) => (
-            <Card 
+            <Link 
               key={testNumber}
-              className="group hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 bg-card/50 backdrop-blur"
+              href={`/test/${category.toLowerCase()}/${testNumber}`}
+              className="group"
             >
-              <CardHeader className="pb-3">
-                <CardTitle className="text-center text-4xl font-bold text-primary group-hover:scale-110 transition-transform">
-                  {testNumber}
-                </CardTitle>
-                <CardDescription className="text-center text-xs">
-                  10 {t('category.questions')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full shadow-lg shadow-primary/20" size="sm" asChild>
-                  <Link href={`/test/${category.toLowerCase()}/${testNumber}`}>
-                    <Play className="w-3 h-3 mr-1" />
-                    {t('category.start')}
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+              <div className="relative h-full">
+                {/* Glow effect on hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <Card className="relative h-full border-2 border-border hover:border-primary/50 transition-all duration-300 hover:scale-105 bg-card/80 backdrop-blur-xl overflow-hidden">
+                  {/* Animated gradient background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  
+                  <CardContent className="relative flex flex-col items-center justify-center p-8 space-y-4">
+                    {/* Test number with circle */}
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/30 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                      <span className="text-3xl font-bold text-primary">{testNumber}</span>
+                    </div>
+                    
+                    {/* Test info */}
+                    <div className="text-center space-y-1">
+                      <p className="text-sm font-semibold">Test {testNumber}</p>
+                      <p className="text-xs text-muted-foreground">10 {t('category.questions')}</p>
+                    </div>
+                    
+                    {/* Start button */}
+                    <Button 
+                      size="sm" 
+                      className="w-full shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-shadow"
+                    >
+                      <Play className="w-3 h-3 mr-1" />
+                      {t('category.start')}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </Link>
           ))}
         </div>
 
