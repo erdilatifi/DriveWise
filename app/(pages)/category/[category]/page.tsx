@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
@@ -9,6 +9,7 @@ import { Play, Clock, CheckCircle, Target, Shuffle, Brain } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { useLanguage } from '@/contexts/language-context';
+import { createClient } from '@/utils/supabase/client';
 
 interface CategoryPageProps {
   params: Promise<{
@@ -20,21 +21,48 @@ export default function CategoryPage({ params }: CategoryPageProps) {
   const { t } = useLanguage();
   const { category: categoryParam } = use(params);
   const category = categoryParam.toUpperCase() as LicenseCategory;
+  const supabase = createClient();
+  const [testCount, setTestCount] = useState(10); // Default to 10
+  const [loading, setLoading] = useState(true);
   
   // Validate category
   if (!CATEGORY_INFO[category]) {
     notFound();
   }
 
+  useEffect(() => {
+    const fetchTestCount = async () => {
+      try {
+        // Get distinct test numbers for this category
+        const { data, error } = await supabase
+          .from('admin_questions')
+          .select('test_number')
+          .eq('category', category);
+
+        if (!error && data) {
+          // Get unique test numbers
+          const uniqueTests = [...new Set(data.map(q => q.test_number))];
+          setTestCount(uniqueTests.length || 10);
+        }
+      } catch (error) {
+        console.error('Error fetching test count:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTestCount();
+  }, [category, supabase]);
+
   const categoryInfo = CATEGORY_INFO[category];
-  const mockTests = Array.from({ length: 10 }, (_, i) => i + 1);
+  const mockTests = Array.from({ length: testCount }, (_, i) => i + 1);
 
   return (
-    <div className="min-h-screen bg-background pt-28">
+    <div className="min-h-screen bg-background">
       <Navbar />
 
       {/* Category Header */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden pt-28">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background"></div>
         <div className="container relative mx-auto px-4 py-16">
           <div className="max-w-4xl mx-auto text-center">
@@ -51,7 +79,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
             <div className="flex flex-wrap justify-center gap-4">
               <div className="flex items-center gap-2 bg-card/50 backdrop-blur border border-border/50 px-6 py-3 rounded-xl">
                 <CheckCircle className="w-5 h-5 text-primary" />
-                <span className="font-medium">10 {t('category.mockTests')}</span>
+                <span className="font-medium">{loading ? '...' : testCount} {t('category.mockTests')}</span>
               </div>
               <div className="flex items-center gap-2 bg-card/50 backdrop-blur border border-border/50 px-6 py-3 rounded-xl">
                 <Clock className="w-5 h-5 text-primary" />
@@ -66,7 +94,9 @@ export default function CategoryPage({ params }: CategoryPageProps) {
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">{t('category.selectTest')}</h2>
-          <p className="text-muted-foreground">{t('category.selectTestDesc')}</p>
+          <p className="text-muted-foreground">
+            {loading ? 'Loading tests...' : `Choose from ${testCount} comprehensive mock tests`}
+          </p>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
           {mockTests.map((testNumber) => (

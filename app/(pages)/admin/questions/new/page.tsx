@@ -246,14 +246,14 @@ export default function NewQuestionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-28">
+    <div className="min-h-screen bg-background">
       <Navbar />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="container mx-auto px-6 py-8 max-w-4xl"
+        className="container mx-auto px-6 py-8 max-w-4xl pt-28"
       >
         {/* Header */}
         <div className="mb-8">

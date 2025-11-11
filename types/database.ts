@@ -61,6 +61,7 @@ export interface UserProfile {
   is_admin: boolean;
   is_instructor: boolean;
   instructor_code?: string;
+  app_rating?: number; // 1-5 stars, optional
   created_at: string;
   updated_at: string;
 }

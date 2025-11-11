@@ -39,7 +39,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background relative pt-28 overflow-x-hidden">
+    <div className="min-h-screen bg-background relative overflow-x-hidden">
       {/* Soft grid background (unchanged) */}
       <div
         aria-hidden
@@ -62,7 +62,7 @@ export default function HomePage() {
       <Navbar />
 
       {/* Hero (unchanged) */}
-      <motion.section {...subtleRise} className="relative overflow-hidden">
+      <motion.section {...subtleRise} className="relative overflow-hidden pt-28">
         <div className="container relative mx-auto px-6 py-24 md:py-32 max-w-7xl">
           <div className="max-w-4xl mx-auto text-center space-y-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">

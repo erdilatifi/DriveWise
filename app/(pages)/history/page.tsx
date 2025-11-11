@@ -151,9 +151,9 @@ export default function HistoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pt-28">
+      <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-6 py-8 max-w-7xl flex items-center justify-center">
+        <div className="container mx-auto px-6 py-8 max-w-7xl flex items-center justify-center pt-28">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
       </div>
@@ -161,14 +161,14 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-28">
+    <div className="min-h-screen bg-background">
       <Navbar />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="container mx-auto px-6 py-8 max-w-7xl"
+        className="container mx-auto px-6 py-8 max-w-7xl pt-28"
       >
         {/* Header */}
         <div className="mb-8">

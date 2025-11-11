@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowRight, CheckCircle, CheckSquare } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import { RatingModal } from '@/components/rating-modal';
 
 interface Question {
   id: string;
@@ -36,6 +37,8 @@ export default function TestPage() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [startTime] = useState(Date.now());
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [isFirstTest, setIsFirstTest] = useState(false);
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -250,6 +253,24 @@ export default function TestPage() {
         return;
       }
 
+      // Check if this is the user's first test
+      const { count: testCount } = await supabase
+        .from('test_attempts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      // Check if user has already rated the app
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('app_rating')
+        .eq('id', userId)
+        .single();
+
+      // Show rating modal if this is first test and user hasn't rated yet
+      if (testCount === 1 && !userProfile?.app_rating) {
+        setIsFirstTest(true);
+      }
+
       // Save individual answers
       if (testAttempt) {
         console.log('Test attempt saved successfully:', testAttempt.id);
@@ -301,6 +322,13 @@ export default function TestPage() {
       }
 
       setShowResults(true);
+      
+      // Show rating modal after a short delay if it's the first test
+      if (testCount === 1 && !userProfile?.app_rating) {
+        setTimeout(() => {
+          setShowRatingModal(true);
+        }, 1500);
+      }
     } catch (error) {
       console.error('Error submitting test:', error);
       setShowResults(true);
@@ -460,6 +488,15 @@ export default function TestPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Rating Modal */}
+        {userId && (
+          <RatingModal
+            open={showRatingModal}
+            onClose={() => setShowRatingModal(false)}
+            userId={userId}
+          />
+        )}
       </div>
     );
   }

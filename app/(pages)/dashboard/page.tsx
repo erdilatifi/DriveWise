@@ -249,9 +249,10 @@ export default function DashboardPage() {
   const hasData = stats.totalTests > 0;
 
   return (
-    <div className="min-h-screen bg-background pt-28">
+    <div className="min-h-screen bg-background">
       <Navbar />
 
+      <motion.div className="pt-28">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -434,6 +435,7 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
+      </motion.div>
       </motion.div>
     </div>
   );

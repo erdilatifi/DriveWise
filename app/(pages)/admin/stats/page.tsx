@@ -8,7 +8,7 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
-import { Users, FileText, CheckCircle, XCircle, TrendingUp, BarChart3, ArrowLeft, Search, Trash2, Ban, AlertTriangle } from 'lucide-react';
+import { Users, FileText, CheckCircle, XCircle, TrendingUp, BarChart3, ArrowLeft, Search, Trash2, Ban, AlertTriangle, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/utils/supabase/client';
@@ -40,6 +40,7 @@ export default function StatsPage() {
     is_blocked: boolean;
     is_admin?: boolean;
     test_attempts_count: number;
+    app_rating?: number;
   }
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -135,7 +136,7 @@ export default function StatsPage() {
       // Exclude admin user from the list
       let dataQuery = supabase
         .from('user_profiles')
-        .select('id, email, full_name, created_at, is_blocked')
+        .select('id, email, full_name, created_at, is_blocked, app_rating')
         .neq('id', ADMIN_USER_ID)
         .order('created_at', { ascending: false })
         .range(from, to);
@@ -264,14 +265,14 @@ export default function StatsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-28">
+    <div className="min-h-screen bg-background">
       <Navbar />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="container mx-auto px-6 py-8 max-w-7xl"
+        className="container mx-auto px-6 py-8 max-w-7xl pt-28"
       >
         {/* Back Button */}
         <Button variant="ghost" asChild className="mb-4">
@@ -411,11 +412,30 @@ export default function StatsPage() {
                         </div>
                         <div>
                           <p className="font-medium">{userData.email}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {userData.full_name || 'No name set'} • {userData.test_attempts_count || 0} tests taken
-                            {userData.is_blocked && <span className="ml-2 text-red-500">• Blocked</span>}
-                            {userData.is_admin && <span className="ml-2 text-yellow-500">• Admin</span>}
-                          </p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm text-muted-foreground">
+                              {userData.full_name || 'No name set'} • {userData.test_attempts_count || 0} tests taken
+                              {userData.is_blocked && <span className="ml-2 text-red-500">• Blocked</span>}
+                              {userData.is_admin && <span className="ml-2 text-yellow-500">• Admin</span>}
+                            </p>
+                            {userData.app_rating && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-muted-foreground">•</span>
+                                <div className="flex items-center gap-0.5">
+                                  {Array.from({ length: 5 }, (_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`w-3 h-3 ${
+                                        i < userData.app_rating!
+                                          ? 'fill-yellow-400 text-yellow-400'
+                                          : 'text-muted-foreground/30'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

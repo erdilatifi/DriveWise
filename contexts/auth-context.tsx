@@ -122,7 +122,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Provide user-friendly error messages
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Account does not exist or password is incorrect. Please check your credentials or sign up.');
+        } else if (error.message.includes('Email not confirmed')) {
+          throw new Error('Please confirm your email address before logging in.');
+        } else {
+          throw error;
+        }
+      }
 
       // Check if user is blocked
       if (data.user) {
@@ -143,6 +152,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
+      // First check if user already exists
+      const { data: existingUser } = await supabase
+        .from('user_profiles')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (existingUser) {
+        throw new Error('An account with this email already exists. Please log in instead.');
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -153,7 +173,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Provide user-friendly error messages
+        if (error.message.includes('User already registered')) {
+          throw new Error('An account with this email already exists. Please log in instead.');
+        } else if (error.message.includes('Password should be at least')) {
+          throw new Error('Password must be at least 6 characters long.');
+        } else {
+          throw error;
+        }
+      }
 
       return { error: null };
     } catch (err: any) {
