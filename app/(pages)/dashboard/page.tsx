@@ -23,6 +23,7 @@ import {
 export default function DashboardPage() {
   const { t } = useLanguage();
   const [user, setUser] = useState<any>(null);
+  const [userFullName, setUserFullName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalTests: 0,
@@ -99,6 +100,17 @@ export default function DashboardPage() {
       }
       setUser(user);
 
+      // Fetch user's full name from profile
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+      
+      if (profile?.full_name) {
+        setUserFullName(profile.full_name);
+      }
+
       // Ensure user profile exists
       const { data: existingProfile } = await supabase
         .from('user_profiles')
@@ -163,22 +175,25 @@ export default function DashboardPage() {
         ).length;
 
         // Calculate streak (consecutive days with tests)
-        const testDates = attempts.map(test => 
-          new Date(test.completed_at).toDateString()
-        );
-        const uniqueDates = [...new Set(testDates)].sort((a, b) => 
-          new Date(b).getTime() - new Date(a).getTime()
-        );
+        // Get unique dates when tests were taken (normalized to start of day)
+        const testDates = attempts.map(test => {
+          const date = new Date(test.completed_at);
+          return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+        });
+        const uniqueDateTimes = [...new Set(testDates)].sort((a, b) => b - a);
         
         let streak = 0;
-        const today = new Date().toDateString();
-        if (uniqueDates[0] === today || uniqueDates[0] === new Date(Date.now() - 86400000).toDateString()) {
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const yesterdayStart = todayStart - 86400000;
+        
+        // Only count streak if user tested today or yesterday
+        if (uniqueDateTimes.length > 0 && (uniqueDateTimes[0] === todayStart || uniqueDateTimes[0] === yesterdayStart)) {
           streak = 1;
-          for (let i = 1; i < uniqueDates.length; i++) {
-            const prevDate = new Date(uniqueDates[i - 1]);
-            const currDate = new Date(uniqueDates[i]);
-            const diffDays = Math.floor((prevDate.getTime() - currDate.getTime()) / 86400000);
-            if (diffDays === 1) {
+          // Check for consecutive days
+          for (let i = 1; i < uniqueDateTimes.length; i++) {
+            const expectedPrevDay = uniqueDateTimes[i - 1] - 86400000;
+            if (uniqueDateTimes[i] === expectedPrevDay) {
               streak++;
             } else {
               break;
@@ -262,7 +277,7 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="mb-12 space-y-3">
           <h1 className="text-3xl font-bold">
-            {t('dashboard.welcome')}, <span className="text-primary">{user?.email?.split('@')[0]}</span>
+            {t('dashboard.welcome')}, <span className="text-primary">{userFullName || user?.email?.split('@')[0]}</span>
           </h1>
           <p className="text-sm text-muted-foreground">{t('dashboard.subtitle')}</p>
         </div>

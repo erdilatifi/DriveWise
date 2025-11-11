@@ -202,33 +202,32 @@ export default function QuestionsPage() {
         </GlassCard>
 
         {/* Questions by Category */}
-        <div className="space-y-8">
-          {categories.map((category) => (
-            <motion.div
-              key={category}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <GlassCard className="p-6">
-                {/* Category Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                      <span className="text-xl font-bold text-primary">{category}</span>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold">Category {category}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {questionsByCategory[category].length} question{questionsByCategory[category].length !== 1 ? 's' : ''}
-                      </p>
-                    </div>
+        {questionsByCategory && categories.map((category) => (
+          <motion.div
+            key={category}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <GlassCard className="p-6">
+              {/* Category Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                    <span className="text-xl font-bold text-primary">{category}</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">Category {category}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {questionsByCategory?.[category]?.length || 0} question{questionsByCategory?.[category]?.length !== 1 ? 's' : ''}
+                    </p>
                   </div>
                 </div>
+              </div>
 
-                {/* Questions Grid */}
-                <div className="grid grid-cols-1 gap-4">
-                  {questionsByCategory[category].map((question) => (
+              {/* Questions Grid */}
+              <div className="grid grid-cols-1 gap-4">
+                {questionsByCategory?.[category]?.map((question) => (
                     <div
                       key={question.id}
                       className="p-4 rounded-xl border border-border bg-card/50 hover:border-primary/30 transition-colors"
@@ -284,18 +283,17 @@ export default function QuestionsPage() {
             </motion.div>
           ))}
 
-          {categories.length === 0 && (
-            <GlassCard className="p-12 text-center">
-              <p className="text-muted-foreground">No questions found. Add your first question to get started.</p>
-              <Button asChild className="mt-4">
-                <Link href="/admin/questions/new">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add First Question
-                </Link>
-              </Button>
-            </GlassCard>
-          )}
-        </div>
+        {categories.length === 0 && (
+          <GlassCard className="p-12 text-center">
+            <p className="text-muted-foreground">No questions found. Add your first question to get started.</p>
+            <Button asChild className="mt-4">
+              <Link href="/admin/questions/new">
+                <Plus className="w-4 h-4 mr-2" />
+                Add First Question
+              </Link>
+            </Button>
+          </GlassCard>
+        )}
 
         {/* Pagination */}
         {totalPages > 1 && (
