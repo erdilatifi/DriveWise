@@ -1,0 +1,52 @@
+-- ============================================================================
+-- STORAGE BUCKET SETUP - Use Supabase Dashboard UI
+-- ============================================================================
+-- 
+-- ⚠️ IMPORTANT: You cannot create storage buckets via SQL due to permissions.
+-- Follow these steps in the Supabase Dashboard instead:
+--
+-- 1. Go to: Storage → Create a new bucket
+-- 2. Bucket name: decision-trainer
+-- 3. Public bucket: YES (checked)
+-- 4. File size limit: 5242880 (5MB)
+-- 5. Allowed MIME types: image/jpeg, image/jpg, image/png, image/gif, image/webp
+-- 6. Click "Create bucket"
+--
+-- 7. After creating, click on the bucket → Policies → New Policy
+-- 8. Create these policies:
+--
+--    Policy 1: "Public Access"
+--    - Allowed operation: SELECT
+--    - Policy definition: true
+--
+--    Policy 2: "Authenticated Upload"  
+--    - Allowed operation: INSERT
+--    - Policy definition: (auth.role() = 'authenticated')
+--
+--    Policy 3: "Admin Update"
+--    - Allowed operation: UPDATE
+--    - Policy definition: 
+--      EXISTS (
+--        SELECT 1 FROM user_profiles 
+--        WHERE id = auth.uid() AND is_admin = true
+--      )
+--
+--    Policy 4: "Admin Delete"
+--    - Allowed operation: DELETE
+--    - Policy definition:
+--      EXISTS (
+--        SELECT 1 FROM user_profiles 
+--        WHERE id = auth.uid() AND is_admin = true
+--      )
+--
+-- ============================================================================
+-- OR use this simpler approach - just make it public:
+-- ============================================================================
+--
+-- 1. Go to: Storage → Create a new bucket
+-- 2. Name: decision-trainer
+-- 3. Public: YES
+-- 4. Click "Create"
+-- 5. Done! (Public buckets allow read by default)
+--
+-- ============================================================================

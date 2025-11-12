@@ -157,6 +157,30 @@ export const CATEGORY_INFO: Record<LicenseCategory, { name: string; description:
   D: { name: 'Category D', description: 'Buses' },
 };
 
+// Hazard Rush Game
+export interface HazardRushRun {
+  id: string;
+  user_id: string;
+  score: number;
+  hazards_cleared: number;
+  hazards_failed: number;
+  average_reaction_time: number;
+  seed: string;
+  signature: string;
+  created_at: string;
+}
+
+export interface HazardRushLeaderboardEntry {
+  rank: number;
+  user_id: string;
+  user_name: string;
+  score: number;
+  hazards_cleared: number;
+  hazards_failed: number;
+  accuracy: number;
+  created_at: string;
+}
+
 // Language metadata
 export const LANGUAGE_INFO: Record<LanguageCode, { name: string; nativeName: string }> = {
   sq: { name: 'Albanian', nativeName: 'Shqip' },

@@ -117,6 +117,19 @@ export function Navbar() {
                 <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
               )}
             </Link>
+            {user && (
+              <Link
+                href="/decision-trainer"
+                className={`text-sm font-semibold transition-all duration-200 relative group/link ${
+                  pathname.startsWith('/decision-trainer') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
+                }`}
+              >
+                📚 Decision Trainer
+                {pathname.startsWith('/decision-trainer') && (
+                  <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
+                )}
+              </Link>
+            )}
             {user && isAdmin && (
               <Link
                 href="/admin"
@@ -235,6 +248,17 @@ export function Navbar() {
               >
                 Dashboard
               </Link>
+              {user && (
+                <Link
+                  href="/decision-trainer"
+                  className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                    pathname.startsWith('/decision-trainer') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  📚 Decision Trainer
+                </Link>
+              )}
               {user && isAdmin && (
                 <Link
                   href="/admin"

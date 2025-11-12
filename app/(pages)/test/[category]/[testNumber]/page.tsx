@@ -11,6 +11,8 @@ import { ArrowLeft, ArrowRight, CheckCircle, CheckSquare } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { RatingModal } from '@/components/rating-modal';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 interface Question {
   id: string;
@@ -27,6 +29,7 @@ export default function TestPage() {
   const params = useParams();
   const router = useRouter();
   const supabase = createClient();
+  const queryClient = useQueryClient();
   const category = (params.category as string).toUpperCase() as LicenseCategory;
   const testNumber = params.testNumber as string;
 
@@ -210,31 +213,60 @@ export default function TestPage() {
       const timeElapsed = Math.floor((Date.now() - startTime) / 1000);
 
       // Ensure user profile exists before saving test
-      const { data: existingProfile } = await supabase
+      console.log('🔍 Checking if user profile exists for:', userId);
+      
+      const { data: existingProfile, error: profileCheckError } = await supabase
         .from('user_profiles')
         .select('id')
         .eq('id', userId)
         .maybeSingle();
 
+      if (profileCheckError) {
+        console.error('Error checking profile:', profileCheckError);
+      }
+
       if (!existingProfile) {
+        console.log('👤 User profile not found, creating...');
+        
         // Create profile if it doesn't exist
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          await supabase.from('user_profiles').insert({
-            id: user.id,
-            email: user.email || '',
-            full_name: user.user_metadata?.full_name || '',
-          });
+          const { data: newProfile, error: profileError } = await supabase
+            .from('user_profiles')
+            .insert({
+              id: user.id,
+              email: user.email || '',
+              full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+            })
+            .select()
+            .single();
+
+          if (profileError) {
+            console.error('❌ Failed to create user profile:', profileError);
+            toast.error('Failed to create user profile. Please try again.');
+            setShowResults(true);
+            return;
+          }
+          
+          console.log('✅ User profile created:', newProfile);
+        } else {
+          console.error('❌ No authenticated user found');
+          toast.error('Please log in again');
+          router.push('/login');
+          return;
         }
+      } else {
+        console.log('✅ User profile exists');
       }
 
-      // Save test attempt
+
+
       const { data: testAttempt, error: attemptError } = await supabase
         .from('test_attempts')
         .insert({
           user_id: userId,
           category: category,
-          test_number: testNumber, // Save test number (1-10 or 'mixed' or 'personalized')
+          test_number: testNumber,
           score: score.correct,
           total_questions: score.total,
           percentage: score.percentage,
@@ -246,12 +278,22 @@ export default function TestPage() {
 
       if (attemptError) {
         console.error('❌ ERROR SAVING TEST ATTEMPT!');
-        console.error('Error:', attemptError);
+        console.error('Full error object:', JSON.stringify(attemptError, null, 2));
+        console.error('Error message:', attemptError.message);
         console.error('Error code:', attemptError.code);
-        console.error('Make sure database.sql has been run in Supabase!');
+        console.error('Error details:', attemptError.details);
+        console.error('Error hint:', attemptError.hint);
+        toast.error('Failed to save test results: ' + attemptError.message);
         setShowResults(true);
         return;
       }
+
+      console.log('✅ Test attempt saved successfully:', testAttempt);
+
+      // Invalidate leaderboard cache to show updated results
+      queryClient.invalidateQueries({ queryKey: ['tests-leaderboard'] });
+      queryClient.invalidateQueries({ queryKey: ['user-test-stats', userId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats', userId] });
 
       // Check if this is the user's first test
       const { count: testCount } = await supabase

@@ -7,7 +7,7 @@ import { Navbar } from '@/components/navbar';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { FileText, Plus, BarChart3 } from 'lucide-react';
+import { FileText, Plus, BarChart3, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function AdminPage() {
@@ -54,7 +54,7 @@ export default function AdminPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -108,6 +108,25 @@ export default function AdminPage() {
               </p>
               <Button asChild className="w-full">
                 <Link href="/admin/stats">View Stats</Link>
+              </Button>
+            </GlassCard>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <GlassCard hover className="p-6">
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+                <BookOpen className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Decision Trainer</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Manage Decision Trainer scenarios
+              </p>
+              <Button asChild className="w-full">
+                <Link href="/admin/scenarios">Manage Scenarios</Link>
               </Button>
             </GlassCard>
           </motion.div>

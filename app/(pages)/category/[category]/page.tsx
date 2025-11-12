@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import Link from 'next/link';
-import { Play, Clock, CheckCircle, Target, Shuffle, Brain } from 'lucide-react';
+import { Play, Clock, CheckCircle, Target, Shuffle, Brain, Trophy } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { useLanguage } from '@/contexts/language-context';
@@ -85,6 +85,12 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                 <Clock className="w-5 h-5 text-primary" />
                 <span className="font-medium">~10 {t('category.minutesEach')}</span>
               </div>
+              <Button asChild variant="outline" className="gap-2">
+                <Link href="/tests/leaderboard">
+                  <Trophy className="w-4 h-4" />
+                  View Leaderboard
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
