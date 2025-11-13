@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,9 +11,6 @@ import Link from 'next/link';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
-
-// Lazy load Image for better performance
-const Image = dynamic(() => import('next/image'), { ssr: false });
 
 export default function LoginPage() {
   const { t } = useLanguage();
@@ -48,6 +45,9 @@ export default function LoginPage() {
           description: errorMessage,
         });
       }
+    } else {
+      // Success - redirect to dashboard
+      router.push('/dashboard');
     }
 
     setLoading(false);

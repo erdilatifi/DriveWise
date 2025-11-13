@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
@@ -12,6 +12,7 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isBlocked: boolean;
+  userProfile: { full_name?: string; email?: string } | null;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -24,24 +25,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isBlocked, setIsBlocked] = useState(false);
-  const supabase = createClient();
+  const [userProfile, setUserProfile] = useState<{ full_name?: string; email?: string } | null>(null);
+  const [initialized, setInitialized] = useState(false);
+  const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
 
-  const checkIfBlocked = async (userId: string) => {
-    const { data } = await supabase
-      .from('user_profiles')
-      .select('is_blocked')
-      .eq('id', userId)
-      .single();
-    
-    return data?.is_blocked || false;
-  };
+  const checkIfBlocked = useCallback(async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('is_blocked, full_name, email')
+        .eq('id', userId)
+        .single();
+      
+      if (data) {
+        setUserProfile({
+          full_name: data.full_name,
+          email: data.email
+        });
+      }
+      
+      return data?.is_blocked || false;
+    } catch (error) {
+      console.error('Error checking user status:', error);
+      return false;
+    }
+  }, [supabase]);
 
   useEffect(() => {
+    if (initialized) return;
+    
     let mounted = true;
 
     // Get initial session
-    const getUser = async () => {
+    const initializeAuth = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
@@ -57,32 +74,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (blocked) {
             await supabase.auth.signOut();
             setUser(null);
+            setUserProfile(null);
             toast.error('Account Blocked', {
               description: 'Your account has been blocked. Please contact support.',
               duration: 5000,
             });
             router.push('/');
+            setLoading(false);
+            setInitialized(true);
             return;
           }
+        } else {
+          setUserProfile(null);
         }
         
         if (mounted) {
           setUser(user);
           setLoading(false);
+          setInitialized(true);
         }
       } catch (error) {
         console.error('Error getting user:', error);
         if (mounted) {
           setLoading(false);
+          setInitialized(true);
         }
       }
     };
 
-    getUser();
+    initializeAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
+
+      // Handle sign out
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setUserProfile(null);
+        setIsBlocked(false);
+        setLoading(false);
+        return;
+      }
 
       if (session?.user) {
         const blocked = await checkIfBlocked(session.user.id);
@@ -94,13 +127,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (blocked) {
           await supabase.auth.signOut();
           setUser(null);
+          setUserProfile(null);
           toast.error('Account Blocked', {
             description: 'Your account has been blocked. Please contact support.',
             duration: 5000,
           });
           router.push('/');
+          setLoading(false);
           return;
         }
+      } else {
+        setUserProfile(null);
       }
       
       if (mounted) {
@@ -113,9 +150,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [supabase, router]);
+  }, [supabase, router, checkIfBlocked, initialized]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -142,13 +179,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      router.push('/dashboard');
-      router.refresh();
+      // Don't manually redirect - let the auth state change handle it
+      // The onAuthStateChange listener will update the UI automatically
       return { error: null };
     } catch (err: any) {
       return { error: err };
     }
-  };
+  }, [supabase, checkIfBlocked]);
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
@@ -190,22 +227,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
-    setUser(null);
+    // Auth state change listener will handle state updates
     router.push('/');
-    router.refresh();
-  };
+  }, [supabase, router]);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
-  };
+    if (user) {
+      await checkIfBlocked(user.id);
+    } else {
+      setUserProfile(null);
+    }
+  }, [supabase, checkIfBlocked]);
 
-  const isUserAdmin = isAdmin(user?.id);
+  const isUserAdmin = useMemo(() => isAdmin(user?.id), [user?.id]);
+
+  const contextValue = useMemo(() => ({
+    user,
+    loading,
+    isAdmin: isUserAdmin,
+    isBlocked,
+    userProfile,
+    signIn,
+    signUp,
+    signOut,
+    refreshUser
+  }), [user, loading, isUserAdmin, isBlocked, userProfile, signIn, signUp, signOut, refreshUser]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin: isUserAdmin, isBlocked, signIn, signUp, signOut, refreshUser }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

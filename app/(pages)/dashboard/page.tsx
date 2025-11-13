@@ -100,26 +100,27 @@ export default function DashboardPage() {
       }
       setUser(user);
 
-      // Fetch user's full name from profile
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .single();
-      
-      if (profile?.full_name) {
-        setUserFullName(profile.full_name);
+      // Parallel execution of profile operations
+      const [profileResult, existingProfileResult] = await Promise.allSettled([
+        supabase
+          .from('user_profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single(),
+        supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle()
+      ]);
+
+      // Handle profile data
+      if (profileResult.status === 'fulfilled' && profileResult.value.data?.full_name) {
+        setUserFullName(profileResult.value.data.full_name);
       }
 
-      // Ensure user profile exists
-      const { data: existingProfile } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (!existingProfile) {
-        // Create profile if it doesn't exist
+      // Create profile if it doesn't exist
+      if (existingProfileResult.status === 'fulfilled' && !existingProfileResult.value.data) {
         await supabase.from('user_profiles').insert({
           id: user.id,
           email: user.email || '',

@@ -5,6 +5,7 @@ import { QueryProvider } from "@/contexts/query-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { LanguageProvider } from "@/contexts/language-context";
 import { AuthProvider } from "@/contexts/auth-context";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,14 +32,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <LanguageProvider>
-            <QueryProvider>
-              {children}
-            </QueryProvider>
-            <Toaster />
-          </LanguageProvider>
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <LanguageProvider>
+              <QueryProvider>
+                {children}
+              </QueryProvider>
+              <Toaster />
+            </LanguageProvider>
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

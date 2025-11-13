@@ -14,32 +14,12 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [userFullName, setUserFullName] = useState<string | null>(null);
   const { language, setLanguage } = useLanguage();
-  const { user, signOut, isAdmin } = useAuth();
+  const { user, signOut, isAdmin, userProfile } = useAuth();
   const pathname = usePathname();
-  const supabase = createClient();
 
-  // Fetch user's full name
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (user) {
-        const { data } = await supabase
-          .from('user_profiles')
-          .select('full_name')
-          .eq('id', user.id)
-          .single();
-        
-        if (data?.full_name) {
-          setUserFullName(data.full_name);
-        }
-      } else {
-        setUserFullName(null);
-      }
-    };
-
-    fetchUserProfile();
-  }, [user, supabase]);
+  // Get display name from userProfile or fallback to email
+  const displayName = userProfile?.full_name || user?.email?.split('@')[0] || 'User';
 
   // Handle scroll behavior
   useEffect(() => {
@@ -188,7 +168,7 @@ export function Navbar() {
               <>
                 <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                  <span className="text-sm font-medium text-primary">{userFullName || user.email?.split('@')[0]}</span>
+                  <span className="text-sm font-medium text-primary">{displayName}</span>
                 </div>
                 <Button variant="outline" size="sm" onClick={handleLogout} className="border-border/50 hover:border-primary/50">
                   <LogOut className="w-4 h-4 mr-2" />
@@ -227,7 +207,7 @@ export function Navbar() {
               {user && (
                 <div className="flex items-center gap-3 px-4 py-3 mb-2 rounded-xl bg-primary/10 border border-primary/20">
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                  <span className="text-sm font-medium text-primary">{userFullName || user.email?.split('@')[0]}</span>
+                  <span className="text-sm font-medium text-primary">{displayName}</span>
                 </div>
               )}
               <Link
