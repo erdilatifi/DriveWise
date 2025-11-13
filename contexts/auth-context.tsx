@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
 
-  const checkIfBlocked = useCallback(async (userId: string) => {
+  const checkIfBlocked = useCallback(async (userId: string, skipProfileUpdate = false) => {
     try {
       const { data } = await supabase
         .from('user_profiles')
@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .single();
       
-      if (data) {
+      if (data && !skipProfileUpdate) {
         setUserProfile({
           full_name: data.full_name,
           email: data.email
@@ -170,9 +170,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Check if user is blocked
+      // Quick check if user is blocked (skip profile update for speed)
       if (data.user) {
-        const blocked = await checkIfBlocked(data.user.id);
+        const blocked = await checkIfBlocked(data.user.id, true);
         if (blocked) {
           await supabase.auth.signOut();
           throw new Error('Your account has been blocked. Please contact support.');

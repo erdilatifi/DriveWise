@@ -16,23 +16,48 @@ export interface LeaderboardEntry {
   categories_completed: number;
 }
 
-export function useLeaderboard() {
+export function useLeaderboard(currentUserId?: string) {
   return useQuery({
-    queryKey: ['leaderboard'],
+    queryKey: ['leaderboard', currentUserId],
     queryFn: async () => {
       const supabase = createClient();
       
-      const { data, error } = await supabase
+      // Get all leaderboard data to calculate ranks
+      const { data: allData, error } = await supabase
         .from('decision_trainer_leaderboard')
         .select('*')
-        .limit(100);
+        .order('total_xp', { ascending: false })
+        .order('best_time_seconds', { ascending: true });
 
       if (error) {
         console.error('Leaderboard error:', error);
-        return [];
+        return { topTen: [], currentUserRank: null, totalUsers: 0 };
       }
       
-      return (data || []) as LeaderboardEntry[];
+      const leaderboard = (allData || []) as LeaderboardEntry[];
+      const totalUsers = leaderboard.length;
+      
+      // Get top 10
+      const topTen = leaderboard.slice(0, 10);
+      
+      // Find current user's rank and data
+      let currentUserRank = null;
+      if (currentUserId) {
+        const userIndex = leaderboard.findIndex(entry => entry.user_id === currentUserId);
+        if (userIndex !== -1) {
+          currentUserRank = {
+            ...leaderboard[userIndex],
+            rank: userIndex + 1,
+            isInTopTen: userIndex < 10
+          };
+        }
+      }
+      
+      return {
+        topTen,
+        currentUserRank,
+        totalUsers
+      };
     },
     staleTime: 30 * 1000, // 30 seconds - leaderboard updates frequently
     refetchInterval: 60 * 1000, // Auto-refresh every minute

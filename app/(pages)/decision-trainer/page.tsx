@@ -11,6 +11,7 @@ import { ArrowLeft, Check, X, Lightbulb, Trophy, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { CATEGORY_INFO, type Category } from '@/data/scenarios';
 import { useScenarios } from '@/hooks/use-scenarios';
+import { useCompleteCategory, useDecisionTrainerStats } from '@/hooks/use-decision-trainer';
 import { toast } from 'sonner';
 // import Confetti from 'react-canvas-confetti';
 
@@ -26,10 +27,23 @@ export default function DecisionTrainerPage() {
   const [timeLeft, setTimeLeft] = useState(30); // 30 seconds per scenario
   const [totalTime, setTotalTime] = useState(0);
   const [categoryStartTime, setCategoryStartTime] = useState<number>(0);
+  const [sessionAttempts, setSessionAttempts] = useState<Array<{
+    scenarioId: string;
+    isCorrect: boolean;
+    selectedOption: number;
+    timeTakenMs: number;
+    xpEarned: number;
+  }>>([]);
   // const [confettiInstance, setConfettiInstance] = useState<any>(null);
 
   // Fetch scenarios from database
   const { data: scenarios = [], isLoading: scenariosLoading } = useScenarios(selectedCategory || undefined);
+  
+  // Fetch user stats
+  const { data: userStats } = useDecisionTrainerStats(user?.id);
+  
+  // Mutation for completing category
+  const completeCategoryMutation = useCompleteCategory();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -70,14 +84,26 @@ export default function DecisionTrainerPage() {
     if (selectedOption === null || !currentScenario) return;
 
     const isCorrect = currentScenario.options[selectedOption].isCorrect;
-    const selectedOptionData = currentScenario.options[selectedOption];
+    const timeTaken = (30 - timeLeft) * 1000; // Convert to milliseconds
+    const xpEarned = isCorrect ? currentScenario.xp : 0;
+    
+    // Track this attempt for batch submission
+    const attempt = {
+      scenarioId: currentScenario.id,
+      isCorrect,
+      selectedOption,
+      timeTakenMs: timeTaken,
+      xpEarned,
+    };
+    
+    setSessionAttempts(prev => [...prev, attempt]);
     
     setShowResult(true);
     setStats(prev => ({
       correct: prev.correct + (isCorrect ? 1 : 0),
       total: prev.total + 1,
       streak: isCorrect ? prev.streak + 1 : 0,
-      xp: prev.xp + (isCorrect ? currentScenario.xp : 0),
+      xp: prev.xp + xpEarned,
     }));
 
     if (isCorrect) {
@@ -90,20 +116,45 @@ export default function DecisionTrainerPage() {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentScenarioIndex < categoryScenarios.length - 1) {
       setCurrentScenarioIndex(prev => prev + 1);
       setSelectedOption(null);
       setShowResult(false);
       setTimeLeft(30); // Reset timer for next scenario
     } else {
-      const completionTime = Math.floor((Date.now() - categoryStartTime) / 1000);
-      setTotalTime(completionTime);
-      toast.success(`Category complete! Total XP: ${stats.xp} | Time: ${formatTime(completionTime)}`);
+      // Category completed - save results to database
+      const completionTime = Date.now() - categoryStartTime;
+      setTotalTime(Math.floor(completionTime / 1000));
+      
+      if (user?.id && selectedCategory && sessionAttempts.length > 0) {
+        try {
+          const result = await completeCategoryMutation.mutateAsync({
+            userId: user.id,
+            category: selectedCategory,
+            attempts: sessionAttempts,
+            totalTimeMs: completionTime,
+          });
+          
+          toast.success(
+            `🎉 Category Complete!\n` +
+            `XP Earned: ${result.sessionStats.totalXpEarned}\n` +
+            `Accuracy: ${result.sessionStats.accuracy}%\n` +
+            `Best Streak: ${result.sessionStats.maxStreak}`,
+            { duration: 5000 }
+          );
+        } catch (error) {
+          console.error('Error saving results:', error);
+          toast.error('Results saved locally but failed to sync to leaderboard');
+        }
+      }
+      
+      // Reset for next session
       setSelectedCategory(null);
       setCurrentScenarioIndex(0);
       setSelectedOption(null);
       setShowResult(false);
+      setSessionAttempts([]);
     }
   };
 
@@ -122,6 +173,7 @@ export default function DecisionTrainerPage() {
     setTimeLeft(30);
     setTotalTime(0);
     setCategoryStartTime(Date.now());
+    setSessionAttempts([]); // Reset session attempts
   };
 
   if (authLoading || (selectedCategory && scenariosLoading)) {

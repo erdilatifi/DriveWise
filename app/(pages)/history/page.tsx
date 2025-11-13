@@ -1,14 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { createClient } from '@/utils/supabase/client';
+import { useState } from 'react';
 import { Navbar } from '@/components/navbar';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle, XCircle, ChevronLeft, ChevronRight, Eye, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/auth-context';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,122 +19,50 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-
-interface TestAttempt {
-  id: string;
-  category: string;
-  test_number: string;
-  score: number;
-  total_questions: number;
-  percentage: number;
-  completed_at: string;
-}
+import { useTestHistory, useDeleteTestAttempt, useClearAllTestAttempts } from '@/hooks/use-test-attempts';
 
 export default function HistoryPage() {
-  const [tests, setTests] = useState<TestAttempt[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clearAllDialogOpen, setClearAllDialogOpen] = useState(false);
   const [testToDelete, setTestToDelete] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [clearingAll, setClearingAll] = useState(false);
-  const [totalTests, setTotalTests] = useState(0);
   const testsPerPage = 6;
-  const router = useRouter();
-  const supabase = createClient();
 
-  useEffect(() => {
-    fetchTests();
-  }, [currentPage]);
+  // Use TanStack Query for data fetching
+  const { data: historyData, isLoading: loading, error } = useTestHistory(user?.id, currentPage, testsPerPage);
+  const deleteTestMutation = useDeleteTestAttempt();
+  const clearAllMutation = useClearAllTestAttempts();
 
-  const fetchTests = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      // Get total count
-      const { count } = await supabase
-        .from('test_attempts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-
-      setTotalTests(count || 0);
-      setTotalPages(Math.ceil((count || 0) / testsPerPage));
-
-      // Get paginated tests
-      const { data, error } = await supabase
-        .from('test_attempts')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('completed_at', { ascending: false })
-        .range((currentPage - 1) * testsPerPage, currentPage * testsPerPage - 1);
-
-      if (error) throw error;
-      setTests(data || []);
-    } catch (error) {
-      console.error('Error fetching tests:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const tests = historyData?.tests || [];
+  const totalTests = historyData?.totalCount || 0;
+  const totalPages = historyData?.totalPages || 1;
 
   const handleDeleteTest = async () => {
     if (!testToDelete) return;
 
-    setDeleting(true);
     try {
-      // Delete test attempt (answers will be cascade deleted)
-      const { error } = await supabase
-        .from('test_attempts')
-        .delete()
-        .eq('id', testToDelete);
-
-      if (error) throw error;
-
+      await deleteTestMutation.mutateAsync(testToDelete);
       toast.success('Test deleted successfully');
       setDeleteDialogOpen(false);
       setTestToDelete(null);
-      
-      // Refresh the list
-      fetchTests();
     } catch (error) {
       console.error('Error deleting test:', error);
       toast.error('Failed to delete test');
-    } finally {
-      setDeleting(false);
     }
   };
 
   const handleClearAllHistory = async () => {
-    setClearingAll(true);
+    if (!user?.id) return;
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Delete all test attempts for current user (answers will be cascade deleted)
-      const { error } = await supabase
-        .from('test_attempts')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
+      await clearAllMutation.mutateAsync(user.id);
       toast.success('All test history cleared successfully');
       setClearAllDialogOpen(false);
-      
-      // Refresh the list
       setCurrentPage(1);
-      fetchTests();
     } catch (error) {
       console.error('Error clearing history:', error);
       toast.error('Failed to clear history');
-    } finally {
-      setClearingAll(false);
     }
   };
 
@@ -294,10 +221,10 @@ export default function HistoryPage() {
                   </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDeleteTest}
-                    disabled={deleting}
+                    disabled={deleteTestMutation.isPending}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
-                    {deleting ? 'Deleting...' : 'Delete'}
+                    {deleteTestMutation.isPending ? 'Deleting...' : 'Delete'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -318,10 +245,10 @@ export default function HistoryPage() {
                   </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleClearAllHistory}
-                    disabled={clearingAll}
+                    disabled={clearAllMutation.isPending}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
-                    {clearingAll ? 'Clearing...' : `Clear All ${totalTests} Tests`}
+                    {clearAllMutation.isPending ? 'Clearing...' : `Clear All ${totalTests} Tests`}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

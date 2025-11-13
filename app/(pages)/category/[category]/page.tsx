@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
@@ -9,7 +9,7 @@ import { Play, Clock, CheckCircle, Target, Shuffle, Brain, Trophy } from 'lucide
 import { notFound } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { useLanguage } from '@/contexts/language-context';
-import { createClient } from '@/utils/supabase/client';
+import { useTestCount } from '@/hooks/use-test-attempts';
 
 interface CategoryPageProps {
   params: Promise<{
@@ -21,38 +21,14 @@ export default function CategoryPage({ params }: CategoryPageProps) {
   const { t } = useLanguage();
   const { category: categoryParam } = use(params);
   const category = categoryParam.toUpperCase() as LicenseCategory;
-  const supabase = createClient();
-  const [testCount, setTestCount] = useState(10); // Default to 10
-  const [loading, setLoading] = useState(true);
   
   // Validate category
   if (!CATEGORY_INFO[category]) {
     notFound();
   }
 
-  useEffect(() => {
-    const fetchTestCount = async () => {
-      try {
-        // Get distinct test numbers for this category
-        const { data, error } = await supabase
-          .from('admin_questions')
-          .select('test_number')
-          .eq('category', category);
-
-        if (!error && data) {
-          // Get unique test numbers
-          const uniqueTests = [...new Set(data.map(q => q.test_number))];
-          setTestCount(uniqueTests.length || 10);
-        }
-      } catch (error) {
-        console.error('Error fetching test count:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTestCount();
-  }, [category, supabase]);
+  // Use TanStack Query for data fetching
+  const { data: testCount = 10, isLoading: loading } = useTestCount(category);
 
   const categoryInfo = CATEGORY_INFO[category];
   const mockTests = Array.from({ length: testCount }, (_, i) => i + 1);

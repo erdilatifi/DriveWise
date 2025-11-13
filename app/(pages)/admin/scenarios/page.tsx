@@ -11,6 +11,16 @@ import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
 import { CATEGORY_INFO, type Category } from '@/data/scenarios';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface Scenario {
   id: string;
@@ -35,9 +45,10 @@ export default function AdminScenariosPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [uploading, setUploading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [scenarioToDelete, setScenarioToDelete] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
-    id: '',
     category: 'traffic-lights' as Category,
     level: 1,
     question: '',
@@ -67,18 +78,39 @@ export default function AdminScenariosPage() {
 
   const fetchScenarios = async () => {
     try {
+      console.log('🔍 Fetching scenarios...');
       const supabase = createClient();
+      
+      // Test table access first
       const { data, error } = await supabase
         .from('decision_trainer_scenarios')
         .select('*')
         .order('category', { ascending: true })
         .order('level', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Fetch error:', error);
+        console.error('Error details:', {
+          message: error?.message,
+          code: error?.code,
+          details: error?.details,
+          hint: error?.hint
+        });
+        throw error;
+      }
+      
+      console.log('✅ Scenarios fetched:', data?.length || 0, 'scenarios');
       setScenarios(data || []);
     } catch (error: any) {
-      console.error('Error fetching scenarios:', error);
-      toast.error('Failed to load scenarios');
+      console.error('❌ Error fetching scenarios:', error);
+      
+      if (error?.code === '42P01') {
+        toast.error('Decision trainer table not found. Please run the database migration.');
+      } else if (error?.code === '42501') {
+        toast.error('Permission denied. Please check your admin privileges.');
+      } else {
+        toast.error(error?.message || 'Failed to load scenarios');
+      }
     } finally {
       setLoading(false);
     }
@@ -143,33 +175,100 @@ export default function AdminScenariosPage() {
     e.preventDefault();
     
     try {
+      console.log('🔍 Starting scenario submission...');
+      console.log('📝 Form data:', formData);
+      
       const supabase = createClient();
       let imageUrl = formData.image_url;
 
       if (imageFile) {
-        const uploadedUrl = await handleImageUpload(imageFile);
-        if (uploadedUrl) imageUrl = uploadedUrl;
+        console.log('📸 Uploading image...');
+        try {
+          const uploadedUrl = await handleImageUpload(imageFile);
+          if (uploadedUrl) {
+            imageUrl = uploadedUrl;
+            console.log('✅ Image uploaded:', uploadedUrl);
+          } else {
+            console.log('❌ Image upload failed - continuing without image');
+            toast.warning('Image upload failed, scenario created without image');
+            imageUrl = '';
+          }
+        } catch (uploadError) {
+          console.error('❌ Image upload error:', uploadError);
+          toast.warning('Image upload failed, scenario created without image');
+          imageUrl = '';
+        }
+      }
+
+      // Validate required fields
+      if (!formData.question.trim()) {
+        toast.error('Question is required');
+        return;
+      }
+
+      if (!formData.correct_explanation.trim()) {
+        toast.error('Correct explanation is required');
+        return;
+      }
+
+      if (!formData.real_world_tip.trim()) {
+        toast.error('Real-world tip is required');
+        return;
+      }
+
+      // Validate options
+      const validOptions = formData.options.filter(opt => opt.text.trim());
+      if (validOptions.length < 2) {
+        toast.error('At least 2 options are required');
+        return;
+      }
+
+      const correctOptions = formData.options.filter(opt => opt.isCorrect);
+      if (correctOptions.length === 0) {
+        toast.error('At least one correct option is required');
+        return;
       }
 
       const scenarioData = {
-        ...formData,
+        category: formData.category,
+        level: formData.level,
+        question: formData.question.trim(),
         image_url: imageUrl || null,
+        options: formData.options,
+        correct_explanation: formData.correct_explanation.trim(),
+        real_world_tip: formData.real_world_tip.trim(),
+        xp: formData.xp,
+        is_active: true,
       };
 
+      console.log('💾 Saving scenario data:', scenarioData);
+
       if (editingScenario) {
-        const { error } = await supabase
+        console.log('✏️ Updating existing scenario:', editingScenario.id);
+        const { data, error } = await supabase
           .from('decision_trainer_scenarios')
           .update(scenarioData)
-          .eq('id', editingScenario.id);
+          .eq('id', editingScenario.id)
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('❌ Update error:', error);
+          throw error;
+        }
+        console.log('✅ Scenario updated:', data);
         toast.success('Scenario updated!');
       } else {
-        const { error } = await supabase
+        console.log('➕ Creating new scenario...');
+        const { data, error } = await supabase
           .from('decision_trainer_scenarios')
-          .insert([scenarioData]);
+          .insert([scenarioData])
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('❌ Insert error:', error);
+          throw error;
+        }
+        console.log('✅ Scenario created:', data);
         toast.success('Scenario created!');
       }
 
@@ -179,20 +278,42 @@ export default function AdminScenariosPage() {
       fetchScenarios();
       resetForm();
     } catch (error: any) {
-      console.error('Error saving scenario:', error);
-      toast.error(error.message || 'Failed to save scenario');
+      console.error('❌ Error saving scenario:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+        full: error
+      });
+      
+      // Provide specific error messages
+      if (error?.code === '23505') {
+        toast.error('A scenario with this ID already exists');
+      } else if (error?.code === '42501') {
+        toast.error('Permission denied. Please check your admin privileges.');
+      } else if (error?.message?.includes('violates check constraint')) {
+        toast.error('Invalid data format. Please check all fields.');
+      } else {
+        toast.error(error?.message || 'Failed to save scenario');
+      }
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this scenario?')) return;
+  const handleDeleteClick = (id: string) => {
+    setScenarioToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!scenarioToDelete) return;
 
     try {
       const supabase = createClient();
       const { error } = await supabase
         .from('decision_trainer_scenarios')
         .delete()
-        .eq('id', id);
+        .eq('id', scenarioToDelete);
 
       if (error) throw error;
       toast.success('Scenario deleted!');
@@ -200,12 +321,14 @@ export default function AdminScenariosPage() {
     } catch (error: any) {
       console.error('Error deleting scenario:', error);
       toast.error('Failed to delete scenario');
+    } finally {
+      setDeleteDialogOpen(false);
+      setScenarioToDelete(null);
     }
   };
 
   const resetForm = () => {
     setFormData({
-      id: '',
       category: 'traffic-lights',
       level: 1,
       question: '',
@@ -227,7 +350,6 @@ export default function AdminScenariosPage() {
   const startEdit = (scenario: Scenario) => {
     setEditingScenario(scenario);
     setFormData({
-      id: scenario.id,
       category: scenario.category as Category,
       level: scenario.level,
       question: scenario.question,
@@ -279,18 +401,7 @@ export default function AdminScenariosPage() {
           <GlassCard className="p-6 mb-8">
             <h2 className="text-2xl font-bold mb-6">{editingScenario ? 'Edit' : 'Create'} Scenario</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Scenario ID</label>
-                  <input
-                    type="text"
-                    value={formData.id}
-                    onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-                    className="w-full px-3 py-2 bg-background border border-border rounded-lg"
-                    placeholder="tl-001"
-                    required
-                  />
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Category</label>
                   <select
@@ -485,7 +596,7 @@ export default function AdminScenariosPage() {
                         <Button size="sm" variant="outline" onClick={() => startEdit(scenario)}>
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleDelete(scenario.id)}>
+                        <Button size="sm" variant="destructive" onClick={() => handleDeleteClick(scenario.id)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -499,6 +610,29 @@ export default function AdminScenariosPage() {
             );
           })}
         </div>
+
+        {/* Delete Confirmation Modal */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Scenario</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this scenario? This action cannot be undone and will permanently remove the scenario from the Decision Trainer.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteConfirm}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete Scenario
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
