@@ -1,12 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { GlassCard } from '@/components/ui/glass-card';
-import { ArrowLeft, Plus, Edit, Trash2, Image as ImageIcon, X } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Image as ImageIcon, X, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
@@ -33,13 +37,29 @@ interface Scenario {
   real_world_tip: string;
   xp: number;
   is_active: boolean;
+  created_at?: string;
 }
 
-export default function AdminScenariosPage() {
+export default function AdminScenariosPageOptimized() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  
+  // Data state
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20); // Show 20 scenarios per page
+  
+  // Filter and search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [levelFilter, setLevelFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  
+  // Form state
   const [showForm, setShowForm] = useState(false);
   const [editingScenario, setEditingScenario] = useState<Scenario | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -64,576 +84,463 @@ export default function AdminScenariosPage() {
     xp: 25,
   });
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, authLoading, router]);
+  // Calculate pagination info
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const hasNextPage = currentPage < totalPages;
+  const hasPrevPage = currentPage > 1;
 
-  useEffect(() => {
-    if (user) {
-      fetchScenarios();
-    }
-  }, [user]);
-
-  const fetchScenarios = async () => {
+  // Optimized fetch with pagination and filtering
+  const fetchScenarios = useCallback(async (page = 1, resetData = false) => {
     try {
-      console.log('🔍 Fetching scenarios...');
+      if (resetData) {
+        setLoading(true);
+      }
+      
       const supabase = createClient();
       
-      // Test table access first
-      const { data, error } = await supabase
+      // Build query with filters
+      let query = supabase
         .from('decision_trainer_scenarios')
-        .select('*')
-        .order('category', { ascending: true })
-        .order('level', { ascending: true });
+        .select('*', { count: 'exact' });
+      
+      // Apply filters
+      if (searchQuery.trim()) {
+        query = query.or(`question.ilike.%${searchQuery}%,correct_explanation.ilike.%${searchQuery}%,real_world_tip.ilike.%${searchQuery}%`);
+      }
+      
+      if (categoryFilter !== 'all') {
+        query = query.eq('category', categoryFilter);
+      }
+      
+      if (levelFilter !== 'all') {
+        query = query.eq('level', parseInt(levelFilter));
+      }
+      
+      if (statusFilter !== 'all') {
+        query = query.eq('is_active', statusFilter === 'active');
+      }
+      
+      // Apply pagination
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      
+      const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
       if (error) {
         console.error('❌ Fetch error:', error);
-        console.error('Error details:', {
-          message: error?.message,
-          code: error?.code,
-          details: error?.details,
-          hint: error?.hint
-        });
         throw error;
       }
       
-      console.log('✅ Scenarios fetched:', data?.length || 0, 'scenarios');
-      setScenarios(data || []);
-    } catch (error: any) {
-      console.error('❌ Error fetching scenarios:', error);
+      console.log(`✅ Scenarios loaded: ${data?.length || 0} of ${count || 0} total`);
       
-      if (error?.code === '42P01') {
+      setScenarios(data || []);
+      setTotalCount(count || 0);
+      setCurrentPage(page);
+    } catch (error: unknown) {
+      console.error('Error fetching scenarios:', error);
+      const errorMessage = (error as Error).message || 'Failed to load scenarios';
+      
+      if (errorMessage.includes('42P01')) {
         toast.error('Decision trainer table not found. Please run the database migration.');
-      } else if (error?.code === '42501') {
+      } else if (errorMessage.includes('42501')) {
         toast.error('Permission denied. Please check your admin privileges.');
       } else {
-        toast.error(error?.message || 'Failed to load scenarios');
+        toast.error(errorMessage);
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, categoryFilter, levelFilter, statusFilter, pageSize]);
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
-      return;
-    }
-
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image must be less than 5MB');
-      return;
-    }
-
-    setImageFile(file);
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (user) {
+        setCurrentPage(1);
+        fetchScenarios(1, true);
+      }
+    }, 300);
     
-    // Create preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, fetchScenarios, user]);
 
-  const handleImageUpload = async (file: File): Promise<string | null> => {
-    try {
-      setUploading(true);
-      const supabase = createClient();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `scenario-images/${fileName}`;
+  // Filter change effect
+  useEffect(() => {
+    if (user) {
+      setCurrentPage(1);
+      fetchScenarios(1, true);
+    }
+  }, [categoryFilter, levelFilter, statusFilter, fetchScenarios, user]);
 
-      const { error: uploadError } = await supabase.storage
-        .from('decision-trainer')
-        .upload(filePath, file);
+  // Initial load
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    } else if (user) {
+      fetchScenarios(1, true);
+    }
+  }, [user, authLoading, router, fetchScenarios]);
 
-      if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage
-        .from('decision-trainer')
-        .getPublicUrl(filePath);
-
-      toast.success('Image uploaded successfully!');
-      return data.publicUrl;
-    } catch (error: any) {
-      console.error('Error uploading image:', error);
-      toast.error(error.message || 'Failed to upload image');
-      return null;
-    } finally {
-      setUploading(false);
+  // Pagination handlers
+  const handleNextPage = () => {
+    if (hasNextPage) {
+      fetchScenarios(currentPage + 1, true);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      console.log('🔍 Starting scenario submission...');
-      console.log('📝 Form data:', formData);
-      
-      const supabase = createClient();
-      let imageUrl = formData.image_url;
-
-      if (imageFile) {
-        console.log('📸 Uploading image...');
-        try {
-          const uploadedUrl = await handleImageUpload(imageFile);
-          if (uploadedUrl) {
-            imageUrl = uploadedUrl;
-            console.log('✅ Image uploaded:', uploadedUrl);
-          } else {
-            console.log('❌ Image upload failed - continuing without image');
-            toast.warning('Image upload failed, scenario created without image');
-            imageUrl = '';
-          }
-        } catch (uploadError) {
-          console.error('❌ Image upload error:', uploadError);
-          toast.warning('Image upload failed, scenario created without image');
-          imageUrl = '';
-        }
-      }
-
-      // Validate required fields
-      if (!formData.question.trim()) {
-        toast.error('Question is required');
-        return;
-      }
-
-      if (!formData.correct_explanation.trim()) {
-        toast.error('Correct explanation is required');
-        return;
-      }
-
-      if (!formData.real_world_tip.trim()) {
-        toast.error('Real-world tip is required');
-        return;
-      }
-
-      // Validate options
-      const validOptions = formData.options.filter(opt => opt.text.trim());
-      if (validOptions.length < 2) {
-        toast.error('At least 2 options are required');
-        return;
-      }
-
-      const correctOptions = formData.options.filter(opt => opt.isCorrect);
-      if (correctOptions.length === 0) {
-        toast.error('At least one correct option is required');
-        return;
-      }
-
-      const scenarioData = {
-        category: formData.category,
-        level: formData.level,
-        question: formData.question.trim(),
-        image_url: imageUrl || null,
-        options: formData.options,
-        correct_explanation: formData.correct_explanation.trim(),
-        real_world_tip: formData.real_world_tip.trim(),
-        xp: formData.xp,
-        is_active: true,
-      };
-
-      console.log('💾 Saving scenario data:', scenarioData);
-
-      if (editingScenario) {
-        console.log('✏️ Updating existing scenario:', editingScenario.id);
-        const { data, error } = await supabase
-          .from('decision_trainer_scenarios')
-          .update(scenarioData)
-          .eq('id', editingScenario.id)
-          .select();
-
-        if (error) {
-          console.error('❌ Update error:', error);
-          throw error;
-        }
-        console.log('✅ Scenario updated:', data);
-        toast.success('Scenario updated!');
-      } else {
-        console.log('➕ Creating new scenario...');
-        const { data, error } = await supabase
-          .from('decision_trainer_scenarios')
-          .insert([scenarioData])
-          .select();
-
-        if (error) {
-          console.error('❌ Insert error:', error);
-          throw error;
-        }
-        console.log('✅ Scenario created:', data);
-        toast.success('Scenario created!');
-      }
-
-      setShowForm(false);
-      setEditingScenario(null);
-      setImageFile(null);
-      fetchScenarios();
-      resetForm();
-    } catch (error: any) {
-      console.error('❌ Error saving scenario:', error);
-      console.error('Error details:', {
-        message: error?.message,
-        code: error?.code,
-        details: error?.details,
-        hint: error?.hint,
-        full: error
-      });
-      
-      // Provide specific error messages
-      if (error?.code === '23505') {
-        toast.error('A scenario with this ID already exists');
-      } else if (error?.code === '42501') {
-        toast.error('Permission denied. Please check your admin privileges.');
-      } else if (error?.message?.includes('violates check constraint')) {
-        toast.error('Invalid data format. Please check all fields.');
-      } else {
-        toast.error(error?.message || 'Failed to save scenario');
-      }
+  const handlePrevPage = () => {
+    if (hasPrevPage) {
+      fetchScenarios(currentPage - 1, true);
     }
   };
 
-  const handleDeleteClick = (id: string) => {
-    setScenarioToDelete(id);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!scenarioToDelete) return;
-
-    try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from('decision_trainer_scenarios')
-        .delete()
-        .eq('id', scenarioToDelete);
-
-      if (error) throw error;
-      toast.success('Scenario deleted!');
-      fetchScenarios();
-    } catch (error: any) {
-      console.error('Error deleting scenario:', error);
-      toast.error('Failed to delete scenario');
-    } finally {
-      setDeleteDialogOpen(false);
-      setScenarioToDelete(null);
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      fetchScenarios(page, true);
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      category: 'traffic-lights',
-      level: 1,
-      question: '',
-      image_url: '',
-      options: [
-        { text: '', isCorrect: false, explanation: '' },
-        { text: '', isCorrect: false, explanation: '' },
-        { text: '', isCorrect: false, explanation: '' },
-        { text: '', isCorrect: false, explanation: '' },
-      ],
-      correct_explanation: '',
-      real_world_tip: '',
-      xp: 25,
-    });
-    setImageFile(null);
-    setImagePreview('');
+  // Clear filters
+  const clearFilters = () => {
+    setSearchQuery('');
+    setCategoryFilter('all');
+    setLevelFilter('all');
+    setStatusFilter('all');
   };
 
-  const startEdit = (scenario: Scenario) => {
-    setEditingScenario(scenario);
-    setFormData({
-      category: scenario.category as Category,
-      level: scenario.level,
-      question: scenario.question,
-      image_url: scenario.image_url || '',
-      options: scenario.options,
-      correct_explanation: scenario.correct_explanation,
-      real_world_tip: scenario.real_world_tip,
-      xp: scenario.xp,
-    });
-    setShowForm(true);
-  };
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: pageSize }).map((_, i) => (
+        <div key={i} className="p-4 border rounded-lg">
+          <Skeleton className="h-4 w-3/4 mb-2" />
+          <Skeleton className="h-3 w-1/2 mb-4" />
+          <Skeleton className="h-20 w-full mb-2" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-16" />
+            <Skeleton className="h-8 w-16" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-6 py-8 max-w-7xl pt-28">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+            <Skeleton className="h-10 w-32" />
+          </div>
+          <LoadingSkeleton />
+        </div>
       </div>
     );
   }
 
-  if (!user) return null;
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <div className="container mx-auto px-4 py-8 max-w-7xl pt-28">
-        <div className="mb-8">
-          <Button variant="ghost" asChild className="mb-4">
-            <Link href="/admin">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Admin
-            </Link>
-          </Button>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">Manage Scenarios</h1>
-              <p className="text-muted-foreground">Create and edit Decision Trainer questions</p>
+      <div className="container mx-auto px-6 py-8 max-w-7xl pt-28">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <div className="flex items-center gap-4 mb-2">
+              <Button variant="ghost" asChild>
+                <Link href="/admin">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Admin
+                </Link>
+              </Button>
             </div>
-            <Button onClick={() => { resetForm(); setShowForm(true); setEditingScenario(null); }}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Scenario
-            </Button>
+            <h1 className="text-3xl font-bold">Decision Trainer Scenarios</h1>
+            <p className="text-muted-foreground">
+              Manage interactive driving scenarios ({totalCount} total)
+            </p>
           </div>
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Scenario
+          </Button>
         </div>
 
-        {showForm && (
-          <GlassCard className="p-6 mb-8">
-            <h2 className="text-2xl font-bold mb-6">{editingScenario ? 'Edit' : 'Create'} Scenario</h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Category</label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value as Category })}
-                    className="w-full px-3 py-2 bg-background border border-border rounded-lg"
-                  >
+        {/* Filters and Search */}
+        <GlassCard className="p-6 mb-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+            <div className="flex flex-col sm:flex-row gap-4 flex-1">
+              {/* Search */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search scenarios..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              {/* Filters */}
+              <div className="flex gap-2">
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
                     {Object.entries(CATEGORY_INFO).map(([key, info]) => (
-                      <option key={key} value={key}>{info.name}</option>
+                      <SelectItem key={key} value={key}>
+                        {info.name}
+                      </SelectItem>
                     ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Level (1-4)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="4"
-                    value={formData.level}
-                    onChange={(e) => setFormData({ ...formData, level: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 bg-background border border-border rounded-lg"
-                    required
-                  />
-                </div>
-              </div>
+                  </SelectContent>
+                </Select>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Question</label>
-                <textarea
-                  value={formData.question}
-                  onChange={(e) => setFormData({ ...formData, question: e.target.value })}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg"
-                  rows={3}
-                  required
-                />
-              </div>
+                <Select value={levelFilter} onValueChange={setLevelFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Levels</SelectItem>
+                    <SelectItem value="1">Level 1</SelectItem>
+                    <SelectItem value="2">Level 2</SelectItem>
+                    <SelectItem value="3">Level 3</SelectItem>
+                    <SelectItem value="4">Level 4</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Image (Optional) - Max 5MB
-                </label>
-                <div className="space-y-3">
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                    onChange={handleImageSelect}
-                    className="w-full px-3 py-2 bg-background border border-border rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-                    disabled={uploading}
-                  />
-                  
-                  {uploading && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                      Uploading image...
-                    </div>
-                  )}
-                  
-                  {(imagePreview || formData.image_url) && (
-                    <div className="relative inline-block">
-                      <img 
-                        src={imagePreview || formData.image_url} 
-                        alt="Preview" 
-                        className="max-w-xs max-h-64 rounded-lg border-2 border-border object-contain"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setImageFile(null);
-                          setImagePreview('');
-                          setFormData({ ...formData, image_url: '' });
-                        }}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
+            
+            {/* Clear filters button */}
+            {(searchQuery || categoryFilter !== 'all' || levelFilter !== 'all' || statusFilter !== 'all') && (
+              <Button variant="outline" onClick={clearFilters}>
+                <X className="w-4 h-4 mr-2" />
+                Clear Filters
+              </Button>
+            )}
+          </div>
+        </GlassCard>
 
-              <div>
-                <label className="block text-sm font-medium mb-4">Options</label>
-                {formData.options.map((option, index) => (
-                  <div key={index} className="mb-4 p-4 border border-border rounded-lg">
-                    <div className="flex items-center gap-4 mb-2">
-                      <input
-                        type="checkbox"
-                        checked={option.isCorrect}
-                        onChange={(e) => {
-                          const newOptions = [...formData.options];
-                          newOptions[index].isCorrect = e.target.checked;
-                          setFormData({ ...formData, options: newOptions });
-                        }}
-                        className="w-4 h-4"
-                      />
-                      <input
-                        type="text"
-                        value={option.text}
-                        onChange={(e) => {
-                          const newOptions = [...formData.options];
-                          newOptions[index].text = e.target.value;
-                          setFormData({ ...formData, options: newOptions });
-                        }}
-                        className="flex-1 px-3 py-2 bg-background border border-border rounded-lg"
-                        placeholder={`Option ${index + 1}`}
-                        required
-                      />
-                    </div>
-                    <input
-                      type="text"
-                      value={option.explanation || ''}
-                      onChange={(e) => {
-                        const newOptions = [...formData.options];
-                        newOptions[index].explanation = e.target.value;
-                        setFormData({ ...formData, options: newOptions });
-                      }}
-                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm"
-                      placeholder="Explanation (for wrong answers)"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Correct Explanation</label>
-                <textarea
-                  value={formData.correct_explanation}
-                  onChange={(e) => setFormData({ ...formData, correct_explanation: e.target.value })}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg"
-                  rows={3}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Real-World Tip</label>
-                <textarea
-                  value={formData.real_world_tip}
-                  onChange={(e) => setFormData({ ...formData, real_world_tip: e.target.value })}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg"
-                  rows={2}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">XP Points</label>
-                <input
-                  type="number"
-                  min="10"
-                  max="100"
-                  value={formData.xp}
-                  onChange={(e) => setFormData({ ...formData, xp: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg"
-                  required
-                />
-              </div>
-
-              <div className="flex gap-4">
-                <Button type="submit">{editingScenario ? 'Update' : 'Create'} Scenario</Button>
-                <Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditingScenario(null); }}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
+        {/* Scenarios Grid */}
+        {loading ? (
+          <LoadingSkeleton />
+        ) : scenarios.length === 0 ? (
+          <GlassCard className="p-12 text-center">
+            <div className="text-6xl mb-4">🎯</div>
+            <h3 className="text-xl font-bold mb-2">No scenarios found</h3>
+            <p className="text-muted-foreground mb-4">
+              {searchQuery || categoryFilter !== 'all' || levelFilter !== 'all' || statusFilter !== 'all'
+                ? 'Try adjusting your filters or search query.'
+                : 'Get started by creating your first scenario.'}
+            </p>
+            <Button onClick={() => setShowForm(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add First Scenario
+            </Button>
           </GlassCard>
-        )}
-
-        <div className="grid grid-cols-1 gap-4">
-          {Object.entries(CATEGORY_INFO).map(([category, info]) => {
-            const categoryScenarios = scenarios.filter(s => s.category === category);
-            return (
-              <GlassCard key={category} className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold flex items-center gap-2">
-                    <span className="text-2xl">{info.icon}</span>
-                    {info.name}
-                    <span className="text-sm text-muted-foreground">({categoryScenarios.length} scenarios)</span>
-                  </h3>
-                </div>
-                <div className="space-y-2">
-                  {categoryScenarios.map((scenario) => (
-                    <div key={scenario.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">L{scenario.level}</span>
-                          <span className="font-medium">{scenario.question.substring(0, 60)}...</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground">{scenario.xp} XP</div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => startEdit(scenario)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleDeleteClick(scenario.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+        ) : (
+          <>
+            {/* Scenarios Grid */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+              {scenarios.map((scenario) => (
+                <GlassCard key={scenario.id} className="p-6 hover:shadow-lg transition-shadow">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex gap-2">
+                      <Badge variant="outline">
+                        {CATEGORY_INFO[scenario.category as Category]?.name || scenario.category}
+                      </Badge>
+                      <Badge variant="secondary">
+                        Level {scenario.level}
+                      </Badge>
+                      <Badge variant={scenario.is_active ? "default" : "destructive"}>
+                        {scenario.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
                     </div>
-                  ))}
-                  {categoryScenarios.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-4">No scenarios yet</p>
+                  </div>
+                  
+                  <h3 className="font-semibold mb-2 line-clamp-2">
+                    {scenario.question}
+                  </h3>
+                  
+                  {scenario.image_url && (
+                    <div className="mb-3">
+                      <img
+                        src={scenario.image_url}
+                        alt="Scenario"
+                        className="w-full h-32 object-cover rounded-md"
+                      />
+                    </div>
                   )}
-                </div>
-              </GlassCard>
-            );
-          })}
-        </div>
+                  
+                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                    {scenario.correct_explanation}
+                  </p>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-primary">
+                      {scenario.xp} XP
+                    </span>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditingScenario(scenario);
+                          setFormData({
+                            category: scenario.category as Category,
+                            level: scenario.level,
+                            question: scenario.question,
+                            image_url: scenario.image_url || '',
+                            options: scenario.options,
+                            correct_explanation: scenario.correct_explanation,
+                            real_world_tip: scenario.real_world_tip,
+                            xp: scenario.xp,
+                          });
+                          setShowForm(true);
+                        }}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          setScenarioToDelete(scenario.id);
+                          setDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </GlassCard>
+              ))}
+            </div>
 
-        {/* Delete Confirmation Modal */}
-        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Scenario</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete this scenario? This action cannot be undone and will permanently remove the scenario from the Decision Trainer.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteConfirm}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Delete Scenario
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} scenarios
+                </p>
+                
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrevPage}
+                    disabled={!hasPrevPage}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Previous
+                  </Button>
+                  
+                  {/* Page numbers */}
+                  <div className="flex gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={pageNum === currentPage ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handlePageChange(pageNum)}
+                          className="w-10"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNextPage}
+                    disabled={!hasNextPage}
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Scenario</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this scenario? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!scenarioToDelete) return;
+                
+                try {
+                  const supabase = createClient();
+                  const { error } = await supabase
+                    .from('decision_trainer_scenarios')
+                    .delete()
+                    .eq('id', scenarioToDelete);
+                  
+                  if (error) throw error;
+                  
+                  toast.success('Scenario deleted successfully');
+                  fetchScenarios(currentPage, true);
+                } catch (error) {
+                  console.error('Error deleting scenario:', error);
+                  toast.error('Failed to delete scenario');
+                } finally {
+                  setDeleteDialogOpen(false);
+                  setScenarioToDelete(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
