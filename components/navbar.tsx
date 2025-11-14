@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { LogOut, Menu, X, Globe, Check } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
-import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
 
 export function Navbar() {

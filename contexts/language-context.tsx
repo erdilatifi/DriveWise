@@ -221,7 +221,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     // Load language from localStorage
     const savedLanguage = localStorage.getItem('language') as Language;
     if (savedLanguage && (savedLanguage === 'sq' || savedLanguage === 'en')) {
-      setLanguageState(savedLanguage);
+      setLanguageState(prev => savedLanguage);
     }
   }, []);
 

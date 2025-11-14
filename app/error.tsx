@@ -24,7 +24,7 @@ export default function Error({
         <AlertCircle className="w-20 h-20 mx-auto mb-4 text-red-500" />
         <h1 className="text-3xl font-bold mb-2">Oops! Something went wrong</h1>
         <p className="text-muted-foreground mb-6">
-          We encountered an unexpected error. Don't worry, your data is safe. Please try again or return to the dashboard.
+          We encountered an unexpected error. Something went wrong! Don&apos;t worry, it&apos;s not your fault. Your data is safe. Please try again or return to the dashboard.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

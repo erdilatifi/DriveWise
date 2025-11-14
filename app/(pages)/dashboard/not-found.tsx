@@ -11,7 +11,7 @@ export default function DashboardNotFound() {
         <h1 className="text-5xl font-bold mb-2">404</h1>
         <h2 className="text-2xl font-semibold mb-2">Wrong Turn!</h2>
         <p className="text-muted-foreground mb-6">
-          This page doesn't exist in your dashboard.
+          You don&apos;t have access to the dashboard.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

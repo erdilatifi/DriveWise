@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import Link from 'next/link';
@@ -41,7 +40,6 @@ export default function TestPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [startTime] = useState(Date.now());
   const [showRatingModal, setShowRatingModal] = useState(false);
-  const [isFirstTest, setIsFirstTest] = useState(false);
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -290,8 +288,7 @@ export default function TestPage() {
 
       console.log('✅ Test attempt saved successfully:', testAttempt);
 
-      // Invalidate leaderboard cache to show updated results
-      queryClient.invalidateQueries({ queryKey: ['tests-leaderboard'] });
+      // Invalidate cache to show updated results
       queryClient.invalidateQueries({ queryKey: ['user-test-stats', userId] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats', userId] });
 
@@ -309,9 +306,7 @@ export default function TestPage() {
         .single();
 
       // Show rating modal if this is first test and user hasn't rated yet
-      if (testCount === 1 && !userProfile?.app_rating) {
-        setIsFirstTest(true);
-      }
+      const isUserFirstTest = testCount === 1 && !userProfile?.app_rating;
 
       // Save individual answers
       if (testAttempt) {

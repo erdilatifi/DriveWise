@@ -11,7 +11,7 @@ export default function TestsNotFound() {
         <h1 className="text-5xl font-bold mb-2">404</h1>
         <h2 className="text-2xl font-semibold mb-2">Test Not Found</h2>
         <p className="text-muted-foreground mb-6">
-          This test page doesn't exist or has been removed.
+          The test you&apos;re looking for doesn&apos;t exist or has been removed.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

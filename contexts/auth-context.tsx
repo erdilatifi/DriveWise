@@ -190,12 +190,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       return { error: null };
-    } catch (err: any) {
-      return { error: err };
+    } catch (err: unknown) {
+      return { error: err as Error };
     }
   }, [supabase, checkIfBlocked, router]);
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = useCallback(async (email: string, password: string, fullName: string) => {
     try {
       // First check if user already exists
       const { data: existingUser } = await supabase
@@ -230,10 +230,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       return { error: null };
-    } catch (err: any) {
-      return { error: err };
+    } catch (err: unknown) {
+      return { error: err as Error };
     }
-  };
+  }, [supabase]);
 
   const signOut = useCallback(async () => {
     // Set loading state to show loader during logout

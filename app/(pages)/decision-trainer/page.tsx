@@ -188,7 +188,7 @@ export default function DecisionTrainerPage() {
     setStats({ correct: 0, total: 0, streak: 0, xp: 0 });
     setTimeLeft(30);
     setTotalTime(0);
-    setCategoryStartTime(Date.now());
+    setCategoryStartTime(() => Date.now());
     setSessionAttempts([]); // Reset session attempts
   };
 

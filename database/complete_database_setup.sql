@@ -360,8 +360,10 @@ CREATE TRIGGER on_auth_user_created
   EXECUTE FUNCTION public.handle_new_user();
 
 -- ===================================================================
--- STEP 17: Enable ROW LEVEL SECURITY
+-- STEP 17: Enable ROW LEVEL SECURITY (Basic Setup)
 -- ===================================================================
+-- NOTE: This enables RLS but does NOT create comprehensive policies
+-- For complete security, run 'comprehensive_rls_policies.sql' after this setup
 
 -- Enable RLS on all tables
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
@@ -555,13 +557,29 @@ ORDER BY system_component, table_name;
 -- 4. Instructor system for student management
 -- 5. Study materials system
 -- 6. Complete indexing for performance
--- 7. Row Level Security policies for data protection
+-- 7. Basic Row Level Security setup (RLS enabled)
 -- 8. Storage buckets for file uploads
 -- 9. Automated triggers for data consistency
 -- 
+-- ⚠️  IMPORTANT SECURITY STEP:
+-- This file enables RLS but does NOT create comprehensive security policies.
+-- For complete application security, you MUST also run:
+-- 
+--   comprehensive_rls_policies.sql
+-- 
+-- This will create:
+-- - Complete user access controls
+-- - Admin/instructor role permissions
+-- - Data isolation between users
+-- - Storage bucket security
+-- - Audit logging
+-- - Performance optimizations
+-- 
 -- Next steps:
 -- 1. Change the admin email in STEP 20
--- 2. Add your first questions and scenarios
--- 3. Test the application functionality
+-- 2. Run 'comprehensive_rls_policies.sql' for complete security
+-- 3. Add your first questions and scenarios
+-- 4. Test the application functionality
+-- 5. Verify security with test_rls_policies() function
 -- 
 -- ===================================================================

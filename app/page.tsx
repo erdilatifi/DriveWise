@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { GlassCard } from '@/components/ui/glass-card';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import Link from 'next/link';
@@ -65,12 +66,10 @@ export default function HomePage() {
       <motion.section {...subtleRise} className="relative overflow-hidden pt-28">
         <div className="container relative mx-auto px-6 py-24 md:py-32 max-w-7xl">
           <div className="max-w-4xl mx-auto text-center space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
-              <Zap className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-primary">
-                {t('home.hero.badge')}
-              </span>
-            </div>
+            <Badge variant="outline" className="gap-2 px-4 py-2 bg-primary/10 border-primary/20 text-primary">
+              <Zap className="w-4 h-4" />
+              {t('home.hero.badge')}
+            </Badge>
 
             <h1 className="text-5xl md:text-7xl font-bold leading-tight">
               {t('home.hero.title')}
