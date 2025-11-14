@@ -9,6 +9,7 @@ import { LogOut, Menu, X, Globe, Check } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
 import { createClient } from '@/utils/supabase/client';
+import { toast } from 'sonner';
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -19,7 +20,7 @@ export function Navbar() {
   const pathname = usePathname();
 
   // Get display name from userProfile or fallback to email
-  const displayName = userProfile?.full_name || user?.email?.split('@')[0] || 'User';
+  const displayName = userProfile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
 
   // Handle scroll behavior
   useEffect(() => {
@@ -36,8 +37,14 @@ export function Navbar() {
   };
 
   const handleLogout = async () => {
-    await signOut();
-    setMobileMenuOpen(false);
+    try {
+      setMobileMenuOpen(false);
+      toast.success('Logged out successfully');
+      await signOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Error logging out');
+    }
   };
 
   const isActive = (path: string) => pathname === path;
@@ -104,7 +111,7 @@ export function Navbar() {
                   pathname.startsWith('/decision-trainer') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
                 }`}
               >
-                📚 Decision Trainer
+                 Decision Trainer
                 {pathname.startsWith('/decision-trainer') && (
                   <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
                 )}
@@ -236,7 +243,7 @@ export function Navbar() {
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  📚 Decision Trainer
+                   Decision Trainer
                 </Link>
               )}
               {user && isAdmin && (

@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS decision_trainer_attempts (
   scenario_id TEXT NOT NULL,
   category TEXT NOT NULL,
   is_correct BOOLEAN NOT NULL,
-  selected_option INTEGER NOT NULL,
+  selected_options JSONB NOT NULL CHECK (jsonb_typeof(selected_options) = 'array'),
   time_taken_ms INTEGER,
   xp_earned INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -91,6 +91,7 @@ CREATE INDEX IF NOT EXISTS idx_dt_progress_user ON decision_trainer_progress(use
 CREATE INDEX IF NOT EXISTS idx_dt_progress_category ON decision_trainer_progress(category);
 CREATE INDEX IF NOT EXISTS idx_dt_attempts_user ON decision_trainer_attempts(user_id);
 CREATE INDEX IF NOT EXISTS idx_dt_attempts_scenario ON decision_trainer_attempts(scenario_id);
+CREATE INDEX IF NOT EXISTS idx_dt_attempts_selected_options ON decision_trainer_attempts USING GIN (selected_options);
 CREATE INDEX IF NOT EXISTS idx_dt_badges_user ON decision_trainer_badges(user_id);
 
 -- Row Level Security

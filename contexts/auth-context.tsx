@@ -177,15 +177,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await supabase.auth.signOut();
           throw new Error('Your account has been blocked. Please contact support.');
         }
+
+        // Immediately update user state and fetch profile
+        setUser(data.user);
+        setLoading(false);
+
+        // Fetch user profile to update navbar immediately
+        await checkIfBlocked(data.user.id, false);
+
+        // Force router refresh to update UI
+        router.refresh();
       }
 
-      // Don't manually redirect - let the auth state change handle it
-      // The onAuthStateChange listener will update the UI automatically
       return { error: null };
     } catch (err: any) {
       return { error: err };
     }
-  }, [supabase, checkIfBlocked]);
+  }, [supabase, checkIfBlocked, router]);
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
@@ -228,9 +236,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = useCallback(async () => {
+    // Set loading state to show loader during logout
+    setLoading(true);
+    
+    // Clear state immediately
+    setUser(null);
+    setUserProfile(null);
+    setIsBlocked(false);
+    
     await supabase.auth.signOut();
-    // Auth state change listener will handle state updates
+    
+    // Force router refresh and redirect
+    router.refresh();
     router.push('/');
+    
+    // Reset loading after redirect (shorter timeout)
+    setTimeout(() => setLoading(false), 50);
   }, [supabase, router]);
 
   const refreshUser = useCallback(async () => {

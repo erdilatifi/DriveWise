@@ -45,12 +45,16 @@ export default function LoginPage() {
           description: errorMessage,
         });
       }
+      setLoading(false);
     } else {
-      // Success - redirect to dashboard
-      router.push('/dashboard');
+      // Success - wait a moment for auth state to update, then redirect
+      toast.success('Login successful!');
+      // Give more time for auth state to propagate
+      setTimeout(() => {
+        setLoading(false);
+        router.push('/dashboard');
+      }, 200);
     }
-
-    setLoading(false);
   };
 
   return (

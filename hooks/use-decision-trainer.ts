@@ -23,7 +23,7 @@ export interface DecisionTrainerAttempt {
   scenario_id: string;
   category: string;
   is_correct: boolean;
-  selected_option: number;
+  selected_options: number[];
   time_taken_ms: number;
   xp_earned: number;
   created_at: string;
@@ -107,7 +107,7 @@ export function useSubmitScenarioAttempt() {
       scenarioId,
       category,
       isCorrect,
-      selectedOption,
+      selectedOptions,
       timeTakenMs,
       xpEarned,
     }: {
@@ -115,7 +115,7 @@ export function useSubmitScenarioAttempt() {
       scenarioId: string;
       category: string;
       isCorrect: boolean;
-      selectedOption: number;
+      selectedOptions: number[];
       timeTakenMs: number;
       xpEarned: number;
     }) => {
@@ -129,7 +129,7 @@ export function useSubmitScenarioAttempt() {
           scenario_id: scenarioId,
           category,
           is_correct: isCorrect,
-          selected_option: selectedOption,
+          selected_options: selectedOptions,
           time_taken_ms: timeTakenMs,
           xp_earned: xpEarned,
         })
@@ -235,7 +235,7 @@ export function useCompleteCategory() {
       attempts: Array<{
         scenarioId: string;
         isCorrect: boolean;
-        selectedOption: number;
+        selectedOptions: number[];
         timeTakenMs: number;
         xpEarned: number;
       }>;
@@ -249,7 +249,7 @@ export function useCompleteCategory() {
         scenario_id: attempt.scenarioId,
         category,
         is_correct: attempt.isCorrect,
-        selected_option: attempt.selectedOption,
+        selected_options: attempt.selectedOptions,
         time_taken_ms: attempt.timeTakenMs,
         xp_earned: attempt.xpEarned,
       }));

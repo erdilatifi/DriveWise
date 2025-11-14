@@ -21,7 +21,7 @@ export default function DecisionTrainerPage() {
   
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
   const [showResult, setShowResult] = useState(false);
   const [stats, setStats] = useState({ correct: 0, total: 0, streak: 0, xp: 0 });
   const [timeLeft, setTimeLeft] = useState(30); // 30 seconds per scenario
@@ -30,7 +30,7 @@ export default function DecisionTrainerPage() {
   const [sessionAttempts, setSessionAttempts] = useState<Array<{
     scenarioId: string;
     isCorrect: boolean;
-    selectedOption: number;
+    selectedOptions: number[];
     timeTakenMs: number;
     xpEarned: number;
   }>>([]);
@@ -59,7 +59,7 @@ export default function DecisionTrainerPage() {
       setTimeLeft(prev => {
         if (prev <= 1) {
           // Time's up - auto submit wrong answer
-          if (selectedOption === null) {
+          if (selectedOptions.length === 0) {
             toast.error('Time\'s up!');
             handleNext();
           }
@@ -70,20 +70,36 @@ export default function DecisionTrainerPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [selectedCategory, showResult, selectedOption]);
+  }, [selectedCategory, showResult, selectedOptions]);
 
   const categoryScenarios = scenarios;
   const currentScenario = categoryScenarios[currentScenarioIndex];
 
   const handleSelectOption = (index: number) => {
     if (showResult) return;
-    setSelectedOption(index);
+    setSelectedOptions(prev => {
+      if (prev.includes(index)) {
+        // Remove if already selected
+        return prev.filter(i => i !== index);
+      } else {
+        // Add to selection
+        return [...prev, index];
+      }
+    });
   };
 
   const handleSubmitAnswer = () => {
-    if (selectedOption === null || !currentScenario) return;
+    if (selectedOptions.length === 0 || !currentScenario) return;
 
-    const isCorrect = currentScenario.options[selectedOption].isCorrect;
+    // Check if answer is correct - user must select ALL correct options and NO incorrect ones
+    const correctOptionIndices = currentScenario.options
+      .map((option, index) => option.isCorrect ? index : -1)
+      .filter(index => index !== -1);
+    
+    const isCorrect = selectedOptions.length === correctOptionIndices.length &&
+      selectedOptions.every(index => correctOptionIndices.includes(index)) &&
+      correctOptionIndices.every(index => selectedOptions.includes(index));
+    
     const timeTaken = (30 - timeLeft) * 1000; // Convert to milliseconds
     const xpEarned = isCorrect ? currentScenario.xp : 0;
     
@@ -91,7 +107,7 @@ export default function DecisionTrainerPage() {
     const attempt = {
       scenarioId: currentScenario.id,
       isCorrect,
-      selectedOption,
+      selectedOptions,
       timeTakenMs: timeTaken,
       xpEarned,
     };
@@ -119,7 +135,7 @@ export default function DecisionTrainerPage() {
   const handleNext = async () => {
     if (currentScenarioIndex < categoryScenarios.length - 1) {
       setCurrentScenarioIndex(prev => prev + 1);
-      setSelectedOption(null);
+      setSelectedOptions([]);
       setShowResult(false);
       setTimeLeft(30); // Reset timer for next scenario
     } else {
@@ -152,7 +168,7 @@ export default function DecisionTrainerPage() {
       // Reset for next session
       setSelectedCategory(null);
       setCurrentScenarioIndex(0);
-      setSelectedOption(null);
+      setSelectedOptions([]);
       setShowResult(false);
       setSessionAttempts([]);
     }
@@ -167,7 +183,7 @@ export default function DecisionTrainerPage() {
   const startCategory = (category: Category) => {
     setSelectedCategory(category);
     setCurrentScenarioIndex(0);
-    setSelectedOption(null);
+    setSelectedOptions([]);
     setShowResult(false);
     setStats({ correct: 0, total: 0, streak: 0, xp: 0 });
     setTimeLeft(30);
@@ -176,15 +192,18 @@ export default function DecisionTrainerPage() {
     setSessionAttempts([]); // Reset session attempts
   };
 
-  if (authLoading || (selectedCategory && scenariosLoading)) {
+  if (authLoading || (selectedCategory && scenariosLoading) || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">
+            {!user ? 'Authenticating...' : 'Loading...'}
+          </p>
+        </div>
       </div>
     );
   }
-
-  if (!user) return null;
 
   if (!selectedCategory) {
     return (
@@ -289,10 +308,11 @@ export default function DecisionTrainerPage() {
 
             <div className="space-y-3 mb-6">
               {currentScenario.options.map((option, index) => {
-                const isSelected = selectedOption === index;
+                const isSelected = selectedOptions.includes(index);
                 const isCorrect = option.isCorrect;
                 const showCorrect = showResult && isCorrect;
                 const showWrong = showResult && isSelected && !isCorrect;
+                const showMissed = showResult && !isSelected && isCorrect;
 
                 return (
                   <motion.button
@@ -304,6 +324,8 @@ export default function DecisionTrainerPage() {
                         ? 'border-green-500 bg-green-500/10'
                         : showWrong
                         ? 'border-red-500 bg-red-500/10'
+                        : showMissed
+                        ? 'border-yellow-500 bg-yellow-500/10'
                         : isSelected
                         ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-primary/50'
@@ -312,9 +334,21 @@ export default function DecisionTrainerPage() {
                     whileTap={{ scale: showResult ? 1 : 0.98 }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium">{option.text}</span>
-                      {showCorrect && <Check className="w-5 h-5 text-green-500" />}
-                      {showWrong && <X className="w-5 h-5 text-red-500" />}
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                          isSelected 
+                            ? 'border-primary bg-primary text-primary-foreground' 
+                            : 'border-border'
+                        }`}>
+                          {isSelected && <Check className="w-3 h-3" />}
+                        </div>
+                        <span className="font-medium">{option.text}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {showCorrect && <Check className="w-5 h-5 text-green-500" />}
+                        {showWrong && <X className="w-5 h-5 text-red-500" />}
+                        {showMissed && <span className="text-yellow-500 text-sm font-medium">Missed</span>}
+                      </div>
                     </div>
                   </motion.button>
                 );
@@ -330,7 +364,7 @@ export default function DecisionTrainerPage() {
                   className="space-y-4"
                 >
                   <div className={`p-4 rounded-lg border-2 ${
-                    currentScenario.options[selectedOption!].isCorrect
+                    sessionAttempts[sessionAttempts.length - 1]?.isCorrect
                       ? 'border-green-500 bg-green-500/10'
                       : 'border-red-500 bg-red-500/10'
                   }`}>
@@ -338,16 +372,22 @@ export default function DecisionTrainerPage() {
                       <Lightbulb className="w-5 h-5 mt-1 flex-shrink-0" />
                       <div className="flex-1">
                         <h3 className="font-bold mb-2">
-                          {currentScenario.options[selectedOption!].isCorrect ? '✓ Correct!' : '✗ Incorrect - Learn from this!'}
+                          {sessionAttempts[sessionAttempts.length - 1]?.isCorrect ? '✓ Correct!' : '✗ Incorrect - Learn from this!'}
                         </h3>
                         
-                        {!currentScenario.options[selectedOption!].isCorrect && (
+                        {!sessionAttempts[sessionAttempts.length - 1]?.isCorrect && (
                           <div className="bg-red-500/10 border border-red-500/30 p-3 rounded-lg mb-3">
-                            <p className="text-sm font-semibold mb-1">Why this is wrong:</p>
-                            <p className="text-sm">
-                              {currentScenario.options[selectedOption!].explanation || 
-                               'This option doesn\'t follow safe driving practices.'}
-                            </p>
+                            <p className="text-sm font-semibold mb-1">Your selection:</p>
+                            <div className="space-y-1">
+                              {selectedOptions.map(optionIndex => (
+                                <p key={optionIndex} className="text-sm">
+                                  • {currentScenario.options[optionIndex].text}
+                                  {currentScenario.options[optionIndex].explanation && (
+                                    <span className="text-muted-foreground"> - {currentScenario.options[optionIndex].explanation}</span>
+                                  )}
+                                </p>
+                              ))}
+                            </div>
                           </div>
                         )}
                         
@@ -371,14 +411,22 @@ export default function DecisionTrainerPage() {
             </AnimatePresence>
 
             {!showResult && (
-              <Button
-                onClick={handleSubmitAnswer}
-                disabled={selectedOption === null}
-                className="w-full"
-                size="lg"
-              >
-                Submit Answer
-              </Button>
+              <div className="space-y-3">
+                <div className="text-sm text-muted-foreground text-center">
+                  {selectedOptions.length === 0 
+                    ? 'Select one or more answers' 
+                    : `${selectedOptions.length} option${selectedOptions.length === 1 ? '' : 's'} selected`
+                  }
+                </div>
+                <Button
+                  onClick={handleSubmitAnswer}
+                  disabled={selectedOptions.length === 0}
+                  className="w-full"
+                  size="lg"
+                >
+                  Submit Answer
+                </Button>
+              </div>
             )}
           </GlassCard>
         )}

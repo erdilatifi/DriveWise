@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -13,7 +15,8 @@ import { useDashboardStats } from '@/hooks/use-test-attempts';
 
 export default function DashboardPage() {
   const { t } = useLanguage();
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
+  const router = useRouter();
   
   // Use TanStack Query for data fetching
   const { data: dashboardData, isLoading: loading, error } = useDashboardStats(user?.id);
@@ -33,6 +36,27 @@ export default function DashboardPage() {
   
   const userFullName = userProfile?.full_name;
 
+  // Redirect to home if not authenticated and not loading
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/');
+    }
+  }, [user, authLoading, router]);
+
+  // Show loader if no user (even during loading) to prevent empty dashboard flash
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">
+            {authLoading ? 'Authenticating...' : 'Redirecting...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Handle error state
   if (error) {
     console.error('❌ ERROR FETCHING DASHBOARD DATA:', error);
@@ -49,12 +73,14 @@ export default function DashboardPage() {
     }
   }
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading your dashboard...</p>
+          <p className="text-muted-foreground">
+            {authLoading ? 'Authenticating...' : 'Loading your dashboard...'}
+          </p>
         </div>
       </div>
     );
