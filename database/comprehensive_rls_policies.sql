@@ -15,6 +15,7 @@ ALTER TABLE test_attempts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE test_attempt_answers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE student_instructor_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE study_materials ENABLE ROW LEVEL SECURITY;
+ALTER TABLE material_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE decision_trainer_scenarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE decision_trainer_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE decision_trainer_attempts ENABLE ROW LEVEL SECURITY;
@@ -42,6 +43,7 @@ DROP POLICY IF EXISTS "Users can insert own test attempts" ON test_attempts;
 DROP POLICY IF EXISTS "Users can update own test attempts" ON test_attempts;
 DROP POLICY IF EXISTS "Users can delete own test attempts" ON test_attempts;
 DROP POLICY IF EXISTS "Admins can view all test attempts" ON test_attempts;
+DROP POLICY IF EXISTS "Admins can delete any test attempt" ON test_attempts;
 
 -- Test Attempt Answers policies
 DROP POLICY IF EXISTS "Users can view own test answers" ON test_attempt_answers;
@@ -59,14 +61,22 @@ DROP POLICY IF EXISTS "Admins can manage all links" ON student_instructor_links;
 
 -- Study Materials policies
 DROP POLICY IF EXISTS "Public can view published materials" ON study_materials;
+DROP POLICY IF EXISTS "Authenticated users can view published materials" ON study_materials;
 DROP POLICY IF EXISTS "Admins can manage materials" ON study_materials;
+DROP POLICY IF EXISTS "Admins can manage all materials" ON study_materials;
+
+-- Material Images policies
+DROP POLICY IF EXISTS "Authenticated users can view material images" ON material_images;
+DROP POLICY IF EXISTS "Admins can manage material images" ON material_images;
 
 -- Decision Trainer Scenarios policies
 DROP POLICY IF EXISTS "Anyone can view active scenarios" ON decision_trainer_scenarios;
+DROP POLICY IF EXISTS "Authenticated users can view active scenarios" ON decision_trainer_scenarios;
 DROP POLICY IF EXISTS "Admins can insert scenarios" ON decision_trainer_scenarios;
 DROP POLICY IF EXISTS "Admins can update scenarios" ON decision_trainer_scenarios;
 DROP POLICY IF EXISTS "Admins can delete scenarios" ON decision_trainer_scenarios;
 DROP POLICY IF EXISTS "Admins can manage scenarios" ON decision_trainer_scenarios;
+DROP POLICY IF EXISTS "Admins can manage all scenarios" ON decision_trainer_scenarios;
 
 -- Decision Trainer Progress policies
 DROP POLICY IF EXISTS "Users can view own progress" ON decision_trainer_progress;
@@ -84,6 +94,10 @@ DROP POLICY IF EXISTS "Admins can view all attempts" ON decision_trainer_attempt
 DROP POLICY IF EXISTS "Users can view own badges" ON decision_trainer_badges;
 DROP POLICY IF EXISTS "Users can insert own badges" ON decision_trainer_badges;
 DROP POLICY IF EXISTS "Admins can view all badges" ON decision_trainer_badges;
+DROP POLICY IF EXISTS "Admins can manage badges" ON decision_trainer_badges;
+
+-- Audit log policies
+DROP POLICY IF EXISTS "Admins can view audit logs" ON audit_log;
 
 -- ===================================================================
 -- STEP 3: Create helper functions for RLS
@@ -282,6 +296,24 @@ CREATE POLICY "Admins can manage all materials"
   ON study_materials FOR ALL
   USING (public.is_admin());
 
+-- All authenticated users can view images for published materials
+CREATE POLICY "Authenticated users can view material images"
+  ON material_images FOR SELECT
+  TO authenticated
+  USING (
+    NOT public.is_blocked() AND
+    EXISTS (
+      SELECT 1 FROM study_materials sm
+      WHERE sm.id = material_id
+      AND sm.is_published = true
+    )
+  );
+
+-- Admins can manage all material images
+CREATE POLICY "Admins can manage material images"
+  ON material_images FOR ALL
+  USING (public.is_admin());
+
 -- ===================================================================
 -- STEP 10: DECISION TRAINER SCENARIOS - Interactive scenarios
 -- ===================================================================
@@ -372,7 +404,8 @@ CREATE POLICY "Admins can manage badges"
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES 
   ('question-images', 'question-images', true, 5242880, ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
-  ('decision-trainer', 'decision-trainer', true, 5242880, ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+  ('decision-trainer', 'decision-trainer', true, 5242880, ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
+  ('material-images', 'material-images', true, 5242880, ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
 ON CONFLICT (id) DO UPDATE SET
   public = EXCLUDED.public,
   file_size_limit = EXCLUDED.file_size_limit,
@@ -381,10 +414,16 @@ ON CONFLICT (id) DO UPDATE SET
 -- Drop existing storage policies
 DROP POLICY IF EXISTS "Anyone can view question images" ON storage.objects;
 DROP POLICY IF EXISTS "Admins can upload question images" ON storage.objects;
+DROP POLICY IF EXISTS "Admins can update question images" ON storage.objects;
 DROP POLICY IF EXISTS "Admins can delete question images" ON storage.objects;
 DROP POLICY IF EXISTS "Anyone can view decision trainer images" ON storage.objects;
 DROP POLICY IF EXISTS "Admins can upload decision trainer images" ON storage.objects;
+DROP POLICY IF EXISTS "Admins can update decision trainer images" ON storage.objects;
 DROP POLICY IF EXISTS "Admins can delete decision trainer images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can view material images" ON storage.objects;
+DROP POLICY IF EXISTS "Admins can upload material images" ON storage.objects;
+DROP POLICY IF EXISTS "Admins can update material images" ON storage.objects;
+DROP POLICY IF EXISTS "Admins can delete material images" ON storage.objects;
 
 -- Question Images Storage Policies
 CREATE POLICY "Anyone can view question images"
@@ -439,6 +478,33 @@ CREATE POLICY "Admins can delete decision trainer images"
   ON storage.objects FOR DELETE
   USING (
     bucket_id = 'decision-trainer' AND
+    public.is_admin()
+  );
+
+-- Study Material Images Storage Policies
+CREATE POLICY "Anyone can view material images"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'material-images');
+
+CREATE POLICY "Admins can upload material images"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'material-images' AND
+    public.is_admin() AND
+    (storage.foldername(name))[1] = 'materials'
+  );
+
+CREATE POLICY "Admins can update material images"
+  ON storage.objects FOR UPDATE
+  USING (
+    bucket_id = 'material-images' AND
+    public.is_admin()
+  );
+
+CREATE POLICY "Admins can delete material images"
+  ON storage.objects FOR DELETE
+  USING (
+    bucket_id = 'material-images' AND
     public.is_admin()
   );
 
@@ -593,15 +659,15 @@ BEGIN
   SELECT 
     'RLS Enabled Check' as test_name,
     CASE 
-      WHEN COUNT(*) = 10 THEN 'PASS - All tables have RLS enabled'
-      ELSE 'FAIL - Some tables missing RLS: ' || (10 - COUNT(*))::TEXT
+      WHEN COUNT(*) = 11 THEN 'PASS - All tables have RLS enabled'
+      ELSE 'FAIL - Some tables missing RLS: ' || (11 - COUNT(*))::TEXT
     END as result
   FROM pg_class c
   JOIN pg_namespace n ON n.oid = c.relnamespace
   WHERE n.nspname = 'public'
   AND c.relname IN (
     'user_profiles', 'admin_questions', 'test_attempts', 'test_attempt_answers',
-    'student_instructor_links', 'study_materials', 'decision_trainer_scenarios',
+    'student_instructor_links', 'study_materials', 'material_images', 'decision_trainer_scenarios',
     'decision_trainer_progress', 'decision_trainer_attempts', 'decision_trainer_badges'
   )
   AND c.relrowsecurity = true;

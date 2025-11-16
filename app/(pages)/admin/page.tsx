@@ -128,6 +128,25 @@ export default function AdminPage() {
               </Button>
             </GlassCard>
           </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <GlassCard hover className="p-6">
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+                <BookOpen className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Study Materials</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Manage theory materials for each chapter
+              </p>
+              <Button asChild className="w-full">
+                <Link href="/admin/materials">Manage Materials</Link>
+              </Button>
+            </GlassCard>
+          </motion.div>
         </div>
       </motion.div>
     </div>

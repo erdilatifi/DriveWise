@@ -93,6 +93,17 @@ export function Navbar() {
               )}
             </Link>
             <Link
+              href="/materials"
+              className={`text-sm font-semibold transition-all duration-200 relative group/link ${
+                isActive('/materials') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
+              }`}
+            >
+              {t('nav.materials')}
+              {isActive('/materials') && (
+                <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
+              )}
+            </Link>
+            <Link
               href="/dashboard"
               className={`text-sm font-semibold transition-all duration-200 relative group/link ${
                 isActive('/dashboard') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
@@ -229,6 +240,15 @@ export function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {t('nav.home')}
+              </Link>
+              <Link
+                href="/materials"
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  isActive('/materials') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('nav.materials')}
               </Link>
               <Link
                 href="/dashboard"

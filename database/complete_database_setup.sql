@@ -18,6 +18,7 @@ ALTER TABLE IF EXISTS test_attempts DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS test_attempt_answers DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS student_instructor_links DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS study_materials DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS material_images DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS decision_trainer_scenarios DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS decision_trainer_progress DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS decision_trainer_attempts DISABLE ROW LEVEL SECURITY;
@@ -222,14 +223,25 @@ CREATE TABLE IF NOT EXISTS student_instructor_links (
 
 CREATE TABLE IF NOT EXISTS study_materials (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  category VARCHAR(100),
-  title VARCHAR(255) NOT NULL,
-  description TEXT,
-  content TEXT,
-  material_type VARCHAR(50),
-  file_url TEXT,
-  order_index INTEGER,
+  chapter_id INTEGER NOT NULL,
+  title_en TEXT NOT NULL,
+  title_sq TEXT NOT NULL,
+  content_en JSONB NOT NULL,
+  content_sq JSONB NOT NULL,
+  order_index INTEGER NOT NULL,
   is_published BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(chapter_id)
+);
+
+CREATE TABLE IF NOT EXISTS material_images (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  material_id UUID NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,
+  image_url TEXT NOT NULL,
+  caption_en TEXT,
+  caption_sq TEXT,
+  order_index INTEGER,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -312,6 +324,7 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS update_user_profiles_updated_at ON user_profiles;
 DROP TRIGGER IF EXISTS update_admin_questions_updated_at ON admin_questions;
 DROP TRIGGER IF EXISTS update_study_materials_updated_at ON study_materials;
+DROP TRIGGER IF EXISTS update_material_images_updated_at ON material_images;
 DROP TRIGGER IF EXISTS update_dt_scenarios_updated_at ON decision_trainer_scenarios;
 
 -- Create triggers for updated_at
@@ -327,6 +340,11 @@ CREATE TRIGGER update_admin_questions_updated_at
 
 CREATE TRIGGER update_study_materials_updated_at 
   BEFORE UPDATE ON study_materials
+  FOR EACH ROW 
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_material_images_updated_at 
+  BEFORE UPDATE ON material_images
   FOR EACH ROW 
   EXECUTE FUNCTION update_updated_at_column();
 
@@ -372,110 +390,11 @@ ALTER TABLE test_attempts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE test_attempt_answers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE student_instructor_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE study_materials ENABLE ROW LEVEL SECURITY;
+ALTER TABLE material_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE decision_trainer_scenarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE decision_trainer_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE decision_trainer_attempts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE decision_trainer_badges ENABLE ROW LEVEL SECURITY;
-
--- ===================================================================
--- STEP 18: Create RLS POLICIES
--- ===================================================================
-
--- Drop existing policies to avoid conflicts
-DROP POLICY IF EXISTS "Users can view own profile" ON user_profiles;
-DROP POLICY IF EXISTS "Users can update own profile" ON user_profiles;
-DROP POLICY IF EXISTS "Anyone can view active scenarios" ON decision_trainer_scenarios;
-DROP POLICY IF EXISTS "Admins can manage scenarios" ON decision_trainer_scenarios;
-DROP POLICY IF EXISTS "Users can view own progress" ON decision_trainer_progress;
-DROP POLICY IF EXISTS "Users can manage own progress" ON decision_trainer_progress;
-DROP POLICY IF EXISTS "Users can view own attempts" ON decision_trainer_attempts;
-DROP POLICY IF EXISTS "Users can insert own attempts" ON decision_trainer_attempts;
-DROP POLICY IF EXISTS "Users can view own badges" ON decision_trainer_badges;
-DROP POLICY IF EXISTS "Users can insert own badges" ON decision_trainer_badges;
-
--- User Profiles Policies
-CREATE POLICY "Users can view own profile"
-  ON user_profiles FOR SELECT
-  USING (auth.uid() = id);
-
-CREATE POLICY "Users can update own profile"
-  ON user_profiles FOR UPDATE
-  USING (auth.uid() = id);
-
--- Decision Trainer Scenarios Policies
-CREATE POLICY "Anyone can view active scenarios"
-  ON decision_trainer_scenarios FOR SELECT
-  USING (is_active = true);
-
-CREATE POLICY "Admins can manage scenarios"
-  ON decision_trainer_scenarios FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles 
-      WHERE id = auth.uid() AND is_admin = true
-    )
-  );
-
--- Decision Trainer Progress Policies
-CREATE POLICY "Users can view own progress"
-  ON decision_trainer_progress FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can manage own progress"
-  ON decision_trainer_progress FOR ALL
-  USING (auth.uid() = user_id);
-
--- Decision Trainer Attempts Policies
-CREATE POLICY "Users can view own attempts"
-  ON decision_trainer_attempts FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own attempts"
-  ON decision_trainer_attempts FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
--- Decision Trainer Badges Policies
-CREATE POLICY "Users can view own badges"
-  ON decision_trainer_badges FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own badges"
-  ON decision_trainer_badges FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
--- Test System Policies (basic access for authenticated users)
-CREATE POLICY "Authenticated users can view questions"
-  ON admin_questions FOR SELECT
-  TO authenticated
-  USING (true);
-
-CREATE POLICY "Users can view own test attempts"
-  ON test_attempts FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own test attempts"
-  ON test_attempts FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can view own test answers"
-  ON test_attempt_answers FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM test_attempts 
-      WHERE test_attempts.id = test_attempt_id 
-      AND test_attempts.user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "Users can insert own test answers"
-  ON test_attempt_answers FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM test_attempts 
-      WHERE test_attempts.id = test_attempt_id 
-      AND test_attempts.user_id = auth.uid()
-    )
-  );
 
 -- ===================================================================
 -- STEP 19: Create STORAGE BUCKETS
@@ -485,21 +404,6 @@ CREATE POLICY "Users can insert own test answers"
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('decision-trainer', 'decision-trainer', true)
 ON CONFLICT (id) DO NOTHING;
-
--- Create storage policy for decision trainer bucket
-CREATE POLICY "Anyone can view decision trainer images"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'decision-trainer');
-
-CREATE POLICY "Admins can upload decision trainer images"
-  ON storage.objects FOR INSERT
-  WITH CHECK (
-    bucket_id = 'decision-trainer' AND
-    EXISTS (
-      SELECT 1 FROM user_profiles 
-      WHERE id = auth.uid() AND is_admin = true
-    )
-  );
 
 -- ===================================================================
 -- STEP 20: Set First Admin (CHANGE EMAIL!)
@@ -539,6 +443,7 @@ AND table_name IN (
   'test_attempt_answers',
   'student_instructor_links',
   'study_materials',
+  'material_images',
   'decision_trainer_scenarios',
   'decision_trainer_progress',
   'decision_trainer_attempts',
