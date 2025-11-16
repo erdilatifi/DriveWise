@@ -6,18 +6,21 @@ import { useAuth } from '@/contexts/auth-context';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Check, X, Lightbulb, Trophy, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { CATEGORY_INFO, type Category } from '@/data/scenarios';
 import { useScenarios } from '@/hooks/use-scenarios';
-import { useCompleteCategory, useDecisionTrainerStats } from '@/hooks/use-decision-trainer';
+import { useCompleteCategory } from '@/hooks/use-decision-trainer';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/language-context';
 // import Confetti from 'react-canvas-confetti';
 
 export default function DecisionTrainerPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
   
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
@@ -38,9 +41,6 @@ export default function DecisionTrainerPage() {
 
   // Fetch scenarios from database
   const { data: scenarios = [], isLoading: scenariosLoading } = useScenarios(selectedCategory || undefined);
-  
-  // Fetch user stats
-  const { data: userStats } = useDecisionTrainerStats(user?.id);
   
   // Mutation for completing category
   const completeCategoryMutation = useCompleteCategory();
@@ -192,14 +192,61 @@ export default function DecisionTrainerPage() {
     setSessionAttempts([]); // Reset session attempts
   };
 
-  if (authLoading || (selectedCategory && scenariosLoading) || !user) {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">
-            {!user ? 'Authenticating...' : 'Loading...'}
+            {!user ? t('auth.signingIn') : t('test.loadingQuestions')}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (selectedCategory && scenariosLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 max-w-4xl pt-28">
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-9 w-40" />
+              <div className="flex gap-4">
+                <div className="text-center">
+                  <Skeleton className="h-8 w-20 mb-1" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+                <div className="text-center">
+                  <Skeleton className="h-6 w-16 mb-1" />
+                  <Skeleton className="h-3 w-12" />
+                </div>
+                <div className="text-center">
+                  <Skeleton className="h-6 w-16 mb-1" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              </div>
+            </div>
+            <Skeleton className="h-2 w-full rounded-full" />
+          </div>
+
+          <GlassCard className="p-8">
+            <Skeleton className="h-6 w-3/4 mb-6" />
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="w-full p-4 rounded-lg border-2 border-border">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="w-5 h-5 rounded" />
+                      <Skeleton className="h-4 w-40" />
+                    </div>
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
         </div>
       </div>
     );
@@ -214,18 +261,18 @@ export default function DecisionTrainerPage() {
             <Button variant="ghost" asChild className="mb-4">
               <Link href="/dashboard">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
+                {t('auth.backToHome')}
               </Link>
             </Button>
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-4xl font-bold mb-2">📚 Decision Trainer</h1>
-                <p className="text-muted-foreground">Master driving rules through interactive scenarios</p>
+                <p className="text-muted-foreground">{t('dashboard.keepGoing')}</p>
               </div>
               <Button asChild variant="outline">
                 <Link href="/decision-trainer/leaderboard">
                   <Trophy className="w-4 h-4 mr-2" />
-                  Leaderboard
+                  {t('test.viewAllTests')}
                 </Link>
               </Button>
             </div>
@@ -233,9 +280,13 @@ export default function DecisionTrainerPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Object.entries(CATEGORY_INFO).map(([key, info]) => {
-              const categoryCount = 5; // Default count, will be updated when scenarios load
+              const categoryCount = scenarios.filter((scenario) => scenario.category === key).length;
               return (
-                <GlassCard key={key} className="p-6 hover:border-primary/50 transition-all cursor-pointer" onClick={() => startCategory(key as Category)}>
+                <GlassCard
+                  key={key}
+                  className="p-6 hover:border-primary/50 transition-all cursor-pointer"
+                  onClick={() => startCategory(key as Category)}
+                >
                   <div className="flex items-start gap-4">
                     <div className="text-5xl">{info.icon}</div>
                     <div className="flex-1">
@@ -243,7 +294,7 @@ export default function DecisionTrainerPage() {
                       <p className="text-sm text-muted-foreground">{info.description}</p>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">{categoryCount} scenarios</span>
-                        <Button size="sm">Start →</Button>
+                        <Button size="sm">{t('categories.startPractice')} →</Button>
                       </div>
                     </div>
                   </div>
@@ -268,7 +319,7 @@ export default function DecisionTrainerPage() {
         <div className="mb-8">
           <Button variant="ghost" onClick={() => setSelectedCategory(null)} className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Categories
+            {t('test.backToTests')}
           </Button>
           
           <div className="flex items-center justify-between mb-4">
@@ -277,14 +328,14 @@ export default function DecisionTrainerPage() {
                 <span className="text-4xl">{categoryInfo.icon}</span>
                 {categoryInfo.name}
               </h1>
-              <p className="text-muted-foreground">Scenario {currentScenarioIndex + 1} of {categoryScenarios.length}</p>
+              <p className="text-muted-foreground">{t('test.question')} {currentScenarioIndex + 1} {t('test.of')} {categoryScenarios.length}</p>
             </div>
             <div className="flex gap-4">
               <div className="text-center">
                 <div className={`text-3xl font-bold ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-blue-500'}`}>
                   ⏱️ {timeLeft}s
                 </div>
-                <div className="text-xs text-muted-foreground">Time Left</div>
+                <div className="text-xs text-muted-foreground">{t('test.timeLeft')}</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">{stats.xp}</div>
@@ -292,7 +343,7 @@ export default function DecisionTrainerPage() {
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-500">{stats.streak}</div>
-                <div className="text-xs text-muted-foreground">Streak</div>
+                <div className="text-xs text-muted-foreground">{t('dashboard.streak')}</div>
               </div>
             </div>
           </div>
@@ -347,7 +398,7 @@ export default function DecisionTrainerPage() {
                       <div className="flex items-center gap-2">
                         {showCorrect && <Check className="w-5 h-5 text-green-500" />}
                         {showWrong && <X className="w-5 h-5 text-red-500" />}
-                        {showMissed && <span className="text-yellow-500 text-sm font-medium">Missed</span>}
+                        {showMissed && <span className="text-yellow-500 text-sm font-medium">{t('test.failed')}</span>}
                       </div>
                     </div>
                   </motion.button>
@@ -377,7 +428,7 @@ export default function DecisionTrainerPage() {
                         
                         {!sessionAttempts[sessionAttempts.length - 1]?.isCorrect && (
                           <div className="bg-red-500/10 border border-red-500/30 p-3 rounded-lg mb-3">
-                            <p className="text-sm font-semibold mb-1">Your selection:</p>
+                            <p className="text-sm font-semibold mb-1">{t('test.correctLabel')}</p>
                             <div className="space-y-1">
                               {selectedOptions.map(optionIndex => (
                                 <p key={optionIndex} className="text-sm">
@@ -392,19 +443,19 @@ export default function DecisionTrainerPage() {
                         )}
                         
                         <div className="bg-green-500/10 border border-green-500/30 p-3 rounded-lg mb-3">
-                          <p className="text-sm font-semibold mb-1">Correct answer:</p>
+                          <p className="text-sm font-semibold mb-1">{t('test.correctAnswers')}</p>
                           <p className="text-sm">{currentScenario.correct_explanation}</p>
                         </div>
                         
                         <div className="bg-background/50 p-3 rounded-lg">
-                          <p className="text-sm"><strong>💡 Real-world tip:</strong> {currentScenario.real_world_tip}</p>
+                          <p className="text-sm"><strong>💡 </strong>{currentScenario.real_world_tip}</p>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <Button onClick={handleNext} className="w-full" size="lg">
-                    {currentScenarioIndex < categoryScenarios.length - 1 ? 'Next Scenario →' : 'Complete Category 🎉'}
+                    {currentScenarioIndex < categoryScenarios.length - 1 ? t('test.next') : t('test.submitTest')}
                   </Button>
                 </motion.div>
               )}
@@ -414,8 +465,8 @@ export default function DecisionTrainerPage() {
               <div className="space-y-3">
                 <div className="text-sm text-muted-foreground text-center">
                   {selectedOptions.length === 0 
-                    ? 'Select one or more answers' 
-                    : `${selectedOptions.length} option${selectedOptions.length === 1 ? '' : 's'} selected`
+                    ? t('test.selectAnswers')
+                    : `${selectedOptions.length} ${t('test.optionsSelected')}`
                   }
                 </div>
                 <Button
@@ -424,7 +475,7 @@ export default function DecisionTrainerPage() {
                   className="w-full"
                   size="lg"
                 >
-                  Submit Answer
+                  {t('test.submitAnswer')}
                 </Button>
               </div>
             )}
@@ -435,20 +486,20 @@ export default function DecisionTrainerPage() {
           <GlassCard className="p-6">
             <h3 className="font-bold mb-4 flex items-center gap-2">
               <Trophy className="w-5 h-5 text-primary" />
-              Session Stats
+              {t('test.sessionStats')}
             </h3>
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold">{stats.correct}/{stats.total}</div>
-                <div className="text-xs text-muted-foreground">Correct</div>
+                <div className="text-xs text-muted-foreground">{t('test.correctLabel')}</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-primary">{stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0}%</div>
-                <div className="text-xs text-muted-foreground">Accuracy</div>
+                <div className="text-xs text-muted-foreground">{t('test.accuracy')}</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-green-500">{stats.streak}</div>
-                <div className="text-xs text-muted-foreground">Best Streak</div>
+                <div className="text-xs text-muted-foreground">{t('test.bestStreak')}</div>
               </div>
             </div>
           </GlassCard>

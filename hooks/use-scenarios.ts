@@ -42,7 +42,11 @@ export function useScenarios(category?: Category) {
       if (error) throw error;
       return data as Scenario[];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes - scenarios don't change often
+    // Always refetch when the component mounts or the window gains focus
+    // so that newly added scenarios in the admin panel are visible immediately.
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 }
 

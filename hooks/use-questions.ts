@@ -28,16 +28,31 @@ export interface QuestionInput {
   image_url?: string;
 }
 
-// Fetch all questions
-export function useQuestions(category?: string) {
+export interface QuestionsQueryParams {
+  category?: string;
+  search?: string;
+  page: number;
+  pageSize: number;
+}
+
+export interface QuestionsPageResult {
+  questions: Question[];
+  total: number;
+}
+
+// Fetch questions with server-side pagination and optional filters
+export function useQuestions({ category, search, page, pageSize }: QuestionsQueryParams) {
   const supabase = createClient();
 
-  return useQuery({
-    queryKey: ['questions', category],
+  return useQuery<QuestionsPageResult>({
+    queryKey: ['questions', category, search, page, pageSize],
     queryFn: async () => {
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
       let query = supabase
         .from('admin_questions')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('category', { ascending: true })
         .order('test_number', { ascending: true });
 
@@ -45,10 +60,19 @@ export function useQuestions(category?: string) {
         query = query.eq('category', category);
       }
 
-      const { data, error } = await query;
+      if (search && search.trim()) {
+        const term = search.trim();
+        query = query.or(`question_text.ilike.%${term}%,category.ilike.%${term}%`);
+      }
+
+      const { data, error, count } = await query.range(from, to);
 
       if (error) throw error;
-      return data as Question[];
+
+      return {
+        questions: (data || []) as Question[],
+        total: count || 0,
+      };
     },
   });
 }

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Trophy, Target, Award, Zap, History } from 'lucide-react';
 import { Navbar } from '@/components/navbar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
@@ -73,14 +74,63 @@ export default function DashboardPage() {
     }
   }
 
-  if (loading || authLoading) {
+  // While stats are loading (after auth), show a skeleton dashboard layout
+  if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">
-            {authLoading ? 'Authenticating...' : 'Loading your dashboard...'}
-          </p>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-28">
+          <div className="container mx-auto px-8 py-12 max-w-7xl">
+            {/* Header skeleton */}
+            <div className="mb-12 space-y-3">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-80" />
+            </div>
+
+            {/* Stats grid skeleton */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <GlassCard key={i} className="p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-5 w-5 rounded-full" />
+                  </div>
+                  <Skeleton className="h-7 w-16 mb-2" />
+                  <Skeleton className="h-3 w-32" />
+                </GlassCard>
+              ))}
+            </div>
+
+            {/* Charts skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+              <GlassCard className="p-6 lg:col-span-2">
+                <div className="mb-6 space-y-2">
+                  <Skeleton className="h-5 w-40" />
+                  <Skeleton className="h-3 w-64" />
+                </div>
+                <Skeleton className="h-60 w-full rounded-xl" />
+              </GlassCard>
+
+              <GlassCard className="p-6">
+                <div className="mb-6 space-y-2">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-3 w-52" />
+                </div>
+                <Skeleton className="h-60 w-full rounded-full" />
+              </GlassCard>
+            </div>
+
+            {/* History CTA skeleton */}
+            <GlassCard className="p-8">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-40" />
+                  <Skeleton className="h-3 w-64" />
+                </div>
+                <Skeleton className="h-10 w-40" />
+              </div>
+            </GlassCard>
+          </div>
         </div>
       </div>
     );
@@ -124,7 +174,7 @@ export default function DashboardPage() {
 
         {/* Stats Grid */}
         {hasData && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             {[
               { icon: Trophy, label: t('dashboard.totalTests'), value: stats.totalTests, subtitle: `+${stats.testsThisWeek} ${t('dashboard.thisWeek')}`, delay: 0.1 },
               { icon: Target, label: t('dashboard.avgScore'), value: `${stats.averageScore}%`, subtitle: `${stats.averageScore >= 80 ? 'Great job!' : 'Keep practicing'}`, delay: 0.2 },

@@ -49,7 +49,12 @@ export default function QuestionsPage() {
   const [questionToDelete, setQuestionToDelete] = useState<{ id: string; text: string } | null>(null);
   const itemsPerPage = 10;
 
-  const { data: questions, isLoading, error } = useQuestions(categoryFilter || undefined);
+  const { data, isLoading, error } = useQuestions({
+    category: categoryFilter || undefined,
+    search: searchQuery,
+    page: currentPage,
+    pageSize: itemsPerPage,
+  });
   const deleteQuestion = useDeleteQuestion();
 
   useEffect(() => {
@@ -83,16 +88,11 @@ export default function QuestionsPage() {
     }
   };
 
-  const filteredQuestions = questions?.filter((q) =>
-    q.question_text.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    q.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const totalQuestions = data?.total || 0;
+  const paginatedQuestions = data?.questions || [];
 
   // Pagination calculations
-  const totalPages = filteredQuestions ? Math.ceil(filteredQuestions.length / itemsPerPage) : 0;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedQuestions = filteredQuestions?.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(totalQuestions / itemsPerPage);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -161,7 +161,7 @@ export default function QuestionsPage() {
           <div>
             <h1 className="text-3xl font-bold">Quiz Questions</h1>
             <p className="text-sm text-muted-foreground">
-              Manage all quiz questions ({filteredQuestions?.length || 0} total)
+              Manage all quiz questions ({totalQuestions} total)
             </p>
           </div>
           <Button asChild className="shadow-lg shadow-primary/20">
@@ -297,7 +297,12 @@ export default function QuestionsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-8 flex justify-center">
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <p className="text-xs text-muted-foreground">
+              Showing {(currentPage - 1) * itemsPerPage + 1}
+              {' '}
+              - {Math.min(currentPage * itemsPerPage, totalQuestions)} of {totalQuestions} questions
+            </p>
             <Pagination>
               <PaginationContent>
                 <PaginationItem>

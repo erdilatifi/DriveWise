@@ -1,18 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, CheckCircle, CheckSquare } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { RatingModal } from '@/components/rating-modal';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/language-context';
 
+// Test question data structure
 interface Question {
   id: string;
   question_text: string;
@@ -24,11 +27,17 @@ interface Question {
   image_url?: string;
 }
 
+// Lazily load the rating modal to keep the main test bundle small
+const RatingModal = dynamic(() => import('@/components/rating-modal').then(mod => mod.RatingModal), {
+  ssr: false,
+});
+
 export default function TestPage() {
   const params = useParams();
   const router = useRouter();
   const supabase = createClient();
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
   const category = (params.category as string).toUpperCase() as LicenseCategory;
   const testNumber = params.testNumber as string;
 
@@ -403,11 +412,28 @@ export default function TestPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading test questions...</p>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <Card className="max-w-3xl w-full mx-auto border-primary/20 bg-card/95 backdrop-blur-xl shadow-xl shadow-primary/5">
+          <CardHeader>
+            <Skeleton className="h-4 w-32 mb-3" />
+            <Skeleton className="h-8 w-3/4" />
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Skeleton className="h-48 w-full rounded-xl" />
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="h-5 w-5 rounded-md" />
+                  <Skeleton className="h-4 flex-1" />
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3">
+              <Skeleton className="h-10 flex-1" />
+              <Skeleton className="h-10 flex-1" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -417,15 +443,15 @@ export default function TestPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardHeader>
-            <CardTitle>No Questions Available</CardTitle>
+            <CardTitle>{t('test.noQuestionsTitle')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              There are no questions available for this test yet.
+              {t('test.noQuestionsDescription')}
             </p>
             <Button asChild>
               <Link href={`/category/${category.toLowerCase()}`}>
-                Back to Tests
+                {t('test.backToTests')}
               </Link>
             </Button>
           </CardContent>
@@ -445,7 +471,7 @@ export default function TestPage() {
             <Button variant="ghost" asChild>
               <Link href={`/category/${category.toLowerCase()}`}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Tests
+                {t('test.backToTests')}
               </Link>
             </Button>
           </div>
@@ -468,13 +494,13 @@ export default function TestPage() {
               </div>
               <div>
                 <CardTitle className="text-4xl font-bold mb-2">
-                  {passed ? 'Congratulations!' : 'Keep Practicing!'}
+                  {passed ? t('test.congratulations') : t('test.keepPracticing')}
                 </CardTitle>
                 <p className="text-muted-foreground text-lg">
                   {categoryInfo.name} - {
-                    testNumber === 'mixed' ? 'Mixed Question Test' : 
-                    testNumber === 'personalized' ? 'Personalized Test' :
-                    `Test ${testNumber}`
+                    testNumber === 'mixed' ? t('test.mixedName') : 
+                    testNumber === 'personalized' ? t('test.personalizedName') :
+                    `${t('test.test')} ${testNumber}`
                   }
                 </p>
               </div>
@@ -485,15 +511,15 @@ export default function TestPage() {
                   passed ? 'text-primary' : 'text-destructive'
                 }`}>{score.percentage}%</div>
                 <p className="text-muted-foreground text-lg">
-                  {score.correct} out of {score.total} correct answers
+                  {score.correct} {t('test.of')} {score.total} {t('test.correctAnswers')}
                 </p>
               </div>
 
               <div className="space-y-3">
                 <div className="flex justify-between text-sm font-medium">
-                  <span>Passing Score: 80%</span>
+                  <span>{t('test.passingScore')}: 80%</span>
                   <span className={passed ? 'text-primary' : 'text-destructive'}>
-                    {passed ? '✓ Passed' : '✗ Failed'}
+                    {passed ? `✓ ${t('test.passed')}` : `✗ ${t('test.failed')}`}
                   </span>
                 </div>
                 <div className="w-full bg-secondary rounded-full h-3 overflow-hidden">
@@ -509,7 +535,7 @@ export default function TestPage() {
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1" asChild>
                   <Link href={`/category/${category.toLowerCase()}`}>
-                    Back to Tests
+                    {t('test.backToTests')}
                   </Link>
                 </Button>
                 <Button
@@ -519,7 +545,7 @@ export default function TestPage() {
                     window.location.reload();
                   }}
                 >
-                  Retry Test
+                  {t('test.retakeTest')}
                 </Button>
               </div>
             </CardContent>
@@ -556,11 +582,11 @@ export default function TestPage() {
             <Button variant="ghost" asChild size="sm">
               <Link href={`/category/${category.toLowerCase()}`}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Exit Test
+                {t('test.exitTest')}
               </Link>
             </Button>
             <div className="text-sm font-semibold px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary">
-              Question {currentQuestion + 1} of {totalQuestions}
+              {t('test.question')} {currentQuestion + 1} {t('test.of')} {totalQuestions}
             </div>
           </div>
           <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
@@ -578,9 +604,9 @@ export default function TestPage() {
           <CardHeader>
             <div className="text-sm text-primary font-medium mb-3">
               {categoryInfo.name} - {
-                testNumber === 'mixed' ? 'Mixed Question Test' : 
-                testNumber === 'personalized' ? 'Personalized Test' :
-                `Test ${testNumber}`
+                testNumber === 'mixed' ? t('test.mixedName') : 
+                testNumber === 'personalized' ? t('test.personalizedName') :
+                `${t('test.test')} ${testNumber}`
               }
             </div>
             <CardTitle className="text-2xl md:text-3xl">{question.question_text}</CardTitle>
@@ -594,12 +620,12 @@ export default function TestPage() {
                   <div className="relative rounded-xl overflow-hidden border-2 border-border shadow-lg">
                     <img
                       src={question.image_url}
-                      alt="Question illustration"
+                      alt={t('test.questionIllustration')}
                       className="w-full h-auto object-contain bg-muted/30"
                       style={{ maxHeight: '400px' }}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground text-center mt-2">Question Image</p>
+                  <p className="text-xs text-muted-foreground text-center mt-2">{t('test.questionImage')}</p>
                 </div>
               )}
 
@@ -648,7 +674,7 @@ export default function TestPage() {
                 className="flex-1"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Previous
+                {t('test.previous')}
               </Button>
               {currentQuestion === totalQuestions - 1 ? (
                 <Button
@@ -656,7 +682,7 @@ export default function TestPage() {
                   disabled={Object.keys(answers).length !== totalQuestions}
                   className="flex-1"
                 >
-                  Submit Test
+                  {t('test.submitTest')}
                   <CheckCircle className="w-4 h-4 ml-2" />
                 </Button>
               ) : (
@@ -665,7 +691,7 @@ export default function TestPage() {
                   disabled={!currentAnswer}
                   className="flex-1"
                 >
-                  Next
+                  {t('test.next')}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               )}
@@ -674,11 +700,11 @@ export default function TestPage() {
             {/* Question Navigator - Smart Pagination */}
             <div className="border-t pt-3">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-muted-foreground">Question {currentQuestion + 1} of {totalQuestions}</p>
+                <p className="text-xs text-muted-foreground">{t('test.question')} {currentQuestion + 1} {t('test.of')} {totalQuestions}</p>
                 <div className="flex items-center gap-1">
                   <span className={`w-2 h-2 rounded-full ${answers[question.id] ? 'bg-primary' : 'bg-secondary'}`} />
                   <span className="text-xs text-muted-foreground">
-                    {Object.keys(answers).length}/{totalQuestions} answered
+                    {Object.keys(answers).length}/{totalQuestions} {t('test.answeredLabel')}
                   </span>
                 </div>
               </div>

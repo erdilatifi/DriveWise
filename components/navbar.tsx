@@ -14,7 +14,7 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const { user, signOut, isAdmin, userProfile } = useAuth();
   const pathname = usePathname();
 
@@ -87,7 +87,7 @@ export function Navbar() {
                 isActive('/') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
               }`}
             >
-              Home
+              {t('nav.home')}
               {isActive('/') && (
                 <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
               )}
@@ -98,7 +98,7 @@ export function Navbar() {
                 isActive('/dashboard') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
               }`}
             >
-              Dashboard
+              {t('nav.dashboard')}
               {isActive('/dashboard') && (
                 <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
               )}
@@ -178,16 +178,16 @@ export function Navbar() {
                 </div>
                 <Button variant="outline" size="sm" onClick={handleLogout} className="border-border/50 hover:border-primary/50">
                   <LogOut className="w-4 h-4 mr-2" />
-                  Logout
+                  {t('nav.logout')}
                 </Button>
               </>
             ) : (
               <>
                 <Button variant="ghost" size="sm" asChild className="hover:bg-primary/10 hover:text-primary">
-                  <Link href="/login">Login</Link>
+                  <Link href="/login">{t('nav.login')}</Link>
                 </Button>
                 <Button size="sm" asChild className="shadow-lg shadow-primary/30 hover:shadow-primary/40 transition-all duration-300 font-semibold">
-                  <Link href="/register">Get Started</Link>
+                  <Link href="/register">{t('nav.getStarted')}</Link>
                 </Button>
               </>
             )}
@@ -223,7 +223,7 @@ export function Navbar() {
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Home
+                {t('nav.home')}
               </Link>
               <Link
                 href="/dashboard"
@@ -232,7 +232,7 @@ export function Navbar() {
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Dashboard
+                {t('nav.dashboard')}
               </Link>
               {user && (
                 <Link
@@ -261,7 +261,7 @@ export function Navbar() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground">
                   <Globe className="w-4 h-4" />
-                  <span className="font-medium">Language</span>
+                  <span className="font-medium">{t('nav.language')}</span>
                 </div>
                 <button
                   onClick={() => handleLanguageChange('en')}
@@ -287,18 +287,18 @@ export function Navbar() {
               {user ? (
                 <Button variant="outline" size="sm" onClick={handleLogout} className="w-full justify-start border-border/50 hover:border-primary/50">
                   <LogOut className="w-4 h-4 mr-2" />
-                  Logout
+                  {t('nav.logout')}
                 </Button>
               ) : (
                 <>
                   <Button variant="ghost" size="sm" asChild className="w-full justify-start hover:bg-primary/10 hover:text-primary">
                     <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                      Login
+                      {t('nav.login')}
                     </Link>
                   </Button>
                   <Button size="sm" asChild className="w-full justify-start shadow-lg shadow-primary/30">
                     <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
-                      Get Started
+                      {t('nav.getStarted')}
                     </Link>
                   </Button>
                 </>

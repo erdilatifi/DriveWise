@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Navbar } from '@/components/navbar';
@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { GlassCard } from '@/components/ui/glass-card';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { ArrowLeft, Plus, Edit, Trash2, Image as ImageIcon, X, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
@@ -84,10 +86,54 @@ export default function AdminScenariosPageOptimized() {
     xp: 25,
   });
 
+  // Reset form to default values
+  const resetForm = () => {
+    setEditingScenario(null);
+    setImageFile(null);
+    setImagePreview('');
+    setFormData({
+      category: 'traffic-lights' as Category,
+      level: 1,
+      question: '',
+      image_url: '',
+      options: [
+        { text: '', isCorrect: false, explanation: '' },
+        { text: '', isCorrect: false, explanation: '' },
+        { text: '', isCorrect: false, explanation: '' },
+        { text: '', isCorrect: false, explanation: '' },
+      ],
+      correct_explanation: '',
+      real_world_tip: '',
+      xp: 25,
+    });
+  };
+
+  // Open create form
+  const handleOpenCreateForm = () => {
+    resetForm();
+    setShowForm(true);
+  };
+
+  // Close form
+  const handleCloseForm = () => {
+    setShowForm(false);
+    resetForm();
+  };
+
   // Calculate pagination info
   const totalPages = Math.ceil(totalCount / pageSize);
   const hasNextPage = currentPage < totalPages;
   const hasPrevPage = currentPage > 1;
+
+  // Image preview when selecting a new file
+  useEffect(() => {
+    if (!imageFile) return;
+
+    const url = URL.createObjectURL(imageFile);
+    setImagePreview(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [imageFile]);
 
   // Optimized fetch with pagination and filtering
   const fetchScenarios = useCallback(async (page = 1, resetData = false) => {
@@ -210,6 +256,179 @@ export default function AdminScenariosPageOptimized() {
     setStatusFilter('all');
   };
 
+  // Form helpers
+  const handleFormFieldChange = (field: 'category' | 'level' | 'question' | 'correct_explanation' | 'real_world_tip' | 'xp' | 'image_url', value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleOptionFieldChange = (index: number, field: 'text' | 'explanation', value: string) => {
+    setFormData((prev) => {
+      const options = [...prev.options];
+      options[index] = {
+        ...options[index],
+        [field]: value,
+      };
+      return {
+        ...prev,
+        options,
+      };
+    });
+  };
+
+  const toggleOptionCorrect = (index: number) => {
+    setFormData((prev) => {
+      const options = prev.options.map((opt, i) =>
+        i === index ? { ...opt, isCorrect: !opt.isCorrect } : opt
+      );
+      return {
+        ...prev,
+        options,
+      };
+    });
+  };
+
+  const handleImageChange = (e: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+  };
+
+  const handleSubmitScenario = async (e: any) => {
+    e.preventDefault();
+    if (uploading) return;
+
+    try {
+      const trimmedQuestion = formData.question.trim();
+      if (!trimmedQuestion) {
+        toast.error('Question is required');
+        return;
+      }
+
+      const normalizedOptions = formData.options
+        .map((opt) => ({
+          ...opt,
+          text: opt.text.trim(),
+          explanation: opt.explanation?.trim() || '',
+        }))
+        .filter((opt) => opt.text.length > 0);
+
+      if (normalizedOptions.length < 2) {
+        toast.error('Please provide at least two answer options');
+        return;
+      }
+
+      if (!normalizedOptions.some((opt) => opt.isCorrect)) {
+        toast.error('Please mark at least one option as correct');
+        return;
+      }
+
+      if (!formData.correct_explanation.trim()) {
+        toast.error('Correct explanation is required');
+        return;
+      }
+
+      if (!formData.real_world_tip.trim()) {
+        toast.error('Real-world tip is required');
+        return;
+      }
+
+      if (!formData.xp || formData.xp <= 0) {
+        toast.error('XP must be greater than 0');
+        return;
+      }
+
+      setUploading(true);
+      const supabase = createClient();
+
+      let imageUrl = formData.image_url || '';
+
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
+        const filePath = `scenario-images/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('decision-trainer')
+          .upload(filePath, imageFile);
+
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          toast.error('Failed to upload image');
+          setUploading(false);
+          return;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('decision-trainer')
+          .getPublicUrl(filePath);
+
+        imageUrl = publicUrlData.publicUrl;
+      }
+
+      if (editingScenario) {
+        const { error } = await supabase
+          .from('decision_trainer_scenarios')
+          .update({
+            category: formData.category,
+            level: formData.level,
+            question: trimmedQuestion,
+            image_url: imageUrl || null,
+            options: normalizedOptions,
+            correct_explanation: formData.correct_explanation.trim(),
+            real_world_tip: formData.real_world_tip.trim(),
+            xp: formData.xp,
+          })
+          .eq('id', editingScenario.id);
+
+        if (error) {
+          console.error('Error updating scenario:', error);
+          toast.error('Failed to update scenario');
+          setUploading(false);
+          return;
+        }
+
+        toast.success('Scenario updated successfully');
+      } else {
+        const generatedId = `scn-${Date.now()}`;
+
+        const { error } = await supabase
+          .from('decision_trainer_scenarios')
+          .insert({
+            id: generatedId,
+            category: formData.category,
+            level: formData.level,
+            question: trimmedQuestion,
+            image_url: imageUrl || null,
+            options: normalizedOptions,
+            correct_explanation: formData.correct_explanation.trim(),
+            real_world_tip: formData.real_world_tip.trim(),
+            xp: formData.xp,
+            is_active: true,
+          });
+
+        if (error) {
+          console.error('Error creating scenario:', error);
+          toast.error('Failed to create scenario');
+          setUploading(false);
+          return;
+        }
+
+        toast.success('Scenario created successfully');
+      }
+
+      handleCloseForm();
+      fetchScenarios(currentPage, true);
+    } catch (error) {
+      console.error('Error saving scenario:', error);
+      toast.error('Failed to save scenario');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   // Loading skeleton component
   const LoadingSkeleton = () => (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -270,7 +489,7 @@ export default function AdminScenariosPageOptimized() {
               Manage interactive driving scenarios ({totalCount} total)
             </p>
           </div>
-          <Button onClick={() => setShowForm(true)}>
+          <Button onClick={handleOpenCreateForm}>
             <Plus className="w-4 h-4 mr-2" />
             Add Scenario
           </Button>
@@ -418,6 +637,7 @@ export default function AdminScenariosPageOptimized() {
                             real_world_tip: scenario.real_world_tip,
                             xp: scenario.xp,
                           });
+                          setImagePreview(scenario.image_url || '');
                           setShowForm(true);
                         }}
                       >
@@ -500,6 +720,182 @@ export default function AdminScenariosPageOptimized() {
           </>
         )}
       </div>
+
+      {/* Add / Edit Scenario Form */}
+      {showForm && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+          <div className="w-full max-w-4xl mx-4">
+            <GlassCard className="p-6 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">
+                  {editingScenario ? 'Edit Scenario' : 'Add Scenario'}
+                </h2>
+                <Button variant="ghost" size="icon" onClick={handleCloseForm}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <form className="space-y-6" onSubmit={handleSubmitScenario}>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="mb-1 block">Category</Label>
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value) => handleFormFieldChange('category', value as Category)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(CATEGORY_INFO).map(([key, info]) => (
+                          <SelectItem key={key} value={key}>
+                            {info.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="mb-1 block">Level</Label>
+                    <Select
+                      value={String(formData.level)}
+                      onValueChange={(value) => handleFormFieldChange('level', parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Level 1</SelectItem>
+                        <SelectItem value="2">Level 2</SelectItem>
+                        <SelectItem value="3">Level 3</SelectItem>
+                        <SelectItem value="4">Level 4</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="mb-1 block">XP</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={formData.xp}
+                      onChange={(e) => handleFormFieldChange('xp', parseInt(e.target.value || '0'))}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="block">Question</Label>
+                  <Textarea
+                    value={formData.question}
+                    onChange={(e) => handleFormFieldChange('question', e.target.value)}
+                    placeholder="Enter the scenario question..."
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="block">Correct Explanation</Label>
+                    <Textarea
+                      value={formData.correct_explanation}
+                      onChange={(e) => handleFormFieldChange('correct_explanation', e.target.value)}
+                      placeholder="Explain why the correct answer is right..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="block">Real-world Tip</Label>
+                    <Textarea
+                      value={formData.real_world_tip}
+                      onChange={(e) => handleFormFieldChange('real_world_tip', e.target.value)}
+                      placeholder="Give a practical real-world driving tip..."
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="block">Answer Options</Label>
+                    <span className="text-xs text-muted-foreground">
+                      Mark all correct answers (multiple correct options supported)
+                    </span>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {formData.options.map((option, index) => (
+                      <div key={index} className="space-y-2 border rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-medium text-muted-foreground">
+                            Option {index + 1}
+                          </span>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={option.isCorrect ? 'default' : 'outline'}
+                            onClick={() => toggleOptionCorrect(index)}
+                          >
+                            {option.isCorrect ? 'Correct' : 'Mark Correct'}
+                          </Button>
+                        </div>
+                        <Input
+                          placeholder="Option text"
+                          value={option.text}
+                          onChange={(e) => handleOptionFieldChange(index, 'text', e.target.value)}
+                        />
+                        <Textarea
+                          placeholder="Optional explanation for this option"
+                          value={option.explanation}
+                          onChange={(e) => handleOptionFieldChange(index, 'explanation', e.target.value)}
+                          className="mt-2"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="block">Image (optional)</Label>
+                  <div className="flex items-center gap-4">
+                    <Button type="button" variant="outline" className="flex items-center gap-2 relative overflow-hidden">
+                      <ImageIcon className="w-4 h-4" />
+                      <span>Choose Image</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        onChange={handleImageChange}
+                      />
+                    </Button>
+                    {imagePreview && (
+                      <div className="w-24 h-16 rounded-md overflow-hidden border">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {formData.image_url && !imagePreview && (
+                    <p className="text-xs text-muted-foreground break-all">
+                      Current image: {formData.image_url}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <Button type="button" variant="outline" onClick={handleCloseForm} disabled={uploading}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={uploading}>
+                    {uploading ? 'Saving...' : editingScenario ? 'Save Changes' : 'Create Scenario'}
+                  </Button>
+                </div>
+              </form>
+            </GlassCard>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

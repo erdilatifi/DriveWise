@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Trophy, Medal, Award, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useLeaderboard } from '@/hooks/use-leaderboard';
@@ -25,10 +26,57 @@ export default function LeaderboardPage() {
     }
   }, [user, authLoading, router]);
 
-  if (authLoading || isLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 max-w-6xl pt-28">
+          <div className="mb-8">
+            <Skeleton className="h-9 w-40 mb-4" />
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+            </div>
+          </div>
+
+          <GlassCard className="p-6">
+            <div className="mb-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-4 w-40" />
+              </div>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-4 rounded-lg border-2 border-border">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 flex justify-center">
+                      <Skeleton className="h-6 w-6 rounded-full" />
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-40" />
+                      <div className="flex gap-4">
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-6 w-16" />
+                    <Skeleton className="h-6 w-16" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        </div>
       </div>
     );
   }
