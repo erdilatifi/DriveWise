@@ -403,7 +403,7 @@ export default function StatsPage() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="flex items-center justify-between p-4 rounded-xl border border-border hover:border-primary/30 transition-colors bg-card/50"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-border hover:border-primary/30 transition-colors bg-card/50"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
@@ -439,7 +439,7 @@ export default function StatsPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:justify-end">
                       <Button
                         variant="outline"
                         size="sm"

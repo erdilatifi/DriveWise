@@ -143,7 +143,7 @@ export default function HistoryPage() {
               Back to Dashboard
             </Link>
           </Button>
-          <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold mb-2">Test History</h1>
               <p className="text-muted-foreground">
@@ -181,61 +181,76 @@ export default function HistoryPage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <GlassCard className="p-6 hover:border-primary/30 transition-colors">
-                      <div className="flex items-center justify-between gap-4">
-                        {/* Status Icon */}
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          passed ? 'bg-green-500/10' : 'bg-red-500/10'
-                        }`}>
-                          {passed ? (
-                            <CheckCircle className="w-6 h-6 text-green-500" />
-                          ) : (
-                            <XCircle className="w-6 h-6 text-red-500" />
-                          )}
+                    <GlassCard className="p-5 sm:p-6 hover:border-primary/40 transition-colors">
+                      <div className="flex flex-col gap-3">
+                        {/* Top row: icon + basic info */}
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                              passed ? 'bg-green-500/10' : 'bg-red-500/10'
+                            }`}>
+                              {passed ? (
+                                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
+                              ) : (
+                                <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-base sm:text-lg mb-0.5">
+                                Category {test.category} - {
+                                  test.test_number === 'mixed' ? 'Mixed Test' :
+                                  test.test_number === 'personalized' ? 'Personalized Test' :
+                                  `Test #${test.test_number}`
+                                }
+                              </h3>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
+                                {formatDate(test.completed_at)} • {test.total_questions} questions
+                              </p>
+                            </div>
+                          </div>
+                          <div className="hidden sm:flex flex-col items-end text-xs">
+                            <span className={`px-2 py-1 rounded-full font-medium ${
+                              passed ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'
+                            }`}>
+                              {passed ? 'Passed' : 'Failed'}
+                            </span>
+                          </div>
                         </div>
 
-                        {/* Test Info */}
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg mb-1">
-                            Category {test.category} - {
-                              test.test_number === 'mixed' ? 'Mixed Test' :
-                              test.test_number === 'personalized' ? 'Personalized Test' :
-                              `Test #${test.test_number}`
-                            }
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {formatDate(test.completed_at)} • {test.total_questions} questions
-                          </p>
-                        </div>
+                        {/* Bottom row: score + actions */}
+                        <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-3">
+                          <div className="flex items-center gap-4 w-full sm:w-auto">
+                            <div className="text-center">
+                              <p className={`text-2xl sm:text-3xl font-bold ${passed ? 'text-green-500' : 'text-red-500'}`}>
+                                {test.percentage}%
+                              </p>
+                              <p className="text-xs text-muted-foreground">Score</p>
+                            </div>
+                            <div className="hidden sm:block h-8 w-px bg-border" />
+                            <div className="text-xs sm:text-sm text-muted-foreground">
+                              {test.score}/{test.total_questions} correct
+                            </div>
+                          </div>
 
-                        {/* Score */}
-                        <div className="text-center">
-                          <p className={`text-3xl font-bold ${passed ? 'text-green-500' : 'text-red-500'}`}>
-                            {test.percentage}%
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {test.score}/{test.total_questions}
-                          </p>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-2">
-                          <Button asChild>
-                            <Link href={`/history/${test.id}`}>
-                              <Eye className="w-4 h-4 mr-2" />
-                              Review
-                            </Link>
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            onClick={() => {
-                              setTestToDelete(test.id);
-                              setDeleteDialogOpen(true);
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <div className="flex flex-row sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto sm:justify-end">
+                            <Button asChild className="flex-[0.7] sm:flex-none">
+                              <Link href={`/history/${test.id}`}>
+                                <Eye className="w-4 h-4 mr-2" />
+                                Review
+                              </Link>
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="flex-[0.3] sm:flex-none"
+                              onClick={() => {
+                                setTestToDelete(test.id);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </GlassCard>

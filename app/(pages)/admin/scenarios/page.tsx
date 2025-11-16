@@ -511,9 +511,9 @@ export default function AdminScenariosPageOptimized() {
               </div>
               
               {/* Filters */}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-40 min-w-[9rem]">
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -527,7 +527,7 @@ export default function AdminScenariosPageOptimized() {
                 </Select>
 
                 <Select value={levelFilter} onValueChange={setLevelFilter}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-32 min-w-[7rem]">
                     <SelectValue placeholder="Level" />
                   </SelectTrigger>
                   <SelectContent>
@@ -540,7 +540,7 @@ export default function AdminScenariosPageOptimized() {
                 </Select>
 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-32 min-w-[7rem]">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -883,11 +883,11 @@ export default function AdminScenariosPageOptimized() {
                   )}
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-2">
-                  <Button type="button" variant="outline" onClick={handleCloseForm} disabled={uploading}>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-2">
+                  <Button type="button" variant="outline" onClick={handleCloseForm} disabled={uploading} className="w-full sm:w-auto">
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={uploading}>
+                  <Button type="submit" disabled={uploading} className="w-full sm:w-auto">
                     {uploading ? 'Saving...' : editingScenario ? 'Save Changes' : 'Create Scenario'}
                   </Button>
                 </div>

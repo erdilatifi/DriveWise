@@ -88,7 +88,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Stats grid skeleton */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
               {Array.from({ length: 4 }).map((_, i) => (
                 <GlassCard key={i} className="p-6">
                   <div className="flex items-center justify-between mb-3">
@@ -122,12 +122,12 @@ export default function DashboardPage() {
 
             {/* History CTA skeleton */}
             <GlassCard className="p-8">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="space-y-2">
                   <Skeleton className="h-5 w-40" />
                   <Skeleton className="h-3 w-64" />
                 </div>
-                <Skeleton className="h-10 w-40" />
+                <Skeleton className="h-10 w-full sm:w-40" />
               </div>
             </GlassCard>
           </div>
@@ -233,6 +233,8 @@ export default function DashboardPage() {
                       borderRadius: '12px',
                       padding: '8px 12px'
                     }}
+                    labelStyle={{ color: '#fff' }}
+                    itemStyle={{ color: '#fff' }}
                   />
                   <Line 
                     type="monotone" 
@@ -281,6 +283,8 @@ export default function DashboardPage() {
                       borderRadius: '12px',
                       padding: '8px 12px'
                     }}
+                    labelStyle={{ color: '#fff' }}
+                    itemStyle={{ color: '#fff' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -308,14 +312,14 @@ export default function DashboardPage() {
             className="mb-12"
           >
             <GlassCard className="p-8">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-semibold mb-2">Test History</h2>
                   <p className="text-sm text-muted-foreground">
                     View all your completed tests and review your answers
                   </p>
                 </div>
-                <Button size="lg" asChild className="shadow-lg shadow-primary/20">
+                <Button size="lg" asChild className="shadow-lg shadow-primary/20 w-full sm:w-auto">
                   <Link href="/history">
                     <History className="w-4 h-4 mr-2" />
                     View History

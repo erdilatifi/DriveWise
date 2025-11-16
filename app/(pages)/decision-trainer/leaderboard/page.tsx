@@ -110,7 +110,7 @@ export default function LeaderboardPage() {
             </Link>
           </Button>
           
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <h1 className="text-4xl font-bold mb-2">🏆 Leaderboard</h1>
               <p className="text-muted-foreground">Top learners in Decision Trainer</p>
@@ -129,7 +129,7 @@ export default function LeaderboardPage() {
                 </span>
               </div>
               <div className="p-4 rounded-lg border-2 border-primary bg-primary/5">
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="w-12 flex justify-center">
                     <span className="text-primary font-bold">#{currentUserRank.rank}</span>
                   </div>
@@ -141,7 +141,7 @@ export default function LeaderboardPage() {
                       </h3>
                       <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">You</span>
                     </div>
-                    <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
                       <span>{currentUserRank.total_scenarios} scenarios</span>
                       <span>{currentUserRank.accuracy}% accuracy</span>
                       <span>{currentUserRank.categories_completed} categories</span>
@@ -151,7 +151,7 @@ export default function LeaderboardPage() {
                     </div>
                   </div>
                   
-                  <div className="text-right">
+                  <div className="text-center sm:text-right">
                     <div className="flex items-center gap-2 text-2xl font-bold text-primary">
                       <Zap className="w-5 h-5" />
                       {currentUserRank.total_xp}
@@ -159,7 +159,7 @@ export default function LeaderboardPage() {
                     <div className="text-xs text-muted-foreground">XP</div>
                   </div>
                   
-                  <div className="text-right">
+                  <div className="text-center sm:text-right">
                     <div className="text-xl font-bold text-orange-500">
                       🔥 {currentUserRank.best_streak}
                     </div>
@@ -209,7 +209,7 @@ export default function LeaderboardPage() {
                         : 'border-border'
                     }`}
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                       <div className="w-12 flex justify-center">
                         {getRankIcon(rank)}
                       </div>
@@ -223,7 +223,7 @@ export default function LeaderboardPage() {
                             <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">You</span>
                           )}
                         </div>
-                        <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
                           <span>{entry.total_scenarios} scenarios</span>
                           <span>{entry.accuracy}% accuracy</span>
                           <span>{entry.categories_completed} categories</span>
@@ -233,7 +233,7 @@ export default function LeaderboardPage() {
                         </div>
                       </div>
                       
-                      <div className="text-right">
+                      <div className="text-center sm:text-right">
                         <div className="flex items-center gap-2 text-2xl font-bold text-primary">
                           <Zap className="w-5 h-5" />
                           {entry.total_xp}

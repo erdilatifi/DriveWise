@@ -1,15 +1,16 @@
 'use client';
 
-import { use } from 'react';
+import { use, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import Link from 'next/link';
 import { Play, Clock, CheckCircle, Target, Shuffle, Brain } from 'lucide-react';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { useLanguage } from '@/contexts/language-context';
 import { useTestCount } from '@/hooks/use-test-attempts';
+import { useAuth } from '@/contexts/auth-context';
 
 interface CategoryPageProps {
   params: Promise<{
@@ -19,12 +20,33 @@ interface CategoryPageProps {
 
 export default function CategoryPage({ params }: CategoryPageProps) {
   const { t } = useLanguage();
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const { category: categoryParam } = use(params);
   const category = categoryParam.toUpperCase() as LicenseCategory;
   
   // Validate category
   if (!CATEGORY_INFO[category]) {
     notFound();
+  }
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [authLoading, user, router]);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">
+            {authLoading ? 'Authenticating...' : 'Redirecting...'}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   // Use TanStack Query for data fetching
@@ -92,7 +114,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                   <CardContent className="relative flex flex-col items-center justify-center p-8 space-y-4">
                     {/* Test number with circle */}
                     <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/30 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
-                      <span className="text-3xl font-bold text-primary">{testNumber}</span>
+                      <span className="text-3xl font-bold text-primary group-hover:text-primary-foreground">{testNumber}</span>
                     </div>
                     
                     {/* Test info */}

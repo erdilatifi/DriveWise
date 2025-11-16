@@ -272,7 +272,7 @@ export default function DecisionTrainerPage() {
               <Button asChild variant="outline">
                 <Link href="/decision-trainer/leaderboard">
                   <Trophy className="w-4 h-4 mr-2" />
-                  {t('test.viewAllTests')}
+                  Leaderboard
                 </Link>
               </Button>
             </div>
@@ -292,9 +292,11 @@ export default function DecisionTrainerPage() {
                     <div className="flex-1">
                       <h3 className="text-xl font-bold mb-2">{info.name}</h3>
                       <p className="text-sm text-muted-foreground">{info.description}</p>
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm mt-2">
                         <span className="text-muted-foreground">{categoryCount} scenarios</span>
-                        <Button size="sm">{t('categories.startPractice')} →</Button>
+                        <Button size="sm" className="w-full sm:w-auto">
+                          {t('categories.startPractice')} →
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -322,7 +324,7 @@ export default function DecisionTrainerPage() {
             {t('test.backToTests')}
           </Button>
           
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div>
               <h1 className="text-3xl font-bold flex items-center gap-2">
                 <span className="text-4xl">{categoryInfo.icon}</span>
@@ -330,18 +332,18 @@ export default function DecisionTrainerPage() {
               </h1>
               <p className="text-muted-foreground">{t('test.question')} {currentScenarioIndex + 1} {t('test.of')} {categoryScenarios.length}</p>
             </div>
-            <div className="flex gap-4">
-              <div className="text-center">
+            <div className="flex flex-wrap sm:flex-nowrap gap-4 justify-start sm:justify-end">
+              <div className="text-center min-w-[90px]">
                 <div className={`text-3xl font-bold ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-blue-500'}`}>
                   ⏱️ {timeLeft}s
                 </div>
                 <div className="text-xs text-muted-foreground">{t('test.timeLeft')}</div>
               </div>
-              <div className="text-center">
+              <div className="text-center min-w-[70px]">
                 <div className="text-2xl font-bold text-primary">{stats.xp}</div>
                 <div className="text-xs text-muted-foreground">XP</div>
               </div>
-              <div className="text-center">
+              <div className="text-center min-w-[70px]">
                 <div className="text-2xl font-bold text-green-500">{stats.streak}</div>
                 <div className="text-xs text-muted-foreground">{t('dashboard.streak')}</div>
               </div>
