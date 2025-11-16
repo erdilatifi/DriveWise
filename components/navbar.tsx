@@ -15,7 +15,7 @@ export function Navbar() {
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { language, setLanguage, t } = useLanguage();
-  const { user, signOut, isAdmin, userProfile } = useAuth();
+  const { user, signOut, isAdmin, userProfile, loading: authLoading } = useAuth();
   const pathname = usePathname();
 
   // Get display name from userProfile or fallback to email
@@ -170,7 +170,12 @@ export function Navbar() {
               )}
             </div>
             
-            {user ? (
+            {authLoading ? (
+              <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-primary/5 border border-primary/10">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                <span className="text-sm text-muted-foreground">Loading...</span>
+              </div>
+            ) : user ? (
               <>
                 <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
@@ -284,7 +289,12 @@ export function Navbar() {
               </div>
               
               <div className="h-px bg-border/40 my-3"></div>
-              {user ? (
+              {authLoading ? (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/5 border border-primary/10">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                  <span className="text-sm text-muted-foreground">Loading...</span>
+                </div>
+              ) : user ? (
                 <Button variant="outline" size="sm" onClick={handleLogout} className="w-full justify-start border-border/50 hover:border-primary/50">
                   <LogOut className="w-4 h-4 mr-2" />
                   {t('nav.logout')}

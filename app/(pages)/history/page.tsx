@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,8 @@ import { toast } from 'sonner';
 import { useTestHistory, useDeleteTestAttempt, useClearAllTestAttempts } from '@/hooks/use-test-attempts';
 
 export default function HistoryPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clearAllDialogOpen, setClearAllDialogOpen] = useState(false);
@@ -38,6 +40,12 @@ export default function HistoryPage() {
   const tests = historyData?.tests || [];
   const totalTests = historyData?.totalCount || 0;
   const totalPages = historyData?.totalPages || 1;
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/');
+    }
+  }, [authLoading, user, router]);
 
   const handleDeleteTest = async () => {
     if (!testToDelete) return;
@@ -76,6 +84,19 @@ export default function HistoryPage() {
       minute: '2-digit',
     });
   };
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">
+            {authLoading ? 'Authenticating...' : 'Redirecting...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

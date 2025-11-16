@@ -64,34 +64,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (!mounted) return;
         
-        if (user) {
-          const blocked = await checkIfBlocked(user.id);
-          
-          if (!mounted) return;
-          
-          setIsBlocked(blocked);
-          
-          if (blocked) {
-            await supabase.auth.signOut();
-            setUser(null);
-            setUserProfile(null);
-            toast.error('Account Blocked', {
-              description: 'Your account has been blocked. Please contact support.',
-              duration: 5000,
-            });
-            router.push('/');
-            setLoading(false);
-            setInitialized(true);
-            return;
-          }
-        } else {
+        // Immediately update auth state for fast UI feedback
+        setUser(user);
+        setLoading(false);
+        setInitialized(true);
+
+        if (!user) {
           setUserProfile(null);
+          setIsBlocked(false);
+          return;
         }
-        
-        if (mounted) {
-          setUser(user);
-          setLoading(false);
-          setInitialized(true);
+
+        // Run blocked/profile check in the background
+        const blocked = await checkIfBlocked(user.id);
+
+        if (!mounted) return;
+
+        setIsBlocked(blocked);
+
+        if (blocked) {
+          await supabase.auth.signOut();
+          setUser(null);
+          setUserProfile(null);
+          toast.error('Account Blocked', {
+            description: 'Your account has been blocked. Please contact support.',
+            duration: 5000,
+          });
+          router.push('/');
         }
       } catch (error) {
         console.error('Error getting user:', error);
@@ -117,32 +116,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (session?.user) {
-        const blocked = await checkIfBlocked(session.user.id);
-        
-        if (!mounted) return;
-        
-        setIsBlocked(blocked);
-        
-        if (blocked) {
-          await supabase.auth.signOut();
-          setUser(null);
-          setUserProfile(null);
-          toast.error('Account Blocked', {
-            description: 'Your account has been blocked. Please contact support.',
-            duration: 5000,
-          });
-          router.push('/');
-          setLoading(false);
-          return;
-        }
-      } else {
+      const currentUser = session?.user ?? null;
+
+      // Immediately reflect auth state change in UI
+      setUser(currentUser);
+      setLoading(false);
+
+      if (!currentUser) {
         setUserProfile(null);
+        setIsBlocked(false);
+        return;
       }
-      
-      if (mounted) {
-        setUser(session?.user ?? null);
-        setLoading(false);
+
+      // Background blocked/profile check
+      const blocked = await checkIfBlocked(currentUser.id);
+
+      if (!mounted) return;
+
+      setIsBlocked(blocked);
+
+      if (blocked) {
+        await supabase.auth.signOut();
+        setUser(null);
+        setUserProfile(null);
+        toast.error('Account Blocked', {
+          description: 'Your account has been blocked. Please contact support.',
+          duration: 5000,
+        });
+        router.push('/');
       }
     });
 
