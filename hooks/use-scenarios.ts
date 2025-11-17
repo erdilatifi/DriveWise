@@ -19,6 +19,7 @@ export interface Scenario {
   real_world_tip: string;
   xp: number;
   is_active: boolean;
+  chapter_id?: number | null;
 }
 
 export function useScenarios(category?: Category) {

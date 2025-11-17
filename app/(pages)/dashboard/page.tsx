@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Trophy, Target, Award, Zap, History } from 'lucide-react';
+import { Trophy, Target, Award, Zap, History, Brain } from 'lucide-react';
 import { Navbar } from '@/components/navbar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -13,6 +13,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
 import { motion } from 'framer-motion';
 import { useDashboardStats } from '@/hooks/use-test-attempts';
+import { useDecisionTrainerStats } from '@/hooks/use-decision-trainer';
 
 export default function DashboardPage() {
   const { t } = useLanguage();
@@ -21,6 +22,7 @@ export default function DashboardPage() {
   
   // Use TanStack Query for data fetching
   const { data: dashboardData, isLoading: loading, error } = useDashboardStats(user?.id);
+  const { data: trainerStats } = useDecisionTrainerStats(user?.id);
   
   const stats = dashboardData?.stats || {
     totalTests: 0,
@@ -198,6 +200,51 @@ export default function DashboardPage() {
             </motion.div>
           ))}
           </div>
+        )}
+
+        {/* Decision Trainer Summary */}
+        {trainerStats && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="mb-12"
+          >
+            <GlassCard className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Brain className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold mb-1">Decision Trainer Progress</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {trainerStats.totalScenarios} scenarios completed · {trainerStats.accuracy}% accuracy · {trainerStats.totalXp} XP
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Best streak: {trainerStats.bestStreak} · Categories practiced: {trainerStats.categoriesCompleted}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col items-stretch gap-2 w-full md:w-auto">
+                <div className="flex gap-2 text-[11px] text-muted-foreground">
+                  <span className="font-semibold">Achievements:</span>
+                  <span>
+                    {trainerStats.totalScenarios >= 1 && 'First Steps'}
+                    {trainerStats.totalAttempts >= 20 && trainerStats.accuracy >= 80 && ', Accuracy Ace'}
+                    {trainerStats.bestStreak >= 10 && ', Streak Master'}
+                    {trainerStats.totalXp >= 500 && ', XP Hunter'}
+                    {trainerStats.categoriesCompleted >= 3 && ', Category Explorer'}
+                  </span>
+                </div>
+                <Button size="sm" asChild className="md:self-end w-full md:w-auto">
+                  <Link href="/decision-trainer">
+                    <Brain className="w-4 h-4 mr-2" />
+                    Go to Decision Trainer
+                  </Link>
+                </Button>
+              </div>
+            </GlassCard>
+          </motion.div>
         )}
 
         {hasData && (

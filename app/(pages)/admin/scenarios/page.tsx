@@ -33,13 +33,20 @@ interface Scenario {
   category: string;
   level: number;
   question: string;
+  question_en?: string | null;
+  question_sq?: string | null;
   image_url?: string;
   options: any[];
   correct_explanation: string;
+  correct_explanation_en?: string | null;
+  correct_explanation_sq?: string | null;
   real_world_tip: string;
+  real_world_tip_en?: string | null;
+  real_world_tip_sq?: string | null;
   xp: number;
   is_active: boolean;
   created_at?: string;
+  chapter_id?: number | null;
 }
 
 export default function AdminScenariosPageOptimized() {
@@ -73,7 +80,8 @@ export default function AdminScenariosPageOptimized() {
   const [formData, setFormData] = useState({
     category: 'traffic-lights' as Category,
     level: 1,
-    question: '',
+    question_en: '',
+    question_sq: '',
     image_url: '',
     options: [
       { text: '', isCorrect: false, explanation: '' },
@@ -81,9 +89,12 @@ export default function AdminScenariosPageOptimized() {
       { text: '', isCorrect: false, explanation: '' },
       { text: '', isCorrect: false, explanation: '' },
     ],
-    correct_explanation: '',
-    real_world_tip: '',
+    correct_explanation_en: '',
+    correct_explanation_sq: '',
+    real_world_tip_en: '',
+    real_world_tip_sq: '',
     xp: 25,
+    chapter_id: 1,
   });
 
   // Reset form to default values
@@ -94,7 +105,8 @@ export default function AdminScenariosPageOptimized() {
     setFormData({
       category: 'traffic-lights' as Category,
       level: 1,
-      question: '',
+      question_en: '',
+      question_sq: '',
       image_url: '',
       options: [
         { text: '', isCorrect: false, explanation: '' },
@@ -102,9 +114,12 @@ export default function AdminScenariosPageOptimized() {
         { text: '', isCorrect: false, explanation: '' },
         { text: '', isCorrect: false, explanation: '' },
       ],
-      correct_explanation: '',
-      real_world_tip: '',
+      correct_explanation_en: '',
+      correct_explanation_sq: '',
+      real_world_tip_en: '',
+      real_world_tip_sq: '',
       xp: 25,
+      chapter_id: 1,
     });
   };
 
@@ -257,7 +272,7 @@ export default function AdminScenariosPageOptimized() {
   };
 
   // Form helpers
-  const handleFormFieldChange = (field: 'category' | 'level' | 'question' | 'correct_explanation' | 'real_world_tip' | 'xp' | 'image_url', value: any) => {
+  const handleFormFieldChange = (field: 'category' | 'level' | 'question_en' | 'question_sq' | 'correct_explanation_en' | 'correct_explanation_sq' | 'real_world_tip_en' | 'real_world_tip_sq' | 'xp' | 'image_url' | 'chapter_id', value: any) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -301,9 +316,11 @@ export default function AdminScenariosPageOptimized() {
     if (uploading) return;
 
     try {
-      const trimmedQuestion = formData.question.trim();
-      if (!trimmedQuestion) {
-        toast.error('Question is required');
+      const trimmedQuestionEn = formData.question_en.trim();
+      const trimmedQuestionSq = formData.question_sq.trim();
+      const baseQuestion = trimmedQuestionEn || trimmedQuestionSq;
+      if (!baseQuestion) {
+        toast.error('Question (at least one language) is required');
         return;
       }
 
@@ -325,13 +342,19 @@ export default function AdminScenariosPageOptimized() {
         return;
       }
 
-      if (!formData.correct_explanation.trim()) {
-        toast.error('Correct explanation is required');
+      const trimmedCorrectEn = formData.correct_explanation_en.trim();
+      const trimmedCorrectSq = formData.correct_explanation_sq.trim();
+      const baseCorrect = trimmedCorrectEn || trimmedCorrectSq;
+      if (!baseCorrect) {
+        toast.error('Correct explanation (at least one language) is required');
         return;
       }
 
-      if (!formData.real_world_tip.trim()) {
-        toast.error('Real-world tip is required');
+      const trimmedTipEn = formData.real_world_tip_en.trim();
+      const trimmedTipSq = formData.real_world_tip_sq.trim();
+      const baseTip = trimmedTipEn || trimmedTipSq;
+      if (!baseTip) {
+        toast.error('Real-world tip (at least one language) is required');
         return;
       }
 
@@ -374,12 +397,19 @@ export default function AdminScenariosPageOptimized() {
           .update({
             category: formData.category,
             level: formData.level,
-            question: trimmedQuestion,
+            question: baseQuestion,
+            question_en: trimmedQuestionEn || null,
+            question_sq: trimmedQuestionSq || null,
             image_url: imageUrl || null,
             options: normalizedOptions,
-            correct_explanation: formData.correct_explanation.trim(),
-            real_world_tip: formData.real_world_tip.trim(),
+            correct_explanation: baseCorrect,
+            correct_explanation_en: trimmedCorrectEn || null,
+            correct_explanation_sq: trimmedCorrectSq || null,
+            real_world_tip: baseTip,
+            real_world_tip_en: trimmedTipEn || null,
+            real_world_tip_sq: trimmedTipSq || null,
             xp: formData.xp,
+            chapter_id: formData.chapter_id || null,
           })
           .eq('id', editingScenario.id);
 
@@ -400,13 +430,20 @@ export default function AdminScenariosPageOptimized() {
             id: generatedId,
             category: formData.category,
             level: formData.level,
-            question: trimmedQuestion,
+            question: baseQuestion,
+            question_en: trimmedQuestionEn || null,
+            question_sq: trimmedQuestionSq || null,
             image_url: imageUrl || null,
             options: normalizedOptions,
-            correct_explanation: formData.correct_explanation.trim(),
-            real_world_tip: formData.real_world_tip.trim(),
+            correct_explanation: baseCorrect,
+            correct_explanation_en: trimmedCorrectEn || null,
+            correct_explanation_sq: trimmedCorrectSq || null,
+            real_world_tip: baseTip,
+            real_world_tip_en: trimmedTipEn || null,
+            real_world_tip_sq: trimmedTipSq || null,
             xp: formData.xp,
             is_active: true,
+            chapter_id: formData.chapter_id || null,
           });
 
         if (error) {
@@ -630,12 +667,16 @@ export default function AdminScenariosPageOptimized() {
                           setFormData({
                             category: scenario.category as Category,
                             level: scenario.level,
-                            question: scenario.question,
+                            question_en: scenario.question_en ?? scenario.question ?? '',
+                            question_sq: scenario.question_sq ?? scenario.question ?? '',
                             image_url: scenario.image_url || '',
                             options: scenario.options,
-                            correct_explanation: scenario.correct_explanation,
-                            real_world_tip: scenario.real_world_tip,
+                            correct_explanation_en: scenario.correct_explanation_en ?? scenario.correct_explanation ?? '',
+                            correct_explanation_sq: scenario.correct_explanation_sq ?? scenario.correct_explanation ?? '',
+                            real_world_tip_en: scenario.real_world_tip_en ?? scenario.real_world_tip ?? '',
+                            real_world_tip_sq: scenario.real_world_tip_sq ?? scenario.real_world_tip ?? '',
                             xp: scenario.xp,
+                            chapter_id: scenario.chapter_id || 1,
                           });
                           setImagePreview(scenario.image_url || '');
                           setShowForm(true);
@@ -736,7 +777,7 @@ export default function AdminScenariosPageOptimized() {
               </div>
 
               <form className="space-y-6" onSubmit={handleSubmitScenario}>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <Label className="mb-1 block">Category</Label>
                     <Select
@@ -783,32 +824,79 @@ export default function AdminScenariosPageOptimized() {
                       onChange={(e) => handleFormFieldChange('xp', parseInt(e.target.value || '0'))}
                     />
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label className="block">Question</Label>
-                  <Textarea
-                    value={formData.question}
-                    onChange={(e) => handleFormFieldChange('question', e.target.value)}
-                    placeholder="Enter the scenario question..."
-                  />
+                  <div>
+                    <Label className="mb-1 block">Chapter (optional)</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={formData.chapter_id ?? ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        handleFormFieldChange(
+                          'chapter_id',
+                          value === '' ? null : parseInt(value, 10) || null,
+                        );
+                      }}
+                      placeholder="e.g. 5"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="block">Correct Explanation</Label>
+                    <Label className="block">Question (English)</Label>
                     <Textarea
-                      value={formData.correct_explanation}
-                      onChange={(e) => handleFormFieldChange('correct_explanation', e.target.value)}
-                      placeholder="Explain why the correct answer is right..."
+                      value={formData.question_en}
+                      onChange={(e) => handleFormFieldChange('question_en', e.target.value)}
+                      placeholder="Enter the scenario question in English..."
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="block">Real-world Tip</Label>
+                    <Label className="block">Pyetja (Shqip)</Label>
                     <Textarea
-                      value={formData.real_world_tip}
-                      onChange={(e) => handleFormFieldChange('real_world_tip', e.target.value)}
-                      placeholder="Give a practical real-world driving tip..."
+                      value={formData.question_sq}
+                      onChange={(e) => handleFormFieldChange('question_sq', e.target.value)}
+                      placeholder="Shkruaj pyetjen në shqip..."
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="block">Correct Explanation (English)</Label>
+                    <Textarea
+                      value={formData.correct_explanation_en}
+                      onChange={(e) => handleFormFieldChange('correct_explanation_en', e.target.value)}
+                      placeholder="Explain why the correct answer is right (EN)..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="block">Shpjegimi i saktë (Shqip)</Label>
+                    <Textarea
+                      value={formData.correct_explanation_sq}
+                      onChange={(e) => handleFormFieldChange('correct_explanation_sq', e.target.value)}
+                      placeholder="Shpjego pse përgjigjja është e saktë (SQ)..."
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="block">Real-world Tip (English)</Label>
+                    <Textarea
+                      value={formData.real_world_tip_en}
+                      onChange={(e) => handleFormFieldChange('real_world_tip_en', e.target.value)}
+                      placeholder="Give a practical real-world driving tip (EN)..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="block">Këshillë praktike (Shqip)</Label>
+                    <Textarea
+                      value={formData.real_world_tip_sq}
+                      onChange={(e) => handleFormFieldChange('real_world_tip_sq', e.target.value)}
+                      placeholder="Jep një këshillë praktike në shqip (SQ)..."
                     />
                   </div>
                 </div>

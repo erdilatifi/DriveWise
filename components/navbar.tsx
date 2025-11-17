@@ -81,6 +81,7 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
+            {/* Home */}
             <Link
               href="/"
               className={`text-sm font-semibold transition-all duration-200 relative group/link ${
@@ -92,6 +93,8 @@ export function Navbar() {
                 <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
               )}
             </Link>
+
+            {/* Materials */}
             <Link
               href="/materials"
               className={`text-sm font-semibold transition-all duration-200 relative group/link ${
@@ -103,17 +106,16 @@ export function Navbar() {
                 <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
               )}
             </Link>
+
+            {/* Tests (category section on landing) */}
             <Link
-              href="/dashboard"
-              className={`text-sm font-semibold transition-all duration-200 relative group/link ${
-                isActive('/dashboard') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
-              }`}
+              href="/#categories"
+              className={`text-sm font-semibold transition-all duration-200 relative group/link text-foreground/80 hover:text-foreground`}
             >
-              {t('nav.dashboard')}
-              {isActive('/dashboard') && (
-                <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
-              )}
+              Tests
             </Link>
+
+            {/* Decision Trainer (logged-in users) */}
             {user && (
               <Link
                 href="/decision-trainer"
@@ -127,6 +129,21 @@ export function Navbar() {
                 )}
               </Link>
             )}
+
+            {/* Dashboard */}
+            <Link
+              href="/dashboard"
+              className={`text-sm font-semibold transition-all duration-200 relative group/link ${
+                isActive('/dashboard') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
+              }`}
+            >
+              {t('nav.dashboard')}
+              {isActive('/dashboard') && (
+                <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
+              )}
+            </Link>
+
+            {/* Admin (admins only) */}
             {user && isAdmin && (
               <Link
                 href="/admin"
@@ -232,6 +249,7 @@ export function Navbar() {
                   <span className="text-sm font-medium text-primary">{displayName}</span>
                 </div>
               )}
+              {/* Home */}
               <Link
                 href="/"
                 className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
@@ -241,6 +259,8 @@ export function Navbar() {
               >
                 {t('nav.home')}
               </Link>
+
+              {/* Materials */}
               <Link
                 href="/materials"
                 className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
@@ -250,15 +270,17 @@ export function Navbar() {
               >
                 {t('nav.materials')}
               </Link>
+
+              {/* Tests */}
               <Link
-                href="/dashboard"
-                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                  isActive('/dashboard') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
-                }`}
+                href="/#categories"
+                className="px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-foreground/80 hover:bg-primary/5 hover:text-foreground"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                {t('nav.dashboard')}
+                Tests
               </Link>
+
+              {/* Decision Trainer (logged-in users) */}
               {user && (
                 <Link
                   href="/decision-trainer"
@@ -270,6 +292,19 @@ export function Navbar() {
                    Decision Trainer
                 </Link>
               )}
+
+              {/* Dashboard */}
+              <Link
+                href="/dashboard"
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  isActive('/dashboard') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('nav.dashboard')}
+              </Link>
+
+              {/* Admin (admins only) */}
               {user && isAdmin && (
                 <Link
                   href="/admin"

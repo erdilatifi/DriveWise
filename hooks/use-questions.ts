@@ -6,9 +6,17 @@ export interface Question {
   category: string;
   test_number: number;
   question_text: string;
+  question_text_en?: string | null;
+  question_text_sq?: string | null;
   option_a: string;
+  option_a_en?: string | null;
+  option_a_sq?: string | null;
   option_b: string;
+  option_b_en?: string | null;
+  option_b_sq?: string | null;
   option_c: string;
+  option_c_en?: string | null;
+  option_c_sq?: string | null;
   correct_answer: 'A' | 'B' | 'C';
   correct_answers?: ('A' | 'B' | 'C')[]; // Multiple correct answers support
   image_url?: string;
@@ -20,9 +28,17 @@ export interface QuestionInput {
   category: string;
   test_number: number;
   question_text: string;
+  question_text_en?: string | null;
+  question_text_sq?: string | null;
   option_a: string;
+  option_a_en?: string | null;
+  option_a_sq?: string | null;
   option_b: string;
+  option_b_en?: string | null;
+  option_b_sq?: string | null;
   option_c: string;
+  option_c_en?: string | null;
+  option_c_sq?: string | null;
   correct_answer: 'A' | 'B' | 'C';
   correct_answers?: ('A' | 'B' | 'C')[]; // Multiple correct answers support
   image_url?: string;

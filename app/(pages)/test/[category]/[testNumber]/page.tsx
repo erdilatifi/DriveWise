@@ -19,9 +19,17 @@ import { useLanguage } from '@/contexts/language-context';
 interface Question {
   id: string;
   question_text: string;
+  question_text_en?: string | null;
+  question_text_sq?: string | null;
   option_a: string;
+  option_a_en?: string | null;
+  option_a_sq?: string | null;
   option_b: string;
+  option_b_en?: string | null;
+  option_b_sq?: string | null;
   option_c: string;
+  option_c_en?: string | null;
+  option_c_sq?: string | null;
   correct_answer: string;
   correct_answers?: string[]; // Multiple correct answers support
   image_url?: string;
@@ -37,7 +45,7 @@ export default function TestPage() {
   const router = useRouter();
   const supabase = createClient();
   const queryClient = useQueryClient();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const category = (params.category as string).toUpperCase() as LicenseCategory;
   const testNumber = params.testNumber as string;
 
@@ -189,6 +197,9 @@ export default function TestPage() {
   const handleAnswer = (value: string) => {
     if (questions.length > 0) {
       const question = questions[currentQuestion];
+      const questionText = language === 'en'
+        ? (question.question_text_en || question.question_text)
+        : (question.question_text_sq || question.question_text);
       // Always use array mode for multiple selection
       const currentAnswers = (answers[question.id] as string[]) || [];
       const newAnswers = currentAnswers.includes(value)
@@ -565,12 +576,30 @@ export default function TestPage() {
   }
 
   const question = questions[currentQuestion];
+  const questionText = language === 'en'
+    ? (question.question_text_en || question.question_text)
+    : (question.question_text_sq || question.question_text);
   const currentAnswer = answers[question.id];
 
   const options = [
-    { id: 'A', text: question.option_a },
-    { id: 'B', text: question.option_b },
-    { id: 'C', text: question.option_c },
+    {
+      id: 'A',
+      text: language === 'en'
+        ? (question.option_a_en || question.option_a)
+        : (question.option_a_sq || question.option_a),
+    },
+    {
+      id: 'B',
+      text: language === 'en'
+        ? (question.option_b_en || question.option_b)
+        : (question.option_b_sq || question.option_b),
+    },
+    {
+      id: 'C',
+      text: language === 'en'
+        ? (question.option_c_en || question.option_c)
+        : (question.option_c_sq || question.option_c),
+    },
   ];
 
   return (
@@ -609,7 +638,7 @@ export default function TestPage() {
                 `${t('test.test')} ${testNumber}`
               }
             </div>
-            <CardTitle className="text-2xl md:text-3xl">{question.question_text}</CardTitle>
+            <CardTitle className="text-2xl md:text-3xl">{questionText}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Side-by-side layout when image exists */}

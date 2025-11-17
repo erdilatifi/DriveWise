@@ -30,6 +30,9 @@ export default function CategoryPage({ params }: CategoryPageProps) {
     notFound();
   }
 
+  // Use TanStack Query for data fetching (must be called unconditionally before any early returns)
+  const { data: testCount = 10, isLoading: loading } = useTestCount(category);
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login');
@@ -48,9 +51,6 @@ export default function CategoryPage({ params }: CategoryPageProps) {
       </div>
     );
   }
-
-  // Use TanStack Query for data fetching
-  const { data: testCount = 10, isLoading: loading } = useTestCount(category);
 
   const categoryInfo = CATEGORY_INFO[category];
   const mockTests = Array.from({ length: testCount }, (_, i) => i + 1);

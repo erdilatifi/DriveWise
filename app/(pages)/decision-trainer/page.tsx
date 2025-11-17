@@ -12,7 +12,7 @@ import { ArrowLeft, Check, X, Lightbulb, Trophy, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { CATEGORY_INFO, type Category } from '@/data/scenarios';
 import { useScenarios } from '@/hooks/use-scenarios';
-import { useCompleteCategory } from '@/hooks/use-decision-trainer';
+import { useCompleteCategory, useDecisionTrainerProgress, useDecisionTrainerStats } from '@/hooks/use-decision-trainer';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/language-context';
 // import Confetti from 'react-canvas-confetti';
@@ -21,6 +21,8 @@ export default function DecisionTrainerPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { t } = useLanguage();
+  const { data: categoryProgressData } = useDecisionTrainerProgress(user?.id);
+   const { data: trainerStats } = useDecisionTrainerStats(user?.id);
   
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
@@ -37,6 +39,24 @@ export default function DecisionTrainerPage() {
     timeTakenMs: number;
     xpEarned: number;
   }>>([]);
+  const [mode, setMode] = useState<'full' | 'quick5' | 'quick10' | 'weak'>('full');
+  const [sessionScenarioIds, setSessionScenarioIds] = useState<string[] | null>(null);
+  const [lastSessionSummary, setLastSessionSummary] = useState<{
+    category: Category;
+    stats: {
+      totalXpEarned: number;
+      correctCount: number;
+      totalCount: number;
+      accuracy: number;
+      maxStreak: number;
+      avgTimeSeconds: number;
+    };
+    mistakes: Array<{
+      scenarioId: string;
+      question: string;
+      chapterId?: number | null;
+    }>;
+  } | null>(null);
   // const [confettiInstance, setConfettiInstance] = useState<any>(null);
 
   // Fetch scenarios from database
@@ -72,7 +92,33 @@ export default function DecisionTrainerPage() {
     return () => clearInterval(timer);
   }, [selectedCategory, showResult, selectedOptions]);
 
-  const categoryScenarios = scenarios;
+  useEffect(() => {
+    if (!selectedCategory || scenariosLoading) return;
+    if (!scenarios.length) return;
+
+    if (mode === 'full') {
+      setSessionScenarioIds(null);
+      return;
+    }
+
+    if (sessionScenarioIds && sessionScenarioIds.length > 0) {
+      return;
+    }
+
+    const maxQuestions = mode === 'quick5' || mode === 'weak' ? 5 : 10;
+    const shuffled = [...scenarios].sort(() => Math.random() - 0.5);
+    const subset = shuffled
+      .slice(0, Math.min(maxQuestions, shuffled.length))
+      .map((s: any) => s.id as string);
+    setSessionScenarioIds(subset);
+    setCurrentScenarioIndex(0);
+  }, [selectedCategory, scenariosLoading, scenarios, mode, sessionScenarioIds]);
+
+  const categoryScenarios = selectedCategory
+    ? (sessionScenarioIds
+        ? (scenarios as any[]).filter((s) => sessionScenarioIds.includes(s.id))
+        : scenarios)
+    : scenarios;
   const currentScenario = categoryScenarios[currentScenarioIndex];
 
   const handleSelectOption = (index: number) => {
@@ -93,12 +139,12 @@ export default function DecisionTrainerPage() {
 
     // Check if answer is correct - user must select ALL correct options and NO incorrect ones
     const correctOptionIndices = currentScenario.options
-      .map((option, index) => option.isCorrect ? index : -1)
-      .filter(index => index !== -1);
+      .map((option: any, index: number) => (option.isCorrect ? index : -1))
+      .filter((index: number) => index !== -1);
     
     const isCorrect = selectedOptions.length === correctOptionIndices.length &&
-      selectedOptions.every(index => correctOptionIndices.includes(index)) &&
-      correctOptionIndices.every(index => selectedOptions.includes(index));
+      selectedOptions.every((index: number) => correctOptionIndices.includes(index)) &&
+      correctOptionIndices.every((index: number) => selectedOptions.includes(index));
     
     const timeTaken = (30 - timeLeft) * 1000; // Convert to milliseconds
     const xpEarned = isCorrect ? currentScenario.xp : 0;
@@ -159,9 +205,74 @@ export default function DecisionTrainerPage() {
             `Best Streak: ${result.sessionStats.maxStreak}`,
             { duration: 5000 }
           );
+
+          const mistakes = sessionAttempts
+            .filter((a) => !a.isCorrect)
+            .map((a) => {
+              const scenario = categoryScenarios.find((s: any) => s.id === a.scenarioId);
+              return {
+                scenarioId: a.scenarioId,
+                question: scenario?.question || '',
+                chapterId: scenario?.chapter_id ?? null,
+              };
+            });
+
+          setLastSessionSummary({
+            category: selectedCategory,
+            stats: {
+              totalXpEarned: result.sessionStats.totalXpEarned,
+              correctCount: result.sessionStats.correctCount,
+              totalCount: result.sessionStats.totalCount,
+              accuracy: result.sessionStats.accuracy,
+              maxStreak: result.sessionStats.maxStreak,
+              avgTimeSeconds: result.sessionStats.avgTimeSeconds,
+            },
+            mistakes,
+          });
         } catch (error) {
           console.error('Error saving results:', error);
           toast.error('Results saved locally but failed to sync to leaderboard');
+
+          const totalXpEarned = sessionAttempts.reduce((sum, a) => sum + a.xpEarned, 0);
+          const correctCount = sessionAttempts.filter((a) => a.isCorrect).length;
+          const totalCount = sessionAttempts.length;
+          const accuracy = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+          let maxStreak = 0;
+          let currentStreak = 0;
+          for (const attempt of sessionAttempts) {
+            if (attempt.isCorrect) {
+              currentStreak++;
+              maxStreak = Math.max(maxStreak, currentStreak);
+            } else {
+              currentStreak = 0;
+            }
+          }
+          const avgTimeSeconds = totalCount > 0 ? Math.round(completionTime / totalCount / 1000) : 0;
+          const mistakes = sessionAttempts
+            .filter((a) => !a.isCorrect)
+            .map((a) => {
+              const scenario = categoryScenarios.find((s: any) => s.id === a.scenarioId);
+              return {
+                scenarioId: a.scenarioId,
+                question: scenario?.question || '',
+                chapterId: scenario?.chapter_id ?? null,
+              };
+            });
+
+          if (selectedCategory) {
+            setLastSessionSummary({
+              category: selectedCategory,
+              stats: {
+                totalXpEarned,
+                correctCount,
+                totalCount,
+                accuracy,
+                maxStreak,
+                avgTimeSeconds,
+              },
+              mistakes,
+            });
+          }
         }
       }
       
@@ -171,6 +282,10 @@ export default function DecisionTrainerPage() {
       setSelectedOptions([]);
       setShowResult(false);
       setSessionAttempts([]);
+      setSessionScenarioIds(null);
+      if (mode === 'weak') {
+        setMode('full');
+      }
     }
   };
 
@@ -190,6 +305,30 @@ export default function DecisionTrainerPage() {
     setTotalTime(0);
     setCategoryStartTime(() => Date.now());
     setSessionAttempts([]); // Reset session attempts
+    setSessionScenarioIds(null);
+  };
+
+  const handleStartWeakPoints = () => {
+    const progressList = (categoryProgressData || []) as any[];
+    const withAttempts = progressList.filter((p) => p.total_attempts > 0);
+    if (withAttempts.length === 0) {
+      toast.error('Complete at least one category first to unlock weak points mode.');
+      return;
+    }
+
+    const weakest = withAttempts.reduce((lowest, p) => {
+      const acc = p.total_attempts > 0 ? p.correct_answers / p.total_attempts : 1;
+      const lowestAcc = lowest.total_attempts > 0 ? lowest.correct_answers / lowest.total_attempts : 1;
+      return acc < lowestAcc ? p : lowest;
+    }, withAttempts[0]);
+
+    const weakestCategory = weakest.category as Category;
+    setMode('weak');
+    startCategory(weakestCategory);
+    const info = CATEGORY_INFO[weakestCategory];
+    if (info) {
+      toast.info(`Focusing on your weakest category: ${info.name}`);
+    }
   };
 
   if (authLoading || !user) {
@@ -278,9 +417,211 @@ export default function DecisionTrainerPage() {
             </div>
           </div>
 
+          {lastSessionSummary && (
+            <div className="mb-6">
+              <GlassCard className="p-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                  <div>
+                    <h2 className="text-lg font-bold flex items-center gap-2">
+                      <Trophy className="w-5 h-5 text-primary" />
+                      Last session: {CATEGORY_INFO[lastSessionSummary.category]?.name || lastSessionSummary.category}
+                    </h2>
+                    <p className="text-xs text-muted-foreground">
+                      {lastSessionSummary.stats.correctCount}/{lastSessionSummary.stats.totalCount} correct · {lastSessionSummary.stats.accuracy}% accuracy · {lastSessionSummary.stats.totalXpEarned} XP
+                    </p>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Avg time: {lastSessionSummary.stats.avgTimeSeconds}s · Best streak: {lastSessionSummary.stats.maxStreak}
+                  </div>
+                </div>
+
+                {lastSessionSummary.mistakes.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Questions to review:</p>
+                    {lastSessionSummary.mistakes.map((m) => (
+                      <div key={m.scenarioId} className="text-sm flex flex-col md:flex-row md:items-center justify-between gap-2 border-t border-border/60 pt-2 mt-2">
+                        <span className="text-muted-foreground line-clamp-2">
+                          {m.question || 'Question'}
+                        </span>
+                        {m.chapterId && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => router.push(`/materials?chapter=${m.chapterId}`)}
+                          >
+                            Review chapter {m.chapterId}
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-green-600 flex items-center gap-2">
+                    <Check className="w-4 h-4" />
+                    Perfect session! No mistakes to review.
+                  </p>
+                )}
+
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setMode('quick5');
+                      startCategory(lastSessionSummary.category);
+                    }}
+                  >
+                    Practice this category again (5 questions)
+                  </Button>
+                </div>
+              </GlassCard>
+            </div>
+          )}
+
+          {trainerStats && (
+            <div className="mb-6">
+              <GlassCard className="p-6">
+                {(() => {
+                  const achievements = [
+                    {
+                      id: 'first-scenario',
+                      label: 'First Steps',
+                      description: 'Complete your first Decision Trainer scenario.',
+                      unlocked: trainerStats.totalScenarios >= 1,
+                    },
+                    {
+                      id: 'accuracy-ace',
+                      label: 'Accuracy Ace',
+                      description: 'Reach 80%+ accuracy over at least 20 attempts.',
+                      unlocked: trainerStats.totalAttempts >= 20 && trainerStats.accuracy >= 80,
+                    },
+                    {
+                      id: 'streak-master',
+                      label: 'Streak Master',
+                      description: 'Hit a best streak of 10 correct answers.',
+                      unlocked: trainerStats.bestStreak >= 10,
+                    },
+                    {
+                      id: 'xp-hunter',
+                      label: 'XP Hunter',
+                      description: 'Earn a total of 500 XP in Decision Trainer.',
+                      unlocked: trainerStats.totalXp >= 500,
+                    },
+                    {
+                      id: 'category-explorer',
+                      label: 'Category Explorer',
+                      description: 'Practice at least 3 different Decision Trainer categories.',
+                      unlocked: trainerStats.categoriesCompleted >= 3,
+                    },
+                  ];
+
+                  const unlockedCount = achievements.filter((a) => a.unlocked).length;
+
+                  return (
+                    <>
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-sm font-semibold flex items-center gap-2">
+                          <Trophy className="w-4 h-4 text-primary" />
+                          Achievements
+                        </h2>
+                        <span className="text-xs text-muted-foreground">
+                          {unlockedCount}/{achievements.length} unlocked
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {achievements.map((ach) => (
+                          <div
+                            key={ach.id}
+                            className={`border rounded-lg px-3 py-2 text-xs ${
+                              ach.unlocked
+                                ? 'border-primary bg-primary/5'
+                                : 'border-border/60 bg-background/40 opacity-80'
+                            }`}
+                          >
+                            <div className="font-semibold flex items-center gap-1 mb-1">
+                              {ach.unlocked ? (
+                                <Check className="w-3 h-3 text-primary" />
+                              ) : (
+                                <span className="w-2 h-2 rounded-full bg-muted-foreground/40" />
+                              )}
+                              {ach.label}
+                            </div>
+                            <p className="text-[11px] text-muted-foreground">{ach.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
+              </GlassCard>
+            </div>
+          )}
+          
+          <GlassCard className="p-4 mb-6">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium">
+                  Practice modes
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant={mode === 'full' ? 'default' : 'outline'}
+                  onClick={() => setMode('full')}
+                >
+                  Full category
+                </Button>
+                <Button
+                  size="sm"
+                  variant={mode === 'quick5' ? 'default' : 'outline'}
+                  onClick={() => setMode('quick5')}
+                >
+                  Quick: 5 questions
+                </Button>
+                <Button
+                  size="sm"
+                  variant={mode === 'quick10' ? 'default' : 'outline'}
+                  onClick={() => setMode('quick10')}
+                >
+                  Quick: 10 questions
+                </Button>
+                {(categoryProgressData || []).some((p: any) => p.total_attempts > 0) && (
+                  <Button
+                    size="sm"
+                    variant={mode === 'weak' ? 'default' : 'outline'}
+                    onClick={handleStartWeakPoints}
+                  >
+                    Weak points
+                  </Button>
+                )}
+              </div>
+            </div>
+          </GlassCard>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Object.entries(CATEGORY_INFO).map(([key, info]) => {
               const categoryCount = scenarios.filter((scenario) => scenario.category === key).length;
+              const progressForCategory = (categoryProgressData || []).find((p: any) => p.category === key);
+              const totalAttempts = progressForCategory?.total_attempts ?? 0;
+              const correctAnswers = progressForCategory?.correct_answers ?? 0;
+              const accuracy = totalAttempts > 0 ? Math.round((correctAnswers / totalAttempts) * 100) : null;
+              let statusLabel = 'New';
+              let statusClass = 'bg-muted text-muted-foreground';
+              if (totalAttempts > 0 && accuracy !== null) {
+                if (accuracy >= 80) {
+                  statusLabel = 'Strong';
+                  statusClass = 'bg-green-500/10 text-green-600 border border-green-500/30';
+                } else if (accuracy >= 50) {
+                  statusLabel = 'Improving';
+                  statusClass = 'bg-blue-500/10 text-blue-600 border border-blue-500/30';
+                } else {
+                  statusLabel = 'Needs attention';
+                  statusClass = 'bg-yellow-500/10 text-yellow-600 border border-yellow-500/30';
+                }
+              }
               return (
                 <GlassCard
                   key={key}
@@ -292,8 +633,16 @@ export default function DecisionTrainerPage() {
                     <div className="flex-1">
                       <h3 className="text-xl font-bold mb-2">{info.name}</h3>
                       <p className="text-sm text-muted-foreground">{info.description}</p>
+                      <div className="mt-1">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClass}`}>
+                          {statusLabel}
+                        </span>
+                      </div>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm mt-2">
-                        <span className="text-muted-foreground">{categoryCount} scenarios</span>
+                        <span className="text-muted-foreground">
+                          {categoryCount} scenarios
+                          {accuracy !== null && ` · ${accuracy}% accuracy`}
+                        </span>
                         <Button size="sm" className="w-full sm:w-auto">
                           {t('categories.startPractice')} →
                         </Button>
@@ -311,6 +660,14 @@ export default function DecisionTrainerPage() {
 
   const categoryInfo = CATEGORY_INFO[selectedCategory];
   const progress = ((currentScenarioIndex + 1) / categoryScenarios.length) * 100;
+  const correctOptionIndices = currentScenario
+    ? currentScenario.options
+        .map((option: any, index: number) => (option.isCorrect ? index : -1))
+        .filter((index: number) => index !== -1)
+    : [];
+  const optionLetter = (index: number) => String.fromCharCode(65 + index);
+  const correctLetters = correctOptionIndices.map(optionLetter);
+  const selectedLetters = selectedOptions.map(optionLetter);
 
   return (
     <div className="min-h-screen bg-background">
@@ -319,7 +676,17 @@ export default function DecisionTrainerPage() {
       
       <div className="container mx-auto px-4 py-8 max-w-4xl pt-28">
         <div className="mb-8">
-          <Button variant="ghost" onClick={() => setSelectedCategory(null)} className="mb-4">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setSelectedCategory(null);
+              setSessionScenarioIds(null);
+              if (mode === 'weak') {
+                setMode('full');
+              }
+            }}
+            className="mb-4"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             {t('test.backToTests')}
           </Button>
@@ -331,6 +698,13 @@ export default function DecisionTrainerPage() {
                 {categoryInfo.name}
               </h1>
               <p className="text-muted-foreground">{t('test.question')} {currentScenarioIndex + 1} {t('test.of')} {categoryScenarios.length}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Mode:{' '}
+                {mode === 'full' && 'Full category'}
+                {mode === 'quick5' && 'Quick: 5 questions'}
+                {mode === 'quick10' && 'Quick: 10 questions'}
+                {mode === 'weak' && 'Weak points (5 questions)'}
+              </p>
             </div>
             <div className="flex flex-wrap sm:flex-nowrap gap-4 justify-start sm:justify-end">
               <div className="text-center min-w-[90px]">
@@ -360,7 +734,7 @@ export default function DecisionTrainerPage() {
             <h2 className="text-2xl font-bold mb-6">{currentScenario.question}</h2>
 
             <div className="space-y-3 mb-6">
-              {currentScenario.options.map((option, index) => {
+              {currentScenario.options.map((option: any, index: number) => {
                 const isSelected = selectedOptions.includes(index);
                 const isCorrect = option.isCorrect;
                 const showCorrect = showResult && isCorrect;
@@ -427,12 +801,24 @@ export default function DecisionTrainerPage() {
                         <h3 className="font-bold mb-2">
                           {sessionAttempts[sessionAttempts.length - 1]?.isCorrect ? '✓ Correct!' : '✗ Incorrect - Learn from this!'}
                         </h3>
+                        <div className="mb-3 text-sm">
+                          <p className="font-semibold">
+                            Correct combination:{' '}
+                            <span className="text-green-600">
+                              {correctLetters.length > 0 ? correctLetters.join(' + ') : '-'}
+                            </span>
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Your selection:{' '}
+                            {selectedLetters.length > 0 ? selectedLetters.join(' + ') : 'No options selected'}
+                          </p>
+                        </div>
                         
                         {!sessionAttempts[sessionAttempts.length - 1]?.isCorrect && (
                           <div className="bg-red-500/10 border border-red-500/30 p-3 rounded-lg mb-3">
                             <p className="text-sm font-semibold mb-1">{t('test.correctLabel')}</p>
                             <div className="space-y-1">
-                              {selectedOptions.map(optionIndex => (
+                              {selectedOptions.map((optionIndex: number) => (
                                 <p key={optionIndex} className="text-sm">
                                   • {currentScenario.options[optionIndex].text}
                                   {currentScenario.options[optionIndex].explanation && (
@@ -452,6 +838,18 @@ export default function DecisionTrainerPage() {
                         <div className="bg-background/50 p-3 rounded-lg">
                           <p className="text-sm"><strong>💡 </strong>{currentScenario.real_world_tip}</p>
                         </div>
+
+                        {currentScenario.chapter_id && (
+                          <div className="mt-3">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => router.push(`/materials?chapter=${currentScenario.chapter_id}`)}
+                            >
+                              {t('materials.title')} – Chapter {currentScenario.chapter_id}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

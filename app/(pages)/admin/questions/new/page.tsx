@@ -45,9 +45,17 @@ export default function NewQuestionPage() {
     category: 'B',
     test_number: 1,
     question_text: '',
+    question_text_en: '',
+    question_text_sq: '',
     option_a: '',
+    option_a_en: '',
+    option_a_sq: '',
     option_b: '',
+    option_b_en: '',
+    option_b_sq: '',
     option_c: '',
+    option_c_en: '',
+    option_c_sq: '',
     correct_answer: 'A',
     image_url: '',
   });
@@ -69,17 +77,29 @@ export default function NewQuestionPage() {
     // Comprehensive validation
     const errors: string[] = [];
     
-    if (!formData.question_text?.trim()) {
-      errors.push('Question text is required');
+    const qEn = formData.question_text_en?.trim() || '';
+    const qSq = formData.question_text_sq?.trim() || '';
+    const baseQuestion = qSq || qEn;
+    if (!baseQuestion) {
+      errors.push('Question text (at least one language) is required');
     }
-    if (!formData.option_a?.trim()) {
-      errors.push('Option A is required');
+    const optAEn = formData.option_a_en?.trim() || '';
+    const optASq = formData.option_a_sq?.trim() || '';
+    const baseOptionA = optASq || optAEn;
+    if (!baseOptionA) {
+      errors.push('Option A (at least one language) is required');
     }
-    if (!formData.option_b?.trim()) {
-      errors.push('Option B is required');
+    const optBEn = formData.option_b_en?.trim() || '';
+    const optBSq = formData.option_b_sq?.trim() || '';
+    const baseOptionB = optBSq || optBEn;
+    if (!baseOptionB) {
+      errors.push('Option B (at least one language) is required');
     }
-    if (!formData.option_c?.trim()) {
-      errors.push('Option C is required');
+    const optCEn = formData.option_c_en?.trim() || '';
+    const optCSq = formData.option_c_sq?.trim() || '';
+    const baseOptionC = optCSq || optCEn;
+    if (!baseOptionC) {
+      errors.push('Option C (at least one language) is required');
     }
     if (multipleAnswers) {
       if (selectedAnswers.size === 0) {
@@ -146,12 +166,26 @@ export default function NewQuestionPage() {
 
     try {
       const questionData: QuestionInput = {
-        ...formData,
+        category: formData.category,
+        test_number: formData.test_number,
+        question_text: baseQuestion,
+        question_text_en: qEn || null,
+        question_text_sq: qSq || null,
+        option_a: baseOptionA,
+        option_a_en: optAEn || null,
+        option_a_sq: optASq || null,
+        option_b: baseOptionB,
+        option_b_en: optBEn || null,
+        option_b_sq: optBSq || null,
+        option_c: baseOptionC,
+        option_c_en: optCEn || null,
+        option_c_sq: optCSq || null,
+        correct_answer: formData.correct_answer,
         image_url: imageUrl,
         ...(multipleAnswers && {
           correct_answers: Array.from(selectedAnswers),
           correct_answer: Array.from(selectedAnswers)[0] // Keep first as fallback
-        })
+        }),
       };
       
       const result = await createQuestion.mutateAsync(questionData);
@@ -382,16 +416,27 @@ export default function NewQuestionPage() {
             </div>
 
             {/* Question Text */}
-            <div className="space-y-2">
-              <Label htmlFor="question_text">Question Text *</Label>
-              <Textarea
-                id="question_text"
-                rows={4}
-                value={formData.question_text}
-                onChange={(e) => setFormData({ ...formData, question_text: e.target.value })}
-                placeholder="Enter the question text..."
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="question_text_en">Question (English) *</Label>
+                <Textarea
+                  id="question_text_en"
+                  rows={4}
+                  value={formData.question_text_en ?? ''}
+                  onChange={(e) => setFormData({ ...formData, question_text_en: e.target.value })}
+                  placeholder="Enter the question text in English..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="question_text_sq">Pyetja (Shqip) *</Label>
+                <Textarea
+                  id="question_text_sq"
+                  rows={4}
+                  value={formData.question_text_sq ?? ''}
+                  onChange={(e) => setFormData({ ...formData, question_text_sq: e.target.value })}
+                  placeholder="Shkruaj pyetjen në shqip..."
+                />
+              </div>
             </div>
 
             {/* Options */}
@@ -399,35 +444,53 @@ export default function NewQuestionPage() {
               <Label>Answer Options *</Label>
               
               <div className="space-y-2">
-                <Label htmlFor="option_a" className="text-sm text-muted-foreground">Option A</Label>
+                <Label htmlFor="option_a_en" className="text-sm text-muted-foreground">Option A (EN)</Label>
                 <Input
-                  id="option_a"
-                  value={formData.option_a}
-                  onChange={(e) => setFormData({ ...formData, option_a: e.target.value })}
-                  placeholder="Enter option A..."
-                  required
+                  id="option_a_en"
+                  value={formData.option_a_en ?? ''}
+                  onChange={(e) => setFormData({ ...formData, option_a_en: e.target.value })}
+                  placeholder="Enter option A in English..."
+                />
+                <Label htmlFor="option_a_sq" className="text-sm text-muted-foreground mt-2">Option A (SQ)</Label>
+                <Input
+                  id="option_a_sq"
+                  value={formData.option_a_sq ?? ''}
+                  onChange={(e) => setFormData({ ...formData, option_a_sq: e.target.value })}
+                  placeholder="Shkruaj opsionin A në shqip..."
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="option_b" className="text-sm text-muted-foreground">Option B</Label>
+                <Label htmlFor="option_b_en" className="text-sm text-muted-foreground">Option B (EN)</Label>
                 <Input
-                  id="option_b"
-                  value={formData.option_b}
-                  onChange={(e) => setFormData({ ...formData, option_b: e.target.value })}
-                  placeholder="Enter option B..."
-                  required
+                  id="option_b_en"
+                  value={formData.option_b_en ?? ''}
+                  onChange={(e) => setFormData({ ...formData, option_b_en: e.target.value })}
+                  placeholder="Enter option B in English..."
+                />
+                <Label htmlFor="option_b_sq" className="text-sm text-muted-foreground mt-2">Option B (SQ)</Label>
+                <Input
+                  id="option_b_sq"
+                  value={formData.option_b_sq ?? ''}
+                  onChange={(e) => setFormData({ ...formData, option_b_sq: e.target.value })}
+                  placeholder="Shkruaj opsionin B në shqip..."
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="option_c" className="text-sm text-muted-foreground">Option C</Label>
+                <Label htmlFor="option_c_en" className="text-sm text-muted-foreground">Option C (EN)</Label>
                 <Input
-                  id="option_c"
-                  value={formData.option_c}
-                  onChange={(e) => setFormData({ ...formData, option_c: e.target.value })}
-                  placeholder="Enter option C..."
-                  required
+                  id="option_c_en"
+                  value={formData.option_c_en ?? ''}
+                  onChange={(e) => setFormData({ ...formData, option_c_en: e.target.value })}
+                  placeholder="Enter option C in English..."
+                />
+                <Label htmlFor="option_c_sq" className="text-sm text-muted-foreground mt-2">Option C (SQ)</Label>
+                <Input
+                  id="option_c_sq"
+                  value={formData.option_c_sq ?? ''}
+                  onChange={(e) => setFormData({ ...formData, option_c_sq: e.target.value })}
+                  placeholder="Shkruaj opsionin C në shqip..."
                 />
               </div>
             </div>

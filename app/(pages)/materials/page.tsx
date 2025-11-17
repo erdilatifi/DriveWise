@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,7 @@ export default function MaterialsPage() {
   const [selectedSection, setSelectedSection] = useState<SectionKey>(1);
   const [search, setSearch] = useState('');
   const { language, t } = useLanguage();
+  const searchParams = useSearchParams();
 
   const { data, isLoading, error } = useMaterials({ pageSize: 50 });
   const materials = (data?.materials ?? []) as any[];
@@ -44,6 +46,16 @@ export default function MaterialsPage() {
     return chapterIds.length > 0 ? chapterIds : SECTION_ORDER;
   }, [materials]);
 
+  useEffect(() => {
+    const chapterParam = searchParams.get('chapter');
+    if (!chapterParam) return;
+
+    const chapter = parseInt(chapterParam, 10);
+    if (!Number.isNaN(chapter) && (sectionOrder as number[]).includes(chapter)) {
+      setSelectedSection(chapter as SectionKey);
+    }
+  }, [searchParams, sectionOrder]);
+
   const currentMaterial = useMemo(() => {
     return materials.find((m) => m.chapter_id === selectedSection) ?? null;
   }, [materials, selectedSection]);
@@ -52,36 +64,27 @@ export default function MaterialsPage() {
     if (!currentMaterial) return null;
     return language === 'sq' ? currentMaterial.content_sq : currentMaterial.content_en;
   }, [currentMaterial, language]);
-
-  const filteredContent = useMemo(() => {
-    if (!baseContent) return {};
-    if (!search.trim()) return baseContent;
+  const filteredSectionOrder = useMemo(() => {
+    if (!search.trim()) return sectionOrder;
 
     const query = search.toLowerCase();
-    const section = baseContent as any;
-    const result: any = {};
 
-    const filterValue = (value: any) => {
-      if (typeof value === 'string') {
-        return value.toLowerCase().includes(query);
-      }
-      if (Array.isArray(value)) {
-        return value.some((v) => typeof v === 'string' && v.toLowerCase().includes(query));
-      }
-      if (typeof value === 'object' && value !== null) {
-        return Object.values(value).some(filterValue);
-      }
-      return false;
-    };
+    return sectionOrder.filter((id) => {
+      const sectionIndex = sectionOrder.indexOf(id);
+      const key = `materials.section.${sectionIndex + 1}`;
+      let label = t(key);
 
-    Object.entries(section).forEach(([key, value]) => {
-      if (filterValue(value)) {
-        result[key] = value;
+      if (!label || label === key) {
+        const materialForChapter = materials.find((m: any) => m.chapter_id === id);
+        label =
+          language === 'sq'
+            ? materialForChapter?.title_sq || `Chapter ${id}`
+            : materialForChapter?.title_en || `Chapter ${id}`;
       }
+
+      return label.toLowerCase().includes(query);
     });
-
-    return result;
-  }, [baseContent, search]);
+  }, [sectionOrder, search, materials, language, t]);
 
   const renderValue = (value: any) => {
     if (typeof value === 'string') {
@@ -113,7 +116,7 @@ export default function MaterialsPage() {
     return null;
   };
 
-  const currentSectionContent = filteredContent as any;
+  const currentSectionContent = baseContent as any;
   const currentImages = (currentMaterial?.images ?? []) as any[];
 
   const sectionIndex = sectionOrder.indexOf(selectedSection);
@@ -214,7 +217,11 @@ export default function MaterialsPage() {
                 <div className="relative">
                   <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
                   <Input
-                    placeholder={t('materials.searchPlaceholder')}
+                    placeholder={
+                      language === 'sq'
+                        ? 'Kërko sipas titullit të kapitullit'
+                        : 'Search by chapter title'
+                    }
                     className="pl-9 bg-background/60 border-border/60"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -223,9 +230,10 @@ export default function MaterialsPage() {
               </GlassCard>
 
               <GlassCard className="p-2 space-y-1 max-h-[480px] overflow-y-auto">
-                {sectionOrder.map((id, index) => {
+                {filteredSectionOrder.map((id) => {
                   const isActive = id === selectedSection;
-                  const key = `materials.section.${index + 1}`;
+                  const sectionIndex = sectionOrder.indexOf(id);
+                  const key = `materials.section.${sectionIndex + 1}`;
                   let label = t(key);
                   if (!label || label === key) {
                     const materialForChapter = materials.find((m: any) => m.chapter_id === id);

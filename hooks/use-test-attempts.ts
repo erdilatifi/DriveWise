@@ -263,7 +263,7 @@ export function useClearAllTestAttempts() {
 }
 
 // Get test count for category
-export function useTestCount(category: string) {
+export function useTestCount(category: string, enabled: boolean = true) {
   return useQuery({
     queryKey: ['test-count', category],
     queryFn: async () => {
@@ -281,5 +281,6 @@ export function useTestCount(category: string) {
       return uniqueTests.length || 10;
     },
     staleTime: 10 * 60 * 1000, // 10 minutes - test count doesn't change often
+    enabled: enabled && !!category,
   });
 }
