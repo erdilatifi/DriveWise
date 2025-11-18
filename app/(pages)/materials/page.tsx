@@ -116,7 +116,7 @@ export default function MaterialsPage() {
     return null;
   };
 
-  const currentSectionContent = baseContent as any;
+  const currentSectionContent = (baseContent || {}) as any;
   const currentImages = (currentMaterial?.images ?? []) as any[];
 
   const sectionIndex = sectionOrder.indexOf(selectedSection);
@@ -184,9 +184,28 @@ export default function MaterialsPage() {
         <div className="pt-28">
           <div className="container mx-auto px-4 py-10 max-w-3xl">
             <GlassCard className="p-6">
-              <p className="text-sm text-destructive">
-                Failed to load materials: {(error as any)?.message || String(error)}
+              <p className="text-sm font-semibold text-destructive mb-1">
+                {t('materials.errorLoadFailed')}
               </p>
+              <p className="text-xs text-muted-foreground break-words">
+                {(error as any)?.message || String(error)}
+              </p>
+            </GlassCard>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!materials.length) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-28">
+          <div className="container mx-auto px-4 py-10 max-w-3xl">
+            <GlassCard className="p-6">
+              <h1 className="text-lg font-bold mb-2">{t('materials.emptyTitle')}</h1>
+              <p className="text-sm text-muted-foreground">{t('materials.emptySubtitle')}</p>
             </GlassCard>
           </div>
         </div>
@@ -217,11 +236,7 @@ export default function MaterialsPage() {
                 <div className="relative">
                   <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
                   <Input
-                    placeholder={
-                      language === 'sq'
-                        ? 'Kërko sipas titullit të kapitullit'
-                        : 'Search by chapter title'
-                    }
+                    placeholder={t('materials.searchPlaceholder')}
                     className="pl-9 bg-background/60 border-border/60"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}

@@ -29,20 +29,31 @@ export function useScenarios(category?: Category) {
     queryFn: async () => {
       const supabase = createClient();
       
-      let query = supabase
+      let baseQuery = supabase
         .from('decision_trainer_scenarios')
         .select('*')
         .eq('is_active', true)
-        .eq('is_published', true)
         .order('level', { ascending: true });
 
       if (category) {
-        query = query.eq('category', category);
+        baseQuery = baseQuery.eq('category', category);
       }
 
-      const { data, error } = await query;
+      // Prefer published-only scenarios when the column exists
+      const { data, error } = await baseQuery.eq('is_published', true);
 
-      if (error) throw error;
+      // If the is_published column does not exist yet (migration not run),
+      // fall back to only filtering by is_active so scenarios still appear.
+      if (error) {
+        // Postgres undefined_column error
+        if ((error as any).code === '42703') {
+          const { data: fallbackData, error: fallbackError } = await baseQuery;
+          if (fallbackError) throw fallbackError;
+          return fallbackData as Scenario[];
+        }
+        throw error;
+      }
+
       return data as Scenario[];
     },
     // Always refetch when the component mounts or the window gains focus

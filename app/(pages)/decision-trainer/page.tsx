@@ -60,7 +60,7 @@ export default function DecisionTrainerPage() {
   // const [confettiInstance, setConfettiInstance] = useState<any>(null);
 
   // Fetch scenarios from database
-  const { data: scenarios = [], isLoading: scenariosLoading } = useScenarios(selectedCategory || undefined);
+  const { data: scenarios = [], isLoading: scenariosLoading, error: scenariosError } = useScenarios(selectedCategory || undefined);
   
   // Mutation for completing category
   const completeCategoryMutation = useCompleteCategory();
@@ -417,6 +417,32 @@ export default function DecisionTrainerPage() {
             </div>
           </div>
 
+          {scenariosError && (
+            <div className="mb-6">
+              <GlassCard className="p-4 border-destructive/40">
+                <p className="text-sm text-destructive font-medium mb-1">
+                  {t('error.title')}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t('error.message')}
+                </p>
+              </GlassCard>
+            </div>
+          )}
+
+          {!scenariosError && !scenariosLoading && scenarios.length === 0 && (
+            <div className="mb-6">
+              <GlassCard className="p-4">
+                <p className="text-sm font-medium mb-1">
+                  {t('trainer.noScenariosTitle')}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t('trainer.noScenariosSubtitle')}
+                </p>
+              </GlassCard>
+            </div>
+          )}
+
           {lastSessionSummary && (
             <div className="mb-6">
               <GlassCard className="p-6">
@@ -427,11 +453,11 @@ export default function DecisionTrainerPage() {
                       {t('trainer.lastSessionTitle')}: {CATEGORY_INFO[lastSessionSummary.category]?.name || lastSessionSummary.category}
                     </h2>
                     <p className="text-xs text-muted-foreground">
-                      {lastSessionSummary.stats.correctCount}/{lastSessionSummary.stats.totalCount} correct · {lastSessionSummary.stats.accuracy}% accuracy · {lastSessionSummary.stats.totalXpEarned} XP
+                      {lastSessionSummary.stats.correctCount}/{lastSessionSummary.stats.totalCount} {t('test.correctLabel').toLowerCase()} · {lastSessionSummary.stats.accuracy}% {t('test.accuracy').toLowerCase()} · {lastSessionSummary.stats.totalXpEarned} {t('dashboard.trainerXp')}
                     </p>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    Avg time: {lastSessionSummary.stats.avgTimeSeconds}s · Best streak: {lastSessionSummary.stats.maxStreak}
+                    {t('test.timeLeft')}: {lastSessionSummary.stats.avgTimeSeconds}s · {t('dashboard.trainerBestStreak')}: {lastSessionSummary.stats.maxStreak}
                   </div>
                 </div>
 
@@ -441,7 +467,7 @@ export default function DecisionTrainerPage() {
                     {lastSessionSummary.mistakes.map((m) => (
                       <div key={m.scenarioId} className="text-sm flex flex-col md:flex-row md:items-center justify-between gap-2 border-t border-border/60 pt-2 mt-2">
                         <span className="text-muted-foreground line-clamp-2">
-                          {m.question || 'Question'}
+                          {m.question || t('test.question')}
                         </span>
                         {m.chapterId && (
                           <Button
@@ -521,32 +547,32 @@ export default function DecisionTrainerPage() {
                   const achievements = [
                     {
                       id: 'first-scenario',
-                      label: 'First Steps',
-                      description: 'Complete your first Decision Trainer scenario.',
+                      label: t('trainer.firstSteps'),
+                      description: t('trainer.firstScenarioDesc'),
                       unlocked: trainerStats.totalScenarios >= 1,
                     },
                     {
                       id: 'accuracy-ace',
-                      label: 'Accuracy Ace',
-                      description: 'Reach 80%+ accuracy over at least 20 attempts.',
+                      label: t('trainer.accuracyAce'),
+                      description: t('trainer.accuracyAceDesc'),
                       unlocked: trainerStats.totalAttempts >= 20 && trainerStats.accuracy >= 80,
                     },
                     {
                       id: 'streak-master',
-                      label: 'Streak Master',
-                      description: 'Hit a best streak of 10 correct answers.',
+                      label: t('trainer.streakMaster'),
+                      description: t('trainer.streakMasterDesc'),
                       unlocked: trainerStats.bestStreak >= 10,
                     },
                     {
                       id: 'xp-hunter',
-                      label: 'XP Hunter',
-                      description: 'Earn a total of 500 XP in Decision Trainer.',
+                      label: t('trainer.xpHunter'),
+                      description: t('trainer.xpHunterDesc'),
                       unlocked: trainerStats.totalXp >= 500,
                     },
                     {
                       id: 'category-explorer',
-                      label: 'Category Explorer',
-                      description: 'Practice at least 3 different Decision Trainer categories.',
+                      label: t('trainer.categoryExplorer'),
+                      description: t('trainer.categoryExplorerDesc'),
                       unlocked: trainerStats.categoriesCompleted >= 3,
                     },
                   ];
@@ -561,7 +587,7 @@ export default function DecisionTrainerPage() {
                           {t('dashboard.testAchievementsTitle')}
                         </h2>
                         <span className="text-xs text-muted-foreground">
-                          {unlockedCount}/{achievements.length} unlocked
+                          {unlockedCount}/{achievements.length} {t('trainer.achievementsUnlockedLabel')}
                         </span>
                       </div>
 
@@ -599,7 +625,7 @@ export default function DecisionTrainerPage() {
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-primary" />
                 <span className="text-sm font-medium">
-                  Practice modes
+                  {t('trainer.practiceModes')}
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -608,21 +634,21 @@ export default function DecisionTrainerPage() {
                   variant={mode === 'full' ? 'default' : 'outline'}
                   onClick={() => setMode('full')}
                 >
-                  Full category
+                  {t('trainer.fullCategory')}
                 </Button>
                 <Button
                   size="sm"
                   variant={mode === 'quick5' ? 'default' : 'outline'}
                   onClick={() => setMode('quick5')}
                 >
-                  Quick: 5 questions
+                  {t('trainer.quick5')}
                 </Button>
                 <Button
                   size="sm"
                   variant={mode === 'quick10' ? 'default' : 'outline'}
                   onClick={() => setMode('quick10')}
                 >
-                  Quick: 10 questions
+                  {t('trainer.quick10')}
                 </Button>
                 {(categoryProgressData || []).some((p: any) => p.total_attempts > 0) && (
                   <Button
@@ -630,7 +656,7 @@ export default function DecisionTrainerPage() {
                     variant={mode === 'weak' ? 'default' : 'outline'}
                     onClick={handleStartWeakPoints}
                   >
-                    Weak points
+                    {t('trainer.weakPoints')}
                   </Button>
                 )}
               </div>
@@ -644,17 +670,17 @@ export default function DecisionTrainerPage() {
               const totalAttempts = progressForCategory?.total_attempts ?? 0;
               const correctAnswers = progressForCategory?.correct_answers ?? 0;
               const accuracy = totalAttempts > 0 ? Math.round((correctAnswers / totalAttempts) * 100) : null;
-              let statusLabel = 'New';
+              let statusLabel = t('trainer.statusNew');
               let statusClass = 'bg-muted text-muted-foreground';
               if (totalAttempts > 0 && accuracy !== null) {
                 if (accuracy >= 80) {
-                  statusLabel = 'Strong';
+                  statusLabel = t('trainer.statusStrong');
                   statusClass = 'bg-green-500/10 text-green-600 border border-green-500/30';
                 } else if (accuracy >= 50) {
-                  statusLabel = 'Improving';
+                  statusLabel = t('trainer.statusImproving');
                   statusClass = 'bg-blue-500/10 text-blue-600 border border-blue-500/30';
                 } else {
-                  statusLabel = 'Needs attention';
+                  statusLabel = t('trainer.statusNeedsAttention');
                   statusClass = 'bg-yellow-500/10 text-yellow-600 border border-yellow-500/30';
                 }
               }
@@ -676,8 +702,8 @@ export default function DecisionTrainerPage() {
                       </div>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm mt-2">
                         <span className="text-muted-foreground">
-                          {categoryCount} scenarios
-                          {accuracy !== null && ` · ${accuracy}% accuracy`}
+                          {categoryCount} {t('trainer.scenariosShort')}
+                          {accuracy !== null && ` · ${accuracy}% ${t('trainer.accuracyShort')}`}
                         </span>
                         <Button size="sm" className="w-full sm:w-auto">
                           {t('categories.startPractice')} →
@@ -751,7 +777,7 @@ export default function DecisionTrainerPage() {
               </div>
               <div className="text-center min-w-[70px]">
                 <div className="text-2xl font-bold text-primary">{stats.xp}</div>
-                <div className="text-xs text-muted-foreground">XP</div>
+                <div className="text-xs text-muted-foreground">{t('dashboard.trainerXp')}</div>
               </div>
               <div className="text-center min-w-[70px]">
                 <div className="text-2xl font-bold text-green-500">{stats.streak}</div>
@@ -805,7 +831,7 @@ export default function DecisionTrainerPage() {
                         }`}>
                           {isSelected && <Check className="w-3 h-3" />}
                         </div>
-                        <span className="font-medium">{option.text}</span>
+                        <span className="font-medium break-words text-left">{option.text}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         {showCorrect && <Check className="w-5 h-5 text-green-500" />}
@@ -835,18 +861,18 @@ export default function DecisionTrainerPage() {
                       <Lightbulb className="w-5 h-5 mt-1 flex-shrink-0" />
                       <div className="flex-1">
                         <h3 className="font-bold mb-2">
-                          {sessionAttempts[sessionAttempts.length - 1]?.isCorrect ? '✓ Correct!' : '✗ Incorrect - Learn from this!'}
+                          {sessionAttempts[sessionAttempts.length - 1]?.isCorrect ? t('test.correctTitle') : t('test.incorrectTitle')}
                         </h3>
                         <div className="mb-3 text-sm">
                           <p className="font-semibold">
-                            Correct combination:{' '}
+                            {t('trainer.correctCombinationLabel')}{' '}
                             <span className="text-green-600">
                               {correctLetters.length > 0 ? correctLetters.join(' + ') : '-'}
                             </span>
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Your selection:{' '}
-                            {selectedLetters.length > 0 ? selectedLetters.join(' + ') : 'No options selected'}
+                            {t('trainer.yourSelectionLabel')}{' '}
+                            {selectedLetters.length > 0 ? selectedLetters.join(' + ') : t('trainer.noSelectionLabel')}
                           </p>
                         </div>
                         
@@ -882,7 +908,7 @@ export default function DecisionTrainerPage() {
                               variant="outline"
                               onClick={() => router.push(`/materials?chapter=${currentScenario.chapter_id}`)}
                             >
-                              {t('materials.title')} – Chapter {currentScenario.chapter_id}
+                              {t('trainer.reviewChapterCta')} {currentScenario.chapter_id}
                             </Button>
                           </div>
                         )}

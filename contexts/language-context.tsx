@@ -216,8 +216,11 @@ const translations: Record<Language, Record<string, string>> = {
     'materials.section.13': '13. Breakdowns',
     'materials.readCarefully': 'Read carefully and connect these rules with real driving situations.',
     'materials.noResults': 'No results match your search in this chapter.',
+    'materials.emptyTitle': 'No study materials yet',
+    'materials.emptySubtitle': 'Your instructor or admin has not added study materials for this course yet.',
     'materials.resultsForPrefix': 'Showing results for',
     'materials.resultsForSuffix': 'in this chapter',
+    'materials.errorLoadFailed': 'Failed to load materials',
 
     // History / Review Page (English)
     'history.reviewSubtitle': 'Review your answers and learn from mistakes',
@@ -260,6 +263,18 @@ const translations: Record<Language, Record<string, string>> = {
     'trainer.streakMaster': 'Streak Master',
     'trainer.xpHunter': 'XP Hunter',
     'trainer.categoryExplorer': 'Category Explorer',
+    'trainer.noScenariosTitle': 'No scenarios available yet',
+    'trainer.noScenariosSubtitle': 'Ask your instructor or admin to add Decision Trainer scenarios for you.',
+    'trainer.firstScenarioDesc': 'Complete your first Decision Trainer scenario.',
+    'trainer.accuracyAceDesc': 'Reach 80%+ accuracy over at least 20 attempts.',
+    'trainer.streakMasterDesc': 'Hit a best streak of 10 correct answers.',
+    'trainer.xpHunterDesc': 'Earn a total of 500 XP in Decision Trainer.',
+    'trainer.categoryExplorerDesc': 'Practice at least 3 different Decision Trainer categories.',
+    'trainer.achievementsUnlockedLabel': 'unlocked',
+    'trainer.correctCombinationLabel': 'Correct combination:',
+    'trainer.yourSelectionLabel': 'Your selection:',
+    'trainer.noSelectionLabel': 'No options selected',
+    'trainer.reviewChapterCta': 'Review chapter',
     
     // Leaderboard (English)
     'leaderboard.backToTrainer': 'Back to Trainer',
@@ -476,8 +491,11 @@ const translations: Record<Language, Record<string, string>> = {
     'materials.section.13': '13. Mjeti në Defekt',
     'materials.readCarefully': 'Lexo me kujdes dhe lidhi këto rregulla me situatat reale në trafik.',
     'materials.noResults': 'Asnjë rezultat nuk përputhet me kërkimin tënd në këtë kapitull.',
+    'materials.emptyTitle': 'Ende nuk ka materiale mësimore',
+    'materials.emptySubtitle': 'Instruktori ose administratori yt nuk ka shtuar ende materiale mësimore për këtë kurs.',
     'materials.resultsForPrefix': 'Duke shfaqur rezultatet për',
     'materials.resultsForSuffix': 'në këtë kapitull',
+    'materials.errorLoadFailed': 'Nuk u arrit të ngarkohen materialet',
 
     // History / Review Page (Albanian)
     'history.reviewSubtitle': 'Rishiko përgjigjet dhe mëso nga gabimet',
@@ -520,7 +538,19 @@ const translations: Record<Language, Record<string, string>> = {
     'trainer.streakMaster': 'Mjeshtër i serive',
     'trainer.xpHunter': 'Gjuetari i XP-së',
     'trainer.categoryExplorer': 'Eksplorues kategorish',
-
+    'trainer.noScenariosTitle': 'Ende nuk ka skenarë',
+    'trainer.noScenariosSubtitle': 'Kërko nga instruktori ose administratori yt të shtojë skenarë në Decision Trainer.',
+    'trainer.firstScenarioDesc': 'Përfundo skenarin tënd të parë në Decision Trainer.',
+    'trainer.accuracyAceDesc': 'Arrij të paktën 80% saktësi në të paktën 20 përpjekje.',
+    'trainer.streakMasterDesc': 'Arrij një seri prej 10 përgjigjesh të sakta radhazi.',
+    'trainer.xpHunterDesc': 'Fito gjithsej 500 XP në Decision Trainer.',
+    'trainer.categoryExplorerDesc': 'Praktiko të paktën 3 kategori të ndryshme në Decision Trainer.',
+    'trainer.achievementsUnlockedLabel': 'të hapura',
+    'trainer.correctCombinationLabel': 'Kombinimi i saktë:',
+    'trainer.yourSelectionLabel': 'Zgjedhja jote:',
+    'trainer.noSelectionLabel': 'Nuk është zgjedhur asnjë opsion',
+    'trainer.reviewChapterCta': 'Rishiko kapitullin',
+    
     // Leaderboard (Albanian)
     'leaderboard.backToTrainer': 'Kthehu te Decision Trainer',
     'leaderboard.subtitle': 'Nxënësit më të mirë në Decision Trainer',

@@ -20,5 +20,6 @@ export const config = {
     '/test/:path*',
     '/history/:path*',
     '/decision-trainer/:path*',
+    '/materials/:path*',
   ],
 }
