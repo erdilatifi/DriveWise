@@ -69,6 +69,7 @@ export function useTestQuestions(category: string, testNumber: string, userId?: 
             .from('admin_questions')
             .select('*')
             .in('id', wrongQuestionIds)
+            .eq('is_published', true)
             .limit(10);
 
           if (questionsError) throw questionsError;
@@ -80,7 +81,8 @@ export function useTestQuestions(category: string, testNumber: string, userId?: 
           const { data: allQuestions, error: allError } = await supabase
             .from('admin_questions')
             .select('*')
-            .eq('category', category);
+            .eq('category', category)
+            .eq('is_published', true);
 
           if (allError) throw allError;
 
@@ -99,7 +101,8 @@ export function useTestQuestions(category: string, testNumber: string, userId?: 
         const { data, error } = await supabase
           .from('admin_questions')
           .select('*')
-          .eq('category', category);
+          .eq('category', category)
+          .eq('is_published', true);
 
         if (error) throw error;
 
@@ -112,7 +115,8 @@ export function useTestQuestions(category: string, testNumber: string, userId?: 
           .from('admin_questions')
           .select('*')
           .eq('category', category)
-          .eq('test_number', parseInt(testNumber));
+          .eq('test_number', parseInt(testNumber))
+          .eq('is_published', true);
 
         if (error) throw error;
         return (data || []).slice(0, 10);

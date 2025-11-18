@@ -53,6 +53,8 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
     option_c_sq: '',
     correct_answer: 'A',
     image_url: '',
+    explanation_en: '',
+    explanation_sq: '',
   });
 
   useEffect(() => {
@@ -80,6 +82,8 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
         option_c_sq: question.option_c_sq ?? question.option_c ?? '',
         correct_answer: question.correct_answer,
         image_url: question.image_url || '',
+        explanation_en: question.explanation_en ?? '',
+        explanation_sq: question.explanation_sq ?? '',
       });
     }
   }, [question]);
@@ -160,6 +164,8 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
         option_c_sq: optCSq || null,
         correct_answer: formData.correct_answer,
         image_url: formData.image_url,
+        explanation_en: (formData.explanation_en || '').trim() || null,
+        explanation_sq: (formData.explanation_sq || '').trim() || null,
       });
       console.log('Question updated successfully:', result);
       toast.success('Question updated successfully!');
@@ -230,8 +236,7 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <GlassCard className="p-6 space-y-6">
-            {/* Category and Test Number */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
                 <Select
@@ -262,6 +267,23 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
                   required
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={formData.is_published ? 'published' : 'draft'}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, is_published: value === 'published' })
+                  }
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Question Text */}
@@ -284,6 +306,30 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
                   value={formData.question_text_sq ?? ''}
                   onChange={(e) => setFormData({ ...formData, question_text_sq: e.target.value })}
                   placeholder="Shkruaj pyetjen në shqip..."
+                />
+              </div>
+            </div>
+
+            {/* Explanation (optional, bilingual) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="explanation_en">Explanation (English, optional)</Label>
+                <Textarea
+                  id="explanation_en"
+                  rows={3}
+                  value={formData.explanation_en ?? ''}
+                  onChange={(e) => setFormData({ ...formData, explanation_en: e.target.value })}
+                  placeholder="Short explanation for this question in English..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="explanation_sq">Shpjegimi (Shqip, opsional)</Label>
+                <Textarea
+                  id="explanation_sq"
+                  rows={3}
+                  value={formData.explanation_sq ?? ''}
+                  onChange={(e) => setFormData({ ...formData, explanation_sq: e.target.value })}
+                  placeholder="Shpjegim i shkurtër për këtë pyetje në shqip..."
                 />
               </div>
             </div>

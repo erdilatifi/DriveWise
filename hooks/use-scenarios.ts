@@ -20,6 +20,7 @@ export interface Scenario {
   xp: number;
   is_active: boolean;
   chapter_id?: number | null;
+  is_published?: boolean;
 }
 
 export function useScenarios(category?: Category) {
@@ -32,6 +33,7 @@ export function useScenarios(category?: Category) {
         .from('decision_trainer_scenarios')
         .select('*')
         .eq('is_active', true)
+        .eq('is_published', true)
         .order('level', { ascending: true });
 
       if (category) {

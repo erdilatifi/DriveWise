@@ -80,7 +80,7 @@ export default function DecisionTrainerPage() {
         if (prev <= 1) {
           // Time's up - auto submit wrong answer
           if (selectedOptions.length === 0) {
-            toast.error('Time\'s up!');
+            toast.error(t('trainer.toastTimesUp'));
             handleNext();
           }
           return 0;
@@ -169,12 +169,12 @@ export default function DecisionTrainerPage() {
     }));
 
     if (isCorrect) {
-      toast.success(`Correct! +${currentScenario.xp} XP`);
+      toast.success(`${t('trainer.toastCorrect')} +${currentScenario.xp} XP`);
       if (stats.streak > 0 && stats.streak % 5 === 0) {
         // Trigger confetti on streak milestones
       }
     } else {
-      toast.error('Incorrect. Read the explanation to learn!');
+      toast.error(t('trainer.toastIncorrect'));
     }
   };
 
@@ -231,7 +231,7 @@ export default function DecisionTrainerPage() {
           });
         } catch (error) {
           console.error('Error saving results:', error);
-          toast.error('Results saved locally but failed to sync to leaderboard');
+          toast.error(t('trainer.toastSyncFailed'));
 
           const totalXpEarned = sessionAttempts.reduce((sum, a) => sum + a.xpEarned, 0);
           const correctCount = sessionAttempts.filter((a) => a.isCorrect).length;
@@ -312,7 +312,7 @@ export default function DecisionTrainerPage() {
     const progressList = (categoryProgressData || []) as any[];
     const withAttempts = progressList.filter((p) => p.total_attempts > 0);
     if (withAttempts.length === 0) {
-      toast.error('Complete at least one category first to unlock weak points mode.');
+      toast.error(t('trainer.toastWeakLocked'));
       return;
     }
 
@@ -327,7 +327,7 @@ export default function DecisionTrainerPage() {
     startCategory(weakestCategory);
     const info = CATEGORY_INFO[weakestCategory];
     if (info) {
-      toast.info(`Focusing on your weakest category: ${info.name}`);
+      toast.info(`${t('trainer.toastFocusingWeak')} ${info.name}`);
     }
   };
 
@@ -405,13 +405,13 @@ export default function DecisionTrainerPage() {
             </Button>
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-4xl font-bold mb-2">📚 Decision Trainer</h1>
+                <h1 className="text-4xl font-bold mb-2">📚 {t('trainer.title')}</h1>
                 <p className="text-muted-foreground">{t('dashboard.keepGoing')}</p>
               </div>
               <Button asChild variant="outline">
                 <Link href="/decision-trainer/leaderboard">
                   <Trophy className="w-4 h-4 mr-2" />
-                  Leaderboard
+                  {t('trainer.leaderboard')}
                 </Link>
               </Button>
             </div>
@@ -424,7 +424,7 @@ export default function DecisionTrainerPage() {
                   <div>
                     <h2 className="text-lg font-bold flex items-center gap-2">
                       <Trophy className="w-5 h-5 text-primary" />
-                      Last session: {CATEGORY_INFO[lastSessionSummary.category]?.name || lastSessionSummary.category}
+                      {t('trainer.lastSessionTitle')}: {CATEGORY_INFO[lastSessionSummary.category]?.name || lastSessionSummary.category}
                     </h2>
                     <p className="text-xs text-muted-foreground">
                       {lastSessionSummary.stats.correctCount}/{lastSessionSummary.stats.totalCount} correct · {lastSessionSummary.stats.accuracy}% accuracy · {lastSessionSummary.stats.totalXpEarned} XP
@@ -437,7 +437,7 @@ export default function DecisionTrainerPage() {
 
                 {lastSessionSummary.mistakes.length > 0 ? (
                   <div className="space-y-2">
-                    <p className="text-sm font-medium">Questions to review:</p>
+                    <p className="text-sm font-medium">{t('trainer.questionsToReview')}</p>
                     {lastSessionSummary.mistakes.map((m) => (
                       <div key={m.scenarioId} className="text-sm flex flex-col md:flex-row md:items-center justify-between gap-2 border-t border-border/60 pt-2 mt-2">
                         <span className="text-muted-foreground line-clamp-2">
@@ -458,21 +458,57 @@ export default function DecisionTrainerPage() {
                 ) : (
                   <p className="text-sm text-green-600 flex items-center gap-2">
                     <Check className="w-4 h-4" />
-                    Perfect session! No mistakes to review.
+                    {t('trainer.perfectSession')}
                   </p>
                 )}
 
-                <div className="mt-4 flex justify-end">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setMode('quick5');
-                      startCategory(lastSessionSummary.category);
-                    }}
-                  >
-                    Practice this category again (5 questions)
-                  </Button>
+                {/* Smart recommended next steps based on session accuracy */}
+                <div className="mt-6 border-t pt-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold mb-1">{t('trainer.nextStepsTitle')}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {lastSessionSummary.stats.accuracy >= 80
+                        ? t('trainer.nextStepsHigh')
+                        : lastSessionSummary.stats.accuracy >= 50
+                        ? t('trainer.nextStepsMedium')
+                        : t('trainer.nextStepsLow')}
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2 md:justify-end">
+                    {/* Practice more in Decision Trainer */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setMode('quick5');
+                        startCategory(lastSessionSummary.category);
+                      }}
+                    >
+                      {t('trainer.practiceMoreCta')}
+                    </Button>
+
+                    {/* Weak points mode (if available via handleStartWeakPoints) */}
+                    {(categoryProgressData || []).some((p: any) => p.total_attempts > 0) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleStartWeakPoints}
+                      >
+                        {t('trainer.weakPointsModeCta')}
+                      </Button>
+                    )}
+
+                    {/* Go to related tests for this category */}
+                    <Button
+                      size="sm"
+                      asChild
+                      variant="outline"
+                    >
+                      <Link href={`/category/${lastSessionSummary.category.toLowerCase()}`}>
+                        {t('trainer.goToTestsCta')}
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               </GlassCard>
             </div>
@@ -522,7 +558,7 @@ export default function DecisionTrainerPage() {
                       <div className="flex items-center justify-between mb-4">
                         <h2 className="text-sm font-semibold flex items-center gap-2">
                           <Trophy className="w-4 h-4 text-primary" />
-                          Achievements
+                          {t('dashboard.testAchievementsTitle')}
                         </h2>
                         <span className="text-xs text-muted-foreground">
                           {unlockedCount}/{achievements.length} unlocked
@@ -700,10 +736,10 @@ export default function DecisionTrainerPage() {
               <p className="text-muted-foreground">{t('test.question')} {currentScenarioIndex + 1} {t('test.of')} {categoryScenarios.length}</p>
               <p className="text-xs text-muted-foreground mt-1">
                 Mode:{' '}
-                {mode === 'full' && 'Full category'}
-                {mode === 'quick5' && 'Quick: 5 questions'}
-                {mode === 'quick10' && 'Quick: 10 questions'}
-                {mode === 'weak' && 'Weak points (5 questions)'}
+                {mode === 'full' && t('trainer.modeFull')}
+                {mode === 'quick5' && t('trainer.modeQuick5')}
+                {mode === 'quick10' && t('trainer.modeQuick10')}
+                {mode === 'weak' && t('trainer.modeWeak')}
               </p>
             </div>
             <div className="flex flex-wrap sm:flex-nowrap gap-4 justify-start sm:justify-end">

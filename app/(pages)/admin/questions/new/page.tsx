@@ -58,6 +58,9 @@ export default function NewQuestionPage() {
     option_c_sq: '',
     correct_answer: 'A',
     image_url: '',
+    explanation_en: '',
+    explanation_sq: '',
+    is_published: true,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
@@ -182,6 +185,9 @@ export default function NewQuestionPage() {
         option_c_sq: optCSq || null,
         correct_answer: formData.correct_answer,
         image_url: imageUrl,
+        explanation_en: (formData.explanation_en || '').trim() || null,
+        explanation_sq: (formData.explanation_sq || '').trim() || null,
+        is_published: formData.is_published,
         ...(multipleAnswers && {
           correct_answers: Array.from(selectedAnswers),
           correct_answer: Array.from(selectedAnswers)[0] // Keep first as fallback

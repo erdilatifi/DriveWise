@@ -47,6 +47,7 @@ interface Scenario {
   is_active: boolean;
   created_at?: string;
   chapter_id?: number | null;
+  is_published?: boolean;
 }
 
 export default function AdminScenariosPageOptimized() {
@@ -67,6 +68,7 @@ export default function AdminScenariosPageOptimized() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [levelFilter, setLevelFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [publishedFilter, setPublishedFilter] = useState<string>('all');
   
   // Form state
   const [showForm, setShowForm] = useState(false);
@@ -95,6 +97,7 @@ export default function AdminScenariosPageOptimized() {
     real_world_tip_sq: '',
     xp: 25,
     chapter_id: 1,
+    is_published: true,
   });
 
   // Reset form to default values
@@ -120,6 +123,7 @@ export default function AdminScenariosPageOptimized() {
       real_world_tip_sq: '',
       xp: 25,
       chapter_id: 1,
+      is_published: true,
     });
   };
 
@@ -181,6 +185,10 @@ export default function AdminScenariosPageOptimized() {
         query = query.eq('is_active', statusFilter === 'active');
       }
       
+      if (publishedFilter !== 'all') {
+        query = query.eq('is_published', publishedFilter === 'published');
+      }
+      
       // Apply pagination
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
@@ -213,7 +221,7 @@ export default function AdminScenariosPageOptimized() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, categoryFilter, levelFilter, statusFilter, pageSize]);
+  }, [searchQuery, categoryFilter, levelFilter, statusFilter, publishedFilter, pageSize]);
 
   // Debounced search effect
   useEffect(() => {
@@ -233,7 +241,7 @@ export default function AdminScenariosPageOptimized() {
       setCurrentPage(1);
       fetchScenarios(1, true);
     }
-  }, [categoryFilter, levelFilter, statusFilter, fetchScenarios, user]);
+  }, [categoryFilter, levelFilter, statusFilter, publishedFilter, fetchScenarios, user]);
 
   // Initial load
   useEffect(() => {
@@ -269,6 +277,7 @@ export default function AdminScenariosPageOptimized() {
     setCategoryFilter('all');
     setLevelFilter('all');
     setStatusFilter('all');
+    setPublishedFilter('all');
   };
 
   // Form helpers
@@ -586,6 +595,17 @@ export default function AdminScenariosPageOptimized() {
                     <SelectItem value="inactive">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
+
+                <Select value={publishedFilter} onValueChange={setPublishedFilter}>
+                  <SelectTrigger className="w-32 min-w-[7rem]">
+                    <SelectValue placeholder="Published" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Publish</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             
@@ -633,6 +653,9 @@ export default function AdminScenariosPageOptimized() {
                       <Badge variant={scenario.is_active ? "default" : "destructive"}>
                         {scenario.is_active ? 'Active' : 'Inactive'}
                       </Badge>
+                      <Badge variant={scenario.is_published !== false ? "outline" : "destructive"}>
+                        {scenario.is_published !== false ? 'Published' : 'Draft'}
+                      </Badge>
                     </div>
                   </div>
                   
@@ -677,6 +700,7 @@ export default function AdminScenariosPageOptimized() {
                             real_world_tip_sq: scenario.real_world_tip_sq ?? scenario.real_world_tip ?? '',
                             xp: scenario.xp,
                             chapter_id: scenario.chapter_id || 1,
+                            is_published: scenario.is_published !== false,
                           });
                           setImagePreview(scenario.image_url || '');
                           setShowForm(true);
@@ -841,6 +865,29 @@ export default function AdminScenariosPageOptimized() {
                       }}
                       placeholder="e.g. 5"
                     />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="mb-1 block">Status</Label>
+                    <Select
+                      value={formData.is_published ? 'published' : 'draft'}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          is_published: value === 'published',
+                        }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="published">Published</SelectItem>
+                        <SelectItem value="draft">Draft</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 

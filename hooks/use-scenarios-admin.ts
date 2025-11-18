@@ -25,6 +25,7 @@ export interface Scenario {
   real_world_tip: string;
   xp: number;
   is_active: boolean;
+  is_published?: boolean;
   created_at?: string;
 }
 
@@ -38,6 +39,7 @@ export interface ScenarioInput {
   real_world_tip: string;
   xp: number;
   is_active?: boolean;
+  is_published?: boolean;
 }
 
 // Optimized hook for fetching scenarios with pagination and filtering
@@ -109,7 +111,11 @@ export function useCreateScenario() {
       
       const { data, error } = await supabase
         .from('decision_trainer_scenarios')
-        .insert([{ ...scenarioData, is_active: true }])
+        .insert([{ 
+          ...scenarioData, 
+          is_active: true,
+          is_published: scenarioData.is_published ?? true,
+        }])
         .select()
         .single();
       

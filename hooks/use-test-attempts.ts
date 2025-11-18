@@ -36,6 +36,32 @@ export interface RecentTest {
   passed: boolean;
 }
 
+export interface WeakTopicStat {
+  topic: string;
+  totalQuestions: number;
+  correct: number;
+  accuracy: number;
+}
+
+export interface WeakTopicsSummary {
+  topics: WeakTopicStat[];
+  weakTopics: WeakTopicStat[];
+}
+
+export interface TestAchievements {
+  totalTests: number;
+  bestPassStreak: number;
+  totalQuestionsAnswered: number;
+  firstTestCompleted: boolean;
+  fivePassesInRow: boolean;
+  hundredQuestionsAnswered: boolean;
+}
+
+export interface GlobalDailyStreak {
+  currentStreak: number;
+  bestStreak: number;
+}
+
 // Get user's test attempts with dashboard stats
 export function useTestAttempts(userId?: string) {
   return useQuery({
@@ -54,6 +80,146 @@ export function useTestAttempts(userId?: string) {
     },
     enabled: !!userId,
     staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+}
+
+// Compute unified daily streak across tests and Decision Trainer
+export function useGlobalDailyStreak(userId?: string) {
+  return useQuery<GlobalDailyStreak>({
+    queryKey: ['global-daily-streak', userId],
+    queryFn: async () => {
+      const supabase = createClient();
+
+      // Get all test attempt dates
+      const { data: testAttempts, error: testError } = await supabase
+        .from('test_attempts')
+        .select('completed_at')
+        .eq('user_id', userId!);
+
+      if (testError) throw testError;
+
+      // Get all decision trainer attempt dates
+      const { data: dtAttempts, error: dtError } = await supabase
+        .from('decision_trainer_attempts')
+        .select('created_at')
+        .eq('user_id', userId!);
+
+      if (dtError) throw dtError;
+
+      const activeDayTimestamps: number[] = [];
+
+      (testAttempts || []).forEach((a: any) => {
+        const d = new Date(a.completed_at);
+        activeDayTimestamps.push(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime());
+      });
+
+      (dtAttempts || []).forEach((a: any) => {
+        const d = new Date(a.created_at);
+        activeDayTimestamps.push(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime());
+      });
+
+      const uniqueDays = [...new Set(activeDayTimestamps)].sort((a, b) => b - a); // newest first
+
+      if (uniqueDays.length === 0) {
+        return { currentStreak: 0, bestStreak: 0 };
+      }
+
+      // Compute current streak: consecutive days ending today or yesterday
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const yesterdayStart = todayStart - 86400000;
+
+      let currentStreak = 0;
+      let bestStreak = 0;
+
+      // Only count streak if last active day is today or yesterday
+      if (uniqueDays[0] === todayStart || uniqueDays[0] === yesterdayStart) {
+        currentStreak = 1;
+        bestStreak = 1;
+
+        for (let i = 1; i < uniqueDays.length; i++) {
+          const expectedPrevDay = uniqueDays[i - 1] - 86400000;
+          if (uniqueDays[i] === expectedPrevDay) {
+            currentStreak++;
+            if (currentStreak > bestStreak) {
+              bestStreak = currentStreak;
+            }
+          } else {
+            // streak broken
+            break;
+          }
+        }
+      }
+
+      return { currentStreak, bestStreak };
+    },
+    enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+// Compute simple theory test achievements for a user
+export function useTestAchievements(userId?: string) {
+  return useQuery<TestAchievements>({
+    queryKey: ['test-achievements', userId],
+    queryFn: async () => {
+      const supabase = createClient();
+
+      // Get all test attempts for this user (ordered oldest -> newest for streak calc)
+      const { data: attempts, error: attemptsError } = await supabase
+        .from('test_attempts')
+        .select('id, percentage, total_questions, completed_at')
+        .eq('user_id', userId!)
+        .order('completed_at', { ascending: true });
+
+      if (attemptsError) throw attemptsError;
+      const testAttempts = attempts || [];
+      const totalTests = testAttempts.length;
+
+      // Best streak of passed tests in a row
+      let bestPassStreak = 0;
+      let currentStreak = 0;
+      testAttempts.forEach((attempt) => {
+        const passed = Number(attempt.percentage) >= 80;
+        if (passed) {
+          currentStreak++;
+          if (currentStreak > bestPassStreak) {
+            bestPassStreak = currentStreak;
+          }
+        } else {
+          currentStreak = 0;
+        }
+      });
+
+      // Total questions answered across all tests (count answers rows)
+      let totalQuestionsAnswered = 0;
+      if (testAttempts.length > 0) {
+        const attemptIds = testAttempts.map(a => a.id);
+
+        const { count: answersCount, error: answersError } = await supabase
+          .from('test_attempt_answers')
+          .select('*', { count: 'exact', head: true })
+          .in('test_attempt_id', attemptIds);
+
+        if (answersError) throw answersError;
+        totalQuestionsAnswered = answersCount || 0;
+      }
+
+      const firstTestCompleted = totalTests >= 1;
+      const fivePassesInRow = bestPassStreak >= 5;
+      const hundredQuestionsAnswered = totalQuestionsAnswered >= 100;
+
+      return {
+        totalTests,
+        bestPassStreak,
+        totalQuestionsAnswered,
+        firstTestCompleted,
+        fivePassesInRow,
+        hundredQuestionsAnswered,
+      };
+    },
+    enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -282,5 +448,84 @@ export function useTestCount(category: string, enabled: boolean = true) {
     },
     staleTime: 10 * 60 * 1000, // 10 minutes - test count doesn't change often
     enabled: enabled && !!category,
+  });
+}
+
+// Get overall weak-topic statistics across all past tests for a user
+export function useWeakTopics(userId?: string) {
+  return useQuery<WeakTopicsSummary>({
+    queryKey: ['weak-topics', userId],
+    queryFn: async () => {
+      const supabase = createClient();
+
+      // 1) Get all test attempts for this user
+      const { data: attempts, error: attemptsError } = await supabase
+        .from('test_attempts')
+        .select('id')
+        .eq('user_id', userId!);
+
+      if (attemptsError) throw attemptsError;
+      const attemptIds = (attempts || []).map(a => a.id);
+      if (attemptIds.length === 0) {
+        return { topics: [], weakTopics: [] };
+      }
+
+      // 2) Get all answers for those attempts
+      const { data: answers, error: answersError } = await supabase
+        .from('test_attempt_answers')
+        .select('question_id, is_correct')
+        .in('test_attempt_id', attemptIds);
+
+      if (answersError) throw answersError;
+      if (!answers || answers.length === 0) {
+        return { topics: [], weakTopics: [] };
+      }
+
+      const questionIds = [...new Set(answers.map(a => a.question_id))];
+
+      // 3) Get topics for those questions
+      const { data: questions, error: questionsError } = await supabase
+        .from('admin_questions')
+        .select('id, topic')
+        .in('id', questionIds);
+
+      if (questionsError) throw questionsError;
+
+      const topicByQuestionId = new Map<string, string | null>();
+      (questions || []).forEach((q: any) => {
+        topicByQuestionId.set(q.id, q.topic ?? null);
+      });
+
+      const topicStatsMap: Record<string, { total: number; correct: number }> = {};
+
+      answers.forEach((ans: any) => {
+        const topic = topicByQuestionId.get(ans.question_id);
+        if (!topic) return;
+
+        if (!topicStatsMap[topic]) {
+          topicStatsMap[topic] = { total: 0, correct: 0 };
+        }
+        topicStatsMap[topic].total += 1;
+        if (ans.is_correct) {
+          topicStatsMap[topic].correct += 1;
+        }
+      });
+
+      const topics: WeakTopicStat[] = Object.entries(topicStatsMap).map(([topic, stats]) => {
+        const accuracy = stats.total > 0 ? stats.correct / stats.total : 0;
+        return {
+          topic,
+          totalQuestions: stats.total,
+          correct: stats.correct,
+          accuracy,
+        };
+      }).sort((a, b) => a.accuracy - b.accuracy);
+
+      const weakTopics = topics.filter(t => t.totalQuestions >= 3 && t.accuracy < 0.8).slice(0, 5);
+
+      return { topics, weakTopics };
+    },
+    enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
   });
 }

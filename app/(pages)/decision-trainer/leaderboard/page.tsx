@@ -10,10 +10,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Trophy, Medal, Award, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useLeaderboard } from '@/hooks/use-leaderboard';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function LeaderboardPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
   const { data: leaderboardData, isLoading } = useLeaderboard(user?.id);
   
   const topTen = leaderboardData?.topTen || [];
@@ -106,14 +108,14 @@ export default function LeaderboardPage() {
           <Button variant="ghost" asChild className="mb-4">
             <Link href="/decision-trainer">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Trainer
+              {t('leaderboard.backToTrainer')}
             </Link>
           </Button>
           
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-              <h1 className="text-4xl font-bold mb-2">🏆 Leaderboard</h1>
-              <p className="text-muted-foreground">Top learners in Decision Trainer</p>
+              <h1 className="text-4xl font-bold mb-2">🏆 {t('trainer.leaderboard')}</h1>
+              <p className="text-muted-foreground">{t('leaderboard.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -123,7 +125,7 @@ export default function LeaderboardPage() {
           {currentUserRank && !currentUserRank.isInTopTen && (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">Your Rank</h3>
+                <h3 className="text-lg font-semibold">{t('leaderboard.yourRank')}</h3>
                 <span className="text-sm text-muted-foreground">
                   #{currentUserRank.rank} of {totalUsers}
                 </span>
@@ -172,10 +174,10 @@ export default function LeaderboardPage() {
 
           <div className="space-y-3">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Top 10 Leaderboard</h3>
+              <h3 className="text-lg font-semibold">{t('leaderboard.top10Title')}</h3>
               {totalUsers > 10 && (
                 <span className="text-sm text-muted-foreground">
-                  Showing top 10 of {totalUsers} users
+                  {t('leaderboard.showingTop10Of')} {totalUsers}
                 </span>
               )}
             </div>
@@ -183,13 +185,13 @@ export default function LeaderboardPage() {
             {topTen.length === 0 ? (
               <div className="text-center py-12">
                 <Trophy className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-xl font-bold mb-2">No Leaderboard Data Yet</h3>
+                <h3 className="text-xl font-bold mb-2">{t('leaderboard.noDataTitle')}</h3>
                 <p className="text-muted-foreground mb-4">
-                  Complete some scenarios in Decision Trainer to appear on the leaderboard!
+                  {t('leaderboard.noDataSubtitle')}
                 </p>
                 <Button asChild>
                   <Link href="/decision-trainer">
-                    Start Learning
+                    {t('leaderboard.startLearningCta')}
                   </Link>
                 </Button>
               </div>
@@ -259,7 +261,7 @@ export default function LeaderboardPage() {
           <GlassCard className="p-6 text-center">
             <Trophy className="w-12 h-12 mx-auto mb-3 text-yellow-500" />
             <h3 className="font-bold text-2xl mb-1">{topTen[0]?.total_xp || 0}</h3>
-            <p className="text-sm text-muted-foreground">Highest XP</p>
+            <p className="text-sm text-muted-foreground">{t('leaderboard.highestXp')}</p>
           </GlassCard>
           
           <GlassCard className="p-6 text-center">
@@ -267,7 +269,7 @@ export default function LeaderboardPage() {
             <h3 className="font-bold text-2xl mb-1">
               {topTen[0]?.accuracy || 0}%
             </h3>
-            <p className="text-sm text-muted-foreground">Top Accuracy</p>
+            <p className="text-sm text-muted-foreground">{t('leaderboard.topAccuracy')}</p>
           </GlassCard>
           
           <GlassCard className="p-6 text-center">
@@ -275,7 +277,7 @@ export default function LeaderboardPage() {
             <h3 className="font-bold text-2xl mb-1">
               {topTen.length > 0 ? Math.max(...topTen.map((e: any) => e.best_streak), 0) : 0}
             </h3>
-            <p className="text-sm text-muted-foreground">Longest Streak</p>
+            <p className="text-sm text-muted-foreground">{t('leaderboard.longestStreak')}</p>
           </GlassCard>
         </div>
       </div>

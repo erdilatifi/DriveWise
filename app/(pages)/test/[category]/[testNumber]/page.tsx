@@ -33,6 +33,7 @@ interface Question {
   correct_answer: string;
   correct_answers?: string[]; // Multiple correct answers support
   image_url?: string;
+  topic?: string | null;
 }
 
 // Lazily load the rating modal to keep the main test bundle small
@@ -49,6 +50,9 @@ export default function TestPage() {
   const category = (params.category as string).toUpperCase() as LicenseCategory;
   const testNumber = params.testNumber as string;
 
+  const isMixedTest = testNumber === 'mixed';
+  const isPersonalizedTest = testNumber === 'personalized';
+
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [showResults, setShowResults] = useState(false);
@@ -57,6 +61,7 @@ export default function TestPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [startTime] = useState(Date.now());
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const [lastTestAttemptId, setLastTestAttemptId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -307,6 +312,7 @@ export default function TestPage() {
       }
 
       console.log('✅ Test attempt saved successfully:', testAttempt);
+      setLastTestAttemptId(testAttempt.id);
 
       // Invalidate cache to show updated results
       queryClient.invalidateQueries({ queryKey: ['user-test-stats', userId] });
@@ -475,6 +481,48 @@ export default function TestPage() {
     const score = calculateScore();
     const passed = score.percentage >= 80;
 
+    // Build simple per-topic statistics for this test attempt
+    const topicStatsMap: Record<string, { total: number; correct: number }> = {};
+
+    questions.forEach((q) => {
+      const topic = q.topic;
+      if (!topic) return;
+
+      if (!topicStatsMap[topic]) {
+        topicStatsMap[topic] = { total: 0, correct: 0 };
+      }
+
+      const userAnswer = answers[q.id];
+      const correctAnswers = q.correct_answers && q.correct_answers.length > 0
+        ? q.correct_answers
+        : [q.correct_answer];
+
+      let isCorrect = false;
+      if (Array.isArray(userAnswer)) {
+        isCorrect = userAnswer.length === correctAnswers.length &&
+                   userAnswer.every(a => correctAnswers.includes(a));
+      } else {
+        isCorrect = correctAnswers.includes(userAnswer as string);
+      }
+
+      topicStatsMap[topic].total += 1;
+      if (isCorrect) {
+        topicStatsMap[topic].correct += 1;
+      }
+    });
+
+    const topicStats = Object.entries(topicStatsMap).map(([topic, stats]) => {
+      const accuracy = stats.total > 0 ? stats.correct / stats.total : 0;
+      return {
+        topic,
+        total: stats.total,
+        correct: stats.correct,
+        accuracy,
+      };
+    }).sort((a, b) => a.accuracy - b.accuracy);
+
+    const weakTopics = topicStats.filter(t => t.total >= 2 && t.accuracy < 0.8).slice(0, 3);
+
     return (
       <div className="min-h-screen bg-background">
         <header className="border-b border-border/40 bg-card/50 backdrop-blur-sm">
@@ -543,21 +591,82 @@ export default function TestPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" asChild>
-                  <Link href={`/category/${category.toLowerCase()}`}>
-                    {t('test.backToTests')}
-                  </Link>
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={() => {
-                    // Reload page to reset everything
-                    window.location.reload();
-                  }}
-                >
-                  {t('test.retakeTest')}
-                </Button>
+              <div className="space-y-4">
+                <div className="border rounded-lg p-4 bg-muted/40">
+                  <h3 className="text-sm font-semibold mb-1">{t('test.nextStepsTitle')}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {passed ? (
+                      isMixedTest || isPersonalizedTest
+                        ? t('test.nextStepsPassedMixedOrPersonalized')
+                        : t('test.nextStepsPassedStandard')
+                    ) : (
+                      isPersonalizedTest
+                        ? t('test.nextStepsFailedPersonalized')
+                        : t('test.nextStepsFailedStandard')
+                    )}
+                  </p>
+                  {weakTopics.length > 0 && (
+                    <p className="text-xs text-amber-500 mt-2">
+                      {t('test.weakTopicsInThisTest')}{': '}
+                      {weakTopics.map((tTopic, idx) => (
+                        <span key={tTopic.topic}>
+                          {idx > 0 && ', '}
+                          {tTopic.topic}
+                        </span>
+                      ))}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button variant="outline" className="flex-1" asChild>
+                    <Link href={`/category/${category.toLowerCase()}`}>
+                      {t('test.backToTests')}
+                    </Link>
+                  </Button>
+
+                  {lastTestAttemptId && (
+                    <Button className="flex-1" variant="secondary" asChild>
+                      <Link href={`/history/${lastTestAttemptId}`}>
+                        Review this test
+                      </Link>
+                    </Button>
+                  )}
+
+                  <Button
+                    className="flex-1"
+                    onClick={() => {
+                      // Reload page to reset everything
+                      window.location.reload();
+                    }}
+                  >
+                    {t('test.retakeTest')}
+                  </Button>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {!isPersonalizedTest && (
+                    <Button variant="outline" className="flex-1" asChild>
+                      <Link href={`/test/${category.toLowerCase()}/personalized`}>
+                        {t('test.practiceWeakPointsCta')}
+                      </Link>
+                    </Button>
+                  )}
+
+                  {!isMixedTest && (
+                    <Button variant="outline" className="flex-1" asChild>
+                      <Link href={`/test/${category.toLowerCase()}/mixed`}>
+                        {t('test.mixedTestCta')}
+                      </Link>
+                    </Button>
+                  )}
+
+                  <Button variant="outline" className="flex-1" asChild>
+                    <Link href="/decision-trainer">
+                      {t('test.decisionTrainerCta')}
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

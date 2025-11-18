@@ -78,13 +78,19 @@ export default function StatsPage() {
         .from('admin_questions')
         .select('*', { count: 'exact', head: true });
 
-      // Get questions by category
-      const { data: questionsByCategory } = await supabase
+      // Get questions by category and test for coverage
+      const { data: questionsDetail } = await supabase
         .from('admin_questions')
-        .select('category');
+        .select('category, test_number');
 
-      const categoryCounts = questionsByCategory?.reduce((acc, q) => {
+      const categoryCounts = questionsDetail?.reduce((acc, q) => {
         acc[q.category] = (acc[q.category] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      const questionsPerTest = questionsDetail?.reduce((acc, q) => {
+        const key = `${q.category}-${q.test_number}`;
+        acc[key] = (acc[key] || 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
 
@@ -101,6 +107,38 @@ export default function StatsPage() {
       const passedAttempts = attempts?.filter(a => a.percentage >= 80).length || 0;
       const failedAttempts = (attempts?.length || 0) - passedAttempts;
 
+      // Decision Trainer coverage: scenarios by category and level
+      const { data: scenariosDetail } = await supabase
+        .from('decision_trainer_scenarios')
+        .select('category, level, is_active');
+
+      const scenarioCategoryCounts = scenariosDetail?.reduce((acc, s) => {
+        acc[s.category] = (acc[s.category] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      const scenarioLevelCounts = scenariosDetail?.reduce((acc, s) => {
+        acc[s.level] = (acc[s.level] || 0) + 1;
+        return acc;
+      }, {} as Record<number, number>) || {};
+
+      // Study materials coverage: materials per chapter
+      const { data: materialsDetail } = await supabase
+        .from('study_materials')
+        .select('chapter_id, is_published');
+
+      const materialsByChapter = materialsDetail?.reduce((acc, m) => {
+        const chapterId = m.chapter_id as number;
+        if (!acc[chapterId]) {
+          acc[chapterId] = { total: 0, published: 0 };
+        }
+        acc[chapterId].total += 1;
+        if (m.is_published) {
+          acc[chapterId].published += 1;
+        }
+        return acc;
+      }, {} as Record<number, { total: number; published: number }>) || {};
+
       return {
         totalUsers: totalUsers || 0,
         totalQuestions: totalQuestions || 0,
@@ -108,6 +146,10 @@ export default function StatsPage() {
         passedAttempts,
         failedAttempts,
         categoryCounts,
+        questionsPerTest,
+        scenarioCategoryCounts,
+        scenarioLevelCounts,
+        materialsByChapter,
       };
     },
   });
@@ -531,6 +573,110 @@ export default function StatsPage() {
                 <p className="text-sm text-muted-foreground">Category {category}</p>
               </div>
             ))}
+          </div>
+        </GlassCard>
+
+        {/* Content coverage overview */}
+        <GlassCard className="p-6 mt-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Questions per test */}
+            <div>
+              <h2 className="text-lg font-semibold mb-3">Theory Test Coverage</h2>
+              <p className="text-xs text-muted-foreground mb-3">
+                Questions per category/test. Cells with low counts help you see where more questions are needed.
+              </p>
+              <div className="space-y-1 text-xs">
+                {Object.entries(stats?.questionsPerTest || {})
+                  .sort(([aKey], [bKey]) => aKey.localeCompare(bKey))
+                  .map(([key, count]) => {
+                    const [category, testNumber] = key.split('-');
+                    const low = count < 20; // arbitrary threshold for highlighting low-coverage tests
+                    return (
+                      <div
+                        key={key}
+                        className={`flex items-center justify-between px-2 py-1 rounded ${
+                          low ? 'bg-amber-500/10 border border-amber-500/40' : 'bg-card/40 border border-border/60'
+                        }`}
+                      >
+                        <span className="font-medium">Cat {category} · Test {testNumber}</span>
+                        <span className={low ? 'text-amber-600 font-semibold' : 'text-muted-foreground'}>
+                          {count} questions
+                        </span>
+                      </div>
+                    );
+                  })}
+                {Object.keys(stats?.questionsPerTest || {}).length === 0 && (
+                  <p className="text-xs text-muted-foreground">No theory questions found.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Decision Trainer scenarios coverage */}
+            <div>
+              <h2 className="text-lg font-semibold mb-3">Decision Trainer Coverage</h2>
+              <p className="text-xs text-muted-foreground mb-3">
+                Scenarios by category and level to spot gaps in practical training content.
+              </p>
+              <div className="space-y-3 text-xs">
+                <div>
+                  <p className="font-semibold mb-1">By Category</p>
+                  <div className="space-y-1">
+                    {Object.entries(stats?.scenarioCategoryCounts || {}).map(([category, count]) => (
+                      <div key={category} className="flex items-center justify-between px-2 py-1 rounded bg-card/40 border border-border/60">
+                        <span className="font-medium">Category {category}</span>
+                        <span className="text-muted-foreground">{count} scenarios</span>
+                      </div>
+                    ))}
+                    {Object.keys(stats?.scenarioCategoryCounts || {}).length === 0 && (
+                      <p className="text-xs text-muted-foreground">No Decision Trainer scenarios found.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="font-semibold mb-1">By Level</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(stats?.scenarioLevelCounts || {}).map(([level, count]) => (
+                      <div key={level} className="px-2 py-1 rounded-full bg-card/40 border border-border/60">
+                        <span className="font-medium mr-1">L{level}</span>
+                        <span className="text-muted-foreground">{count}</span>
+                      </div>
+                    ))}
+                    {Object.keys(stats?.scenarioLevelCounts || {}).length === 0 && (
+                      <p className="text-xs text-muted-foreground">No scenarios by level yet.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Study materials coverage */}
+            <div>
+              <h2 className="text-lg font-semibold mb-3">Study Materials Coverage</h2>
+              <p className="text-xs text-muted-foreground mb-3">
+                Materials per chapter and publication status. Chapters with no or few materials are highlighted.
+              </p>
+              <div className="space-y-1 text-xs">
+                {Array.from({ length: 13 }).map((_, idx) => {
+                  const chapterId = idx + 1;
+                  const chapterStats = stats?.materialsByChapter?.[chapterId] || { total: 0, published: 0 };
+                  const low = chapterStats.total === 0;
+                  return (
+                    <div
+                      key={chapterId}
+                      className={`flex items-center justify-between px-2 py-1 rounded ${
+                        low ? 'bg-red-500/10 border border-red-500/40' : 'bg-card/40 border border-border/60'
+                      }`}
+                    >
+                      <span className="font-medium">Chapter {chapterId}</span>
+                      <span className={low ? 'text-red-600 font-semibold' : 'text-muted-foreground'}>
+                        {chapterStats.published}/{chapterStats.total} published
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </GlassCard>
       </motion.div>

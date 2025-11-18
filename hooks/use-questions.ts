@@ -19,7 +19,10 @@ export interface Question {
   option_c_sq?: string | null;
   correct_answer: 'A' | 'B' | 'C';
   correct_answers?: ('A' | 'B' | 'C')[]; // Multiple correct answers support
+  explanation_en?: string | null;
+  explanation_sq?: string | null;
   image_url?: string;
+  is_published?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -41,12 +44,16 @@ export interface QuestionInput {
   option_c_sq?: string | null;
   correct_answer: 'A' | 'B' | 'C';
   correct_answers?: ('A' | 'B' | 'C')[]; // Multiple correct answers support
+  explanation_en?: string | null;
+  explanation_sq?: string | null;
   image_url?: string;
+  is_published?: boolean;
 }
 
 export interface QuestionsQueryParams {
   category?: string;
   search?: string;
+  status?: 'all' | 'published' | 'draft';
   page: number;
   pageSize: number;
 }
@@ -57,11 +64,11 @@ export interface QuestionsPageResult {
 }
 
 // Fetch questions with server-side pagination and optional filters
-export function useQuestions({ category, search, page, pageSize }: QuestionsQueryParams) {
+export function useQuestions({ category, search, status = 'all', page, pageSize }: QuestionsQueryParams) {
   const supabase = createClient();
 
   return useQuery<QuestionsPageResult>({
-    queryKey: ['questions', category, search, page, pageSize],
+    queryKey: ['questions', category, search, status, page, pageSize],
     queryFn: async () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
@@ -74,6 +81,12 @@ export function useQuestions({ category, search, page, pageSize }: QuestionsQuer
 
       if (category) {
         query = query.eq('category', category);
+      }
+
+      if (status === 'published') {
+        query = query.eq('is_published', true);
+      } else if (status === 'draft') {
+        query = query.eq('is_published', false);
       }
 
       if (search && search.trim()) {

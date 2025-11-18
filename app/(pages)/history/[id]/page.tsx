@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowRight, CheckCircle, XCircle, CheckSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useParams, useRouter } from 'next/navigation';
+import { useLanguage } from '@/contexts/language-context';
 
 interface Answer {
   id: string;
@@ -18,12 +19,17 @@ interface Answer {
   question: {
     id: string;
     question_text: string;
+    question_text_en?: string | null;
+    question_text_sq?: string | null;
     option_a: string;
     option_b: string;
     option_c: string;
     correct_answer: string;
     correct_answers?: string[];
     image_url?: string;
+    explanation_en?: string | null;
+    explanation_sq?: string | null;
+    topic?: string | null;
   } | null;
 }
 
@@ -32,6 +38,7 @@ export default function ReviewPage() {
   const router = useRouter();
   const testId = params.id as string;
   const supabase = createClient();
+  const { language, t } = useLanguage();
 
   interface TestInfo {
     id: string;
@@ -132,15 +139,44 @@ export default function ReviewPage() {
         <Navbar />
         <div className="container mx-auto px-6 py-8 max-w-7xl pt-28">
           <GlassCard className="p-12 text-center">
-            <p className="text-muted-foreground mb-4">Test not found</p>
+            <p className="text-muted-foreground mb-4">{t('history.notFoundTitle')}</p>
             <Button asChild>
-              <Link href="/history">Back to History</Link>
+              <Link href="/history">{t('history.backToHistory')}</Link>
             </Button>
           </GlassCard>
         </div>
       </div>
     );
   }
+
+  // Build per-topic statistics across all answers in this test
+  const topicStatsMap: Record<string, { total: number; correct: number }> = {};
+
+  answers.forEach((ans) => {
+    const q = ans.question;
+    const topic = q?.topic;
+    if (!q || !topic) return;
+
+    if (!topicStatsMap[topic]) {
+      topicStatsMap[topic] = { total: 0, correct: 0 };
+    }
+    topicStatsMap[topic].total += 1;
+    if (ans.is_correct) {
+      topicStatsMap[topic].correct += 1;
+    }
+  });
+
+  const topicStats = Object.entries(topicStatsMap).map(([topic, stats]) => {
+    const accuracy = stats.total > 0 ? stats.correct / stats.total : 0;
+    return {
+      topic,
+      total: stats.total,
+      correct: stats.correct,
+      accuracy,
+    };
+  }).sort((a, b) => a.accuracy - b.accuracy);
+
+  const weakTopics = topicStats.filter((t) => t.total >= 2 && t.accuracy < 0.8).slice(0, 3);
 
   const answer = answers[currentQuestion];
   const question = answer?.question;
@@ -154,9 +190,9 @@ export default function ReviewPage() {
         <Navbar />
         <div className="container mx-auto px-6 py-8 max-w-7xl pt-28">
           <GlassCard className="p-12 text-center">
-            <p className="text-muted-foreground mb-4">Question data not found</p>
+            <p className="text-muted-foreground mb-4">{t('history.missingQuestionTitle')}</p>
             <Button asChild>
-              <Link href="/history">Back to History</Link>
+              <Link href="/history">{t('history.backToHistory')}</Link>
             </Button>
           </GlassCard>
         </div>
@@ -169,6 +205,14 @@ export default function ReviewPage() {
   const correctAnswers = question.correct_answers && question.correct_answers.length > 0
     ? question.correct_answers
     : [question.correct_answer];
+
+  const localizedQuestionText = language === 'en'
+    ? (question.question_text_en || question.question_text)
+    : (question.question_text_sq || question.question_text);
+
+  const explanationText = language === 'en'
+    ? (question.explanation_en || question.explanation_sq || '')
+    : (question.explanation_sq || question.explanation_en || '');
 
   return (
     <div className="min-h-screen bg-background">
@@ -185,21 +229,21 @@ export default function ReviewPage() {
           <Button variant="ghost" asChild className="mb-4">
             <Link href="/history">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to History
+              {t('history.backToHistory')}
             </Link>
           </Button>
           
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold mb-1">
-                Category {testInfo.category} - {
-                  testInfo.test_number === 'mixed' ? 'Mixed Test' :
-                  testInfo.test_number === 'personalized' ? 'Personalized Test' :
-                  `Test #${testInfo.test_number}`
+                {t('category.licenseCategory')} {testInfo.category} - {
+                  testInfo.test_number === 'mixed' ? t('test.mixedName') :
+                  testInfo.test_number === 'personalized' ? t('test.personalizedName') :
+                  `${t('test.test')} #${testInfo.test_number}`
                 }
               </h1>
               <p className="text-muted-foreground">
-                Review your answers and learn from mistakes
+                {t('history.reviewSubtitle')}
               </p>
             </div>
             <div className="text-right">
@@ -212,6 +256,66 @@ export default function ReviewPage() {
             </div>
           </div>
         </div>
+
+        {/* Topic analytics / weakness insights */}
+        {topicStats.length > 0 && (
+          <div className="mb-6 max-w-4xl mx-auto">
+            <GlassCard className="p-4">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold">{t('history.topicsTitle')}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t('history.topicsSubtitle')}
+                    </p>
+                  </div>
+                  {weakTopics.length > 0 && (
+                    <p className="text-xs font-medium text-amber-500">
+                      {t('history.weakTopicsPrefix')}{' '}
+                      {weakTopics.map((t, idx) => (
+                        <span key={t.topic}>
+                          {idx > 0 && ', '}
+                          {t.topic}
+                        </span>
+                      ))}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  {topicStats.slice(0, 4).map((t) => {
+                    const percentage = Math.round(t.accuracy * 100);
+                    const isWeak = weakTopics.some((w) => w.topic === t.topic);
+                    return (
+                      <div key={t.topic} className="text-xs">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium truncate mr-2">{t.topic}</span>
+                          <span className={`font-semibold ${
+                            isWeak ? 'text-red-500' : percentage >= 90 ? 'text-green-500' : 'text-amber-500'
+                          }`}>
+                            {t.correct}/{t.total} ({percentage}%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                          <div
+                            className={`h-2 rounded-full transition-all ${
+                              isWeak
+                                ? 'bg-red-500/80'
+                                : percentage >= 90
+                                ? 'bg-green-500/80'
+                                : 'bg-amber-500/80'
+                            }`}
+                            style={{ width: `${Math.max(8, percentage)}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </GlassCard>
+          </div>
+        )}
 
         {/* Question Card */}
         <Card className={`${question.image_url ? 'max-w-6xl' : 'max-w-4xl'} mx-auto mb-6`}>
@@ -230,7 +334,7 @@ export default function ReviewPage() {
               <div>
                 <h2 className="text-xl font-semibold">Question {currentQuestion + 1} of {totalQuestions}</h2>
                 <p className={`text-sm ${answer.is_correct ? 'text-green-500' : 'text-red-500'}`}>
-                  {answer.is_correct ? 'Correct Answer' : 'Incorrect Answer'}
+                  {answer.is_correct ? t('test.correctTitle') : t('test.incorrectTitle')}
                 </p>
               </div>
             </div>
@@ -253,7 +357,7 @@ export default function ReviewPage() {
 
               {/* Question and Options */}
               <div>
-                <p className="text-lg font-medium mb-6">{question.question_text}</p>
+                <p className="text-lg font-medium mb-6">{localizedQuestionText}</p>
 
                 <div className="space-y-3">
                   {(['A', 'B', 'C'] as const).map((option) => {
@@ -319,6 +423,13 @@ export default function ReviewPage() {
                     );
                   })}
                 </div>
+
+                {explanationText && (
+                  <div className="mt-6 p-4 rounded-lg bg-muted/40 border border-border">
+                    <p className="text-sm font-semibold mb-1">{t('history.explanationTitle')}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-line">{explanationText}</p>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -333,11 +444,11 @@ export default function ReviewPage() {
               disabled={currentQuestion === 0}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Previous
+              {t('test.previous')}
             </Button>
 
             <div className="text-sm text-muted-foreground">
-              Question {currentQuestion + 1} of {totalQuestions}
+              {t('test.question')} {currentQuestion + 1} {t('test.of')} {totalQuestions}
             </div>
 
             <Button
@@ -345,7 +456,7 @@ export default function ReviewPage() {
               onClick={() => setCurrentQuestion(Math.min(totalQuestions - 1, currentQuestion + 1))}
               disabled={currentQuestion === totalQuestions - 1}
             >
-              Next
+              {t('test.next')}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>

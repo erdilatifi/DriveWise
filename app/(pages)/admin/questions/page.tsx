@@ -44,6 +44,7 @@ export default function QuestionsPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState<{ id: string; text: string } | null>(null);
@@ -52,6 +53,7 @@ export default function QuestionsPage() {
   const { data, isLoading, error } = useQuestions({
     category: categoryFilter || undefined,
     search: searchQuery,
+    status: statusFilter,
     page: currentPage,
     pageSize: itemsPerPage,
   });
@@ -97,7 +99,7 @@ export default function QuestionsPage() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, categoryFilter]);
+  }, [searchQuery, categoryFilter, statusFilter]);
 
   // Group questions by category
   const questionsByCategory = paginatedQuestions?.reduce((acc, question) => {
@@ -164,12 +166,20 @@ export default function QuestionsPage() {
               Manage all quiz questions ({totalQuestions} total)
             </p>
           </div>
-          <Button asChild className="shadow-lg shadow-primary/20">
-            <Link href="/admin/questions/new">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Question
-            </Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button asChild variant="outline" className="shadow-sm">
+              <Link href="/admin/translations">
+                <Filter className="w-4 h-4 mr-2" />
+                Translation mode
+              </Link>
+            </Button>
+            <Button asChild className="shadow-lg shadow-primary/20">
+              <Link href="/admin/questions/new">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Question
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -237,6 +247,15 @@ export default function QuestionsPage() {
                           <div className="flex items-center gap-2 mb-3">
                             <span className="px-2 py-1 rounded-lg bg-muted text-muted-foreground text-xs font-semibold">
                               Test #{question.test_number}
+                            </span>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                                question.is_published !== false
+                                  ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30'
+                                  : 'bg-amber-500/10 text-amber-600 border border-amber-500/30'
+                              }`}
+                            >
+                              {question.is_published !== false ? 'Published' : 'Draft'}
                             </span>
                           </div>
                           <p className="text-sm font-medium mb-3">{question.question_text}</p>
