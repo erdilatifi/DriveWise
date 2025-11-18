@@ -14,7 +14,7 @@ const AlertDialog = ({ open, onOpenChange, children }: AlertDialogProps) => {
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div 
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/70 backdrop-blur-xl"
             onClick={() => onOpenChange?.(false)}
           />
           <div className="relative z-50">
@@ -33,7 +33,7 @@ const AlertDialogContent = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-card p-6 shadow-lg duration-200 sm:rounded-lg",
+      "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl border border-border/70 bg-card/90 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.9)] backdrop-blur-2xl duration-200",
       className
     )}
     {...props}

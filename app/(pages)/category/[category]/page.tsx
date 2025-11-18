@@ -107,7 +107,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                 {/* Glow effect on hover */}
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
-                <Card className="relative h-full border-2 border-border hover:border-primary/50 transition-all duration-300 hover:scale-105 bg-card/80 backdrop-blur-xl overflow-hidden">
+                <Card className="relative h-full border-2 border-border hover:border-primary/50 transition-colors duration-300 bg-card/80 backdrop-blur-xl overflow-hidden">
                   {/* Animated gradient background */}
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   
@@ -140,7 +140,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
 
         {/* Mixed Test Button */}
         <div className="mt-12 max-w-2xl mx-auto">
-          <Card className="bg-gradient-to-br from-primary/10 via-card to-card border-primary/30 shadow-lg shadow-primary/10">
+          <Card className="bg-gradient-to-br from-primary/10 via-card to-card border-primary/30 shadow-lg shadow-primary/10 transition-shadow duration-300">
             <CardContent className="p-8">
               <div className="flex flex-col md:flex-row items-center gap-6">
                 <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center flex-shrink-0">
