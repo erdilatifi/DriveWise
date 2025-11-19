@@ -384,7 +384,7 @@ export default function DashboardPage() {
                             }}
                             labelStyle={{ color: "#e5e5e5", fontSize: 11 }}
                             itemStyle={{ color: "#fed7aa", fontSize: 11 }}
-                            formatter={(value: any) => [`${value}%`, "Score"]}
+                            formatter={(value: number) => [`${value}%`, "Score"]}
                           />
                           <Line
                             type="monotone"
@@ -525,6 +525,7 @@ export default function DashboardPage() {
                           }}
                           labelStyle={{ color: '#fff' }}
                           itemStyle={{ color: '#fff' }}
+                          formatter={(value: number) => [`${value}`, 'Count']}
                         />
                       </PieChart>
                     </ResponsiveContainer>

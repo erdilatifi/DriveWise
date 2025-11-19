@@ -326,7 +326,7 @@ export default function HomePage() {
                             }}
                             labelStyle={{ color: "#e5e5e5", fontSize: 11 }}
                             itemStyle={{ color: "#fed7aa", fontSize: 11 }}
-                            formatter={(value: any) => [`${value}%`, "Score"]}
+                            formatter={(value: number) => [`${value}%`, "Score"]}
                           />
                           <Line
                             type="monotone"
@@ -402,36 +402,67 @@ export default function HomePage() {
         </div>
       </motion.section>
 
-      {/* QUICK CTA STRIP */}
-      <section className="relative">
-        <div className="container mx-auto px-4 sm:px-6 py-10">
-          <div className="max-w-5xl mx-auto">
-            <GlassCard className="relative overflow-hidden p-5 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border border-border/80 bg-black/70">
-              <div className="pointer-events-none absolute -right-32 top-0 h-40 w-40 bg-gradient-to-bl from-orange-500/30 to-transparent blur-3xl opacity-80" />
+      {/* HERO BENEFIT BAND */}
+      <section className="relative border-b border-border/60 bg-gradient-to-b from-background/60 via-black/90 to-background py-12 md:py-16">
+        <div className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-orange-500/60 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-12 bottom-0 h-px bg-gradient-to-r from-transparent via-border/70 to-transparent" />
 
-              <div className="relative space-y-2 max-w-md">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Study the way that suits you
-                </p>
-                <h2 className="text-base md:text-lg font-semibold">
-                  Theory, decisions, and exam-style tests in one place.
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  Jump straight into materials, Decision Trainer, or
-                  category-based mock tests in a single tap.
-                </p>
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="max-w-5xl mx-auto mb-10 text-center space-y-3 relative">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-black/60 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="h-1.5 w-7 rounded-full bg-gradient-to-r from-orange-500 to-orange-300" />
+              Exam flow, not just flashcards
+            </div>
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
+              Your entire theory journey, framed in one place.
+            </h2>
+            <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
+              From the first mock test to your last review session, DriveWise keeps
+              your practice structured, measured, and focused on the real Kosovo exam.
+            </p>
+          </div>
+
+          <div className="max-w-5xl mx-auto grid gap-6 md:grid-cols-2">
+            <GlassCard className="relative h-full border border-border/80 bg-black/80 p-6 md:p-7 overflow-hidden">
+              <div className="pointer-events-none absolute inset-x-4 top-3 h-px bg-gradient-to-r from-transparent via-orange-500/40 to-transparent" />
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-9 h-9 rounded-xl bg-orange-500/15 flex items-center justify-center text-orange-300">
+                  <Target className="w-4 h-4" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold">Real exam rhythm from day one</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Mixed, personalized, and category tests mirror the real timing,
+                    difficulty, and structure of the Kosovo theory exam.
+                  </p>
+                </div>
               </div>
-              <div className="relative flex flex-wrap gap-2 md:justify-end">
-                <Button size="sm" variant="outline" asChild>
-                  <Link href="/materials">{t("materials.title")}</Link>
-                </Button>
-                <Button size="sm" variant="outline" asChild>
-                  <Link href="/decision-trainer">{t("trainer.title")}</Link>
-                </Button>
-                <Button size="sm" variant="outline" asChild>
-                  <Link href="#categories">{t("categories.title")}</Link>
-                </Button>
+              <ul className="space-y-1.5 text-[11px] text-muted-foreground">
+                <li>• Choose between A, B, C, and D with exam-like question pools.</li>
+                <li>• Personalized sessions that lean into the questions you miss.</li>
+                <li>• Progress bars and XP so you always know if you are on track.</li>
+              </ul>
+            </GlassCard>
+
+            <GlassCard className="relative h-full border border-border/80 bg-black/80 p-6 md:p-7 overflow-hidden">
+              <div className="pointer-events-none absolute inset-x-4 top-3 h-px bg-gradient-to-r from-transparent via-orange-500/40 to-transparent" />
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-9 h-9 rounded-xl bg-orange-500/15 flex items-center justify-center text-orange-300">
+                  <Shield className="w-4 h-4" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold">Calm, guided review when it matters</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Detailed history, explanations, and Study Material are all
+                    framed around the same topics you are tested on.
+                  </p>
+                </div>
               </div>
+              <ul className="space-y-1.5 text-[11px] text-muted-foreground">
+                <li>• See every answer, explanation, and weak topic in one place.</li>
+                <li>• Jump from a missed topic straight into the right materials.</li>
+                <li>• Keep your attempts, streaks, and XP safely stored for later.</li>
+              </ul>
             </GlassCard>
           </div>
         </div>
@@ -592,105 +623,81 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* WHO IS DRIVEWISE FOR */}
-      <section className="relative">
-        <div className="container mx-auto px-4 sm:px-6 pt-10 pb-16">
-          <div className="max-w-5xl mx-auto">
-            <GlassCard className="p-5 md:p-6 border border-border/80 bg-black/70 relative overflow-hidden">
-              <div className="pointer-events-none absolute -left-24 bottom-0 h-40 w-40 bg-gradient-to-tr from-orange-500/30 to-transparent blur-3xl opacity-80" />
-              <div className="pointer-events-none absolute inset-x-6 top-3 h-px bg-gradient-to-r from-transparent via-orange-500/35 to-transparent" />
-              <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                <div className="space-y-2 max-w-xl">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                    Who is DriveWise for?
-                  </p>
-                  <h2 className="text-lg md:text-xl font-semibold">
-                    Learners, re-takers, and driving schools in Kosovo.
-                  </h2>
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    Whether you&apos;re attempting the test for the first time,
-                    trying again after a fail, or guiding students as an
-                    instructor, DriveWise gives you mock tests, theory, and
-                    decision training in one focused, distraction-free space.
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs w-full sm:w-auto md:border-l md:border-orange-500/25 md:pl-6">
-                  <PersonaCard
-                    title="First-time learners"
-                    body="Clear progression, instant feedback, and no guesswork."
-                  />
-                  <PersonaCard
-                    title="Re-takers"
-                    body="Focus on weak topics and rebuild confidence."
-                  />
-                  <PersonaCard
-                    title="Instructors"
-                    body="Admin tools, stats, and history in one place."
-                  />
-                </div>
-              </div>
-            </GlassCard>
-          </div>
-        </div>
-      </section>
 
       {/* CORE FEATURES */}
       <section className="relative">
         <div className="container mx-auto px-4 sm:px-6 py-16">
           <div className="max-w-5xl mx-auto">
-            <div className="flex flex-col gap-4 mb-8 md:mb-10 relative">
+            <div className="flex flex-col gap-4 mb-10 md:mb-12 relative">
               <div className="pointer-events-none hidden md:block absolute -left-4 top-2 h-10 w-px bg-gradient-to-b from-orange-500/40 via-orange-400/10 to-transparent" />
+              <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-black/60 px-3 py-1 text-[11px] text-muted-foreground">
+                <span className="h-1 w-6 rounded-full bg-gradient-to-r from-orange-500 to-orange-300" />
+                Built around how Kosovo learners actually study
+              </div>
               <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-                Designed for how Kosovo learners actually study.
+                Everything you need, in three focused pillars.
               </h2>
               <p className="text-sm md:text-base text-muted-foreground max-w-2xl">
-                From exam-style mock tests to real decision-making scenarios and
-                clear analytics, DriveWise focuses you on the next best thing to
-                practice — not on navigating a complicated app.
+                Exam-style practice, decision-making scenarios, and clear
+                analytics work together so you always know what to study next —
+                instead of guessing.
               </p>
             </div>
 
-            <div className="space-y-4">
+            <div className="grid gap-5 md:grid-cols-3">
               {[
                 {
                   icon: Target,
                   title: t("features.comprehensive.title"),
                   desc: t("features.comprehensive.desc"),
-                  extra:
-                    "Mixed, personalized, and category-specific tests tuned to the Kosovo exam.",
+                  bullets: [
+                    "Mixed, personalized, and category tests.",
+                    "Audio, images, and Kosovo-style phrasing.",
+                  ],
                 },
                 {
                   icon: TrendingUp,
                   title: t("features.progress.title"),
                   desc: t("features.progress.desc"),
-                  extra:
-                    "Streaks, XP, and a dashboard that shows exactly where you’re improving.",
+                  bullets: [
+                    "XP, streaks, and weekly score curves.",
+                    "Weak topics highlighted automatically.",
+                  ],
                 },
                 {
                   icon: Shield,
                   title: t("features.guaranteed.title"),
                   desc: t("features.guaranteed.desc"),
-                  extra:
-                    "A calm, distraction-free practice space made for Kosovo learners.",
+                  bullets: [
+                    "Distraction-free interface for deep focus.",
+                    "Stable on slow networks and small phones.",
+                  ],
                 },
               ].map((feature) => (
                 <div
                   key={feature.title}
-                  className="flex items-start gap-4 rounded-xl border border-border/70 bg-black/70 p-4 md:p-5 relative"
+                  className="relative rounded-2xl border border-border/70 bg-black/75 p-5 md:p-6 flex flex-col gap-3 overflow-hidden"
                 >
-                  <div className="pointer-events-none absolute inset-x-5 top-3 h-px bg-gradient-to-r from-transparent via-orange-500/30 to-transparent" />
-                  <div className="w-10 h-10 rounded-lg bg-orange-500/15 flex items-center justify-center text-orange-300 flex-shrink-0">
-                    <feature.icon className="w-5 h-5" />
+                  <div className="pointer-events-none absolute inset-x-4 top-3 h-px bg-gradient-to-r from-transparent via-orange-500/30 to-transparent" />
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-orange-500/15 flex items-center justify-center text-orange-300 flex-shrink-0">
+                      <feature.icon className="w-4 h-4" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-semibold">{feature.title}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {feature.desc}
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-semibold">{feature.title}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {feature.desc}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground/80">
-                      {feature.extra}
-                    </p>
-                  </div>
+                  <ul className="space-y-1.5 text-[11px] text-muted-foreground/85">
+                    {feature.bullets.map((line) => (
+                      <li key={line} className="flex items-start gap-1.5">
+                        <span className="mt-[3px] h-1 w-3 rounded-full bg-gradient-to-r from-orange-500 to-orange-300" />
+                        <span className="flex-1 break-words">{line}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ))}
             </div>
@@ -894,6 +901,274 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+<motion.section
+  id="pricing"
+  initial={{ opacity: 0, y: 40 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true, amount: 0.3 }}
+  transition={{ duration: 0.6 }}
+  className="relative border-t border-border/60 bg-gradient-to-b from-background via-black to-black py-20 md:py-24 overflow-hidden"
+>
+  {/* BACKGROUND GRID + GLOWS */}
+  <div
+    aria-hidden
+    className="pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(70%_70%_at_50%_10%,#000_10%,transparent_70%)]"
+  >
+    <svg
+      className="h-full w-full opacity-[0.06]"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <pattern
+          id="pricing-grid"
+          width="32"
+          height="32"
+          patternUnits="userSpaceOnUse"
+        >
+          <path
+            d="M32 0H0V32"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.35"
+          />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#pricing-grid)" />
+    </svg>
+  </div>
+
+  {/* Radial glows */}
+  <div className="pointer-events-none absolute -top-32 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-orange-500/25 blur-3xl" />
+  <div className="pointer-events-none absolute bottom-[-6rem] left-[10%] h-60 w-60 rounded-full bg-orange-400/20 blur-3xl" />
+  <div className="pointer-events-none absolute bottom-[-8rem] right-[12%] h-72 w-72 rounded-full bg-orange-500/20 blur-3xl" />
+
+  {/* RAILS + MOVING LIGHTS */}
+  <div aria-hidden className="pointer-events-none absolute inset-0">
+    {/* Outer side rails */}
+    <div className="hidden lg:block absolute top-10 bottom-10 left-[12%] w-px bg-gradient-to-b from-transparent via-orange-500/25 to-transparent" />
+    <div className="hidden lg:block absolute top-10 bottom-10 right-[12%] w-px bg-gradient-to-b from-transparent via-orange-500/25 to-transparent" />
+
+    {/* Inner center rails */}
+    <div className="hidden md:block absolute top-24 bottom-24 left-1/2 w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-orange-400/30 to-transparent" />
+    <motion.div
+      className="hidden md:block absolute left-1/2 top-24 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-orange-300 shadow-[0_0_15px_rgba(249,115,22,0.9)]"
+      animate={{ y: [0, 260, 0] }}
+      transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+    />
+
+    {/* Horizontal rails behind cards */}
+    <div className="hidden md:block absolute inset-x-[12%] top-48 h-px bg-gradient-to-r from-transparent via-orange-500/20 to-transparent" />
+    <div className="hidden lg:block absolute inset-x-[14%] bottom-40 h-px bg-gradient-to-r from-transparent via-orange-400/16 to-transparent" />
+  </div>
+
+  <div className="container mx-auto px-4 sm:px-6 relative">
+    {/* HEADER */}
+    <div className="max-w-3xl mx-auto text-center mb-14 md:mb-16 space-y-4 relative">
+      <div className="pointer-events-none absolute inset-x-10 -top-3 h-px bg-gradient-to-r from-transparent via-orange-500/50 to-transparent" />
+      <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-black/60 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+        <span className="h-1.5 w-8 rounded-full bg-gradient-to-r from-orange-500 to-orange-300" />
+        DriveWise Pricing
+      </div>
+      <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight">
+        Choose your{" "}
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-300 to-white">
+          exam window
+        </span>{" "}
+        and unlock everything.
+      </h2>
+      <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
+        Each plan unlocks one category (A, B, C or D) with unlimited mock tests,
+        Decision Trainer, full study materials, and detailed reviews. Admin
+        accounts always have full access at no cost.
+      </p>
+    </div>
+
+    {/* CARDS WRAPPER */}
+    <div className="relative max-w-5xl mx-auto">
+      {/* Soft center glow behind featured card */}
+      <div className="pointer-events-none absolute inset-x-8 -top-8 h-40 rounded-full bg-orange-500/18 blur-3xl" />
+
+      <div className="grid gap-5 lg:gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1fr)] items-stretch">
+        {/* 1 MONTH – LEFT CARD */}
+        <motion.div
+          initial={{ opacity: 0, y: 24, rotate: -1.5 }}
+          whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="relative group"
+        >
+          <div className="absolute -inset-px rounded-3xl bg-gradient-to-b from-orange-500/0 via-orange-500/12 to-transparent opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500" />
+          <div className="relative h-full rounded-3xl border border-border/70 bg-black/85 p-6 flex flex-col gap-4 transform lg:-rotate-1 group-hover:rotate-0 group-hover:-translate-y-1 transition-all duration-300">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                1 Month
+              </span>
+              <span className="rounded-full border border-border/70 px-2.5 py-0.5 text-[10px] text-muted-foreground">
+                Tight deadline
+              </span>
+            </div>
+
+            <div className="flex items-end gap-2">
+              <span className="text-3xl md:text-4xl font-semibold">3€</span>
+              <span className="text-xs text-muted-foreground mb-1">
+                / category
+              </span>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Perfect when your exam is soon and you want a focused, last sprint
+              to get ready.
+            </p>
+
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-border/70 to-transparent my-1" />
+
+            <ul className="space-y-2 text-xs text-muted-foreground">
+              <li>• Unlimited mock tests in one category</li>
+              <li>• Decision Trainer fully unlocked</li>
+              <li>• Theory & study materials for that category</li>
+              <li>• Detailed explanations for every answer</li>
+            </ul>
+
+            <button className="mt-5 inline-flex w-full items-center justify-center rounded-2xl border border-border/80 bg-black/60 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground hover:border-orange-400 hover:text-orange-200 transition">
+              Choose 1 Month
+            </button>
+          </div>
+        </motion.div>
+
+        {/* 3 MONTHS – FEATURED CENTER CARD */}
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="relative group"
+        >
+          {/* Animated halo ring behind */}
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-4 -top-6 h-10 rounded-full bg-gradient-to-r from-orange-500/40 via-orange-300/50 to-orange-500/40 blur-2xl opacity-80"
+            animate={{ opacity: [0.5, 0.9, 0.5] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          />
+
+          {/* Gradient border shell */}
+          <div className="absolute -inset-[2px] rounded-[28px] bg-gradient-to-b from-orange-400 via-orange-500/70 to-orange-400 opacity-90 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="relative h-full rounded-[26px] bg-black/95 p-[1px]">
+            <div className="relative h-full rounded-[24px] bg-gradient-to-b from-black via-zinc-950 to-black p-6 md:p-7 flex flex-col gap-4">
+              {/* Ribbon badge */}
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <div className="rounded-full border border-orange-300/80 bg-black px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-orange-100 shadow-[0_0_24px_rgba(249,115,22,0.65)]">
+                  Best value
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-2">
+                <span className="text-[11px] uppercase tracking-[0.18em] text-orange-200">
+                  3 Months
+                </span>
+                <span className="rounded-full bg-orange-500/15 px-3 py-1 text-[10px] text-orange-100 border border-orange-400/60">
+                  Recommended
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-end gap-2">
+                <span className="text-4xl md:text-5xl font-semibold text-orange-50">
+                  8€
+                </span>
+                <span className="text-xs text-orange-100/80 mb-1">
+                  / category · ≈ 2.67€/month
+                </span>
+              </div>
+
+              <p className="text-xs md:text-sm text-muted-foreground">
+                Ideal if you want real mastery, not just a pass. Enough time to
+                fail, review, and walk into the exam relaxed.
+              </p>
+
+              <div className="h-px w-full bg-gradient-to-r from-orange-500/0 via-orange-500/70 to-orange-500/0 my-1" />
+
+              <ul className="space-y-2 text-xs md:text-sm text-muted-foreground">
+                <li>• Unlimited mock tests in your chosen category</li>
+                <li>• Full Decision Trainer with streaks & strict mode</li>
+                <li>• Complete theory library & guided study flows</li>
+                <li>• Deep analytics & detailed review for every test</li>
+                <li>• Most savings and most popular among DriveWise learners</li>
+              </ul>
+
+              <button className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 to-orange-300 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-black shadow-[0_0_35px_rgba(249,115,22,0.8)] hover:brightness-110 transition">
+                Choose 3 Months
+              </button>
+
+              <p className="mt-3 text-[11px] text-muted-foreground text-center">
+                Best balance of time, price, and exam confidence.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* 2 MONTHS – RIGHT CARD */}
+        <motion.div
+          initial={{ opacity: 0, y: 24, rotate: 1.5 }}
+          whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.05 }}
+          className="relative group"
+        >
+          <div className="absolute -inset-px rounded-3xl bg-gradient-to-b from-orange-500/0 via-orange-500/12 to-transparent opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500" />
+          <div className="relative h-full rounded-3xl border border-border/70 bg-black/85 p-6 flex flex-col gap-4 transform lg:rotate-1 group-hover:rotate-0 group-hover:-translate-y-1 transition-all duration-300">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                2 Months
+              </span>
+              <span className="rounded-full border border-border/70 px-2.5 py-0.5 text-[10px] text-muted-foreground">
+                Extra breathing room
+              </span>
+            </div>
+
+            <div className="flex items-end gap-2">
+              <span className="text-3xl md:text-4xl font-semibold">5€</span>
+              <span className="text-xs text-muted-foreground mb-1">
+                / category
+              </span>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Great if you want consistent practice without rushing or committing
+              long term.
+            </p>
+
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-border/70 to-transparent my-1" />
+
+            <ul className="space-y-2 text-xs text-muted-foreground">
+              <li>• Everything included in the 1 month plan</li>
+              <li>• Better value at 2.50€/month</li>
+              <li>• Perfect if your exam date might move</li>
+            </ul>
+
+            <button className="mt-5 inline-flex w-full items-center justify-center rounded-2xl border border-border/80 bg-black/60 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground hover:border-orange-400 hover:text-orange-200 transition">
+              Choose 2 Months
+            </button>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* FINE PRINT */}
+      <div className="mt-10 text-center text-[11px] text-muted-foreground/80 space-y-1">
+        <p>
+          Each plan unlocks one selected category (A, B, C or D). You can add
+          more categories later with additional plans.
+        </p>
+        <p>
+          Admin and instructor accounts always have full, unrestricted access
+          across all categories without needing a paid plan.
+        </p>
+      </div>
+    </div>
+  </div>
+</motion.section>
+
+
+
 
       {/* FOOTER */}
       <footer className="border-t border-border bg-black/80 backdrop-blur-sm w-full relative">

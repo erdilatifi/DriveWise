@@ -174,17 +174,10 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
       setTimeout(() => {
         router.push('/admin/questions');
       }, 500);
-    } catch (error: any) {
-      const errorMessage = error?.message || 'Unknown error occurred';
-      toast.error(`Failed to update question: ${errorMessage}`);
-      console.error('Error updating question:', {
-        message: error?.message,
-        code: error?.code,
-        details: error?.details,
-        hint: error?.hint,
-        formData: formData,
-        fullError: error,
-      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to update question: ${message}`);
+      console.error('Error updating question:', error, { formData });
     }
   };
 

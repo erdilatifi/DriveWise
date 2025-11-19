@@ -16,6 +16,7 @@ import { useCompleteCategory, useDecisionTrainerProgress, useDecisionTrainerStat
 import type { DecisionTrainerProgress } from '@/hooks/use-decision-trainer';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/language-context';
+import { useGlobalPremium } from '@/hooks/use-subscriptions';
 // import Confetti from 'react-canvas-confetti';
 
 const CATEGORY_ICONS: Record<Category, React.ReactNode> = {
@@ -28,11 +29,12 @@ const CATEGORY_ICONS: Record<Category, React.ReactNode> = {
 };
 
 export default function DecisionTrainerPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   const router = useRouter();
   const { t } = useLanguage();
   const { data: categoryProgressData } = useDecisionTrainerProgress(user?.id);
   const { data: trainerStats } = useDecisionTrainerStats(user?.id);
+  const { hasAnyActivePlan, isLoading: premiumLoading } = useGlobalPremium(user?.id, isAdmin);
   
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
@@ -41,7 +43,6 @@ export default function DecisionTrainerPage() {
   const [stats, setStats] = useState({ correct: 0, total: 0, streak: 0, xp: 0 });
   const [timeLeft, setTimeLeft] = useState(30); // 30 seconds per scenario
   const [totalTime, setTotalTime] = useState(0);
-  const [categoryStartTime, setCategoryStartTime] = useState<number>(0);
   const [sessionAttempts, setSessionAttempts] = useState<Array<{
     scenarioId: string;
     isCorrect: boolean;
@@ -102,27 +103,6 @@ export default function DecisionTrainerPage() {
       router.push('/login');
     }
   }, [user, authLoading, router]);
-
-  // Timer countdown
-  useEffect(() => {
-    if (!selectedCategory || showResult) return;
-
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          // Time's up - auto submit wrong answer
-          if (selectedOptions.length === 0) {
-            toast.error(t('trainer.toastTimesUp'), toastStyles.error);
-            handleNext();
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [selectedCategory, showResult, selectedOptions]);
 
   useEffect(() => {
     if (!selectedCategory || scenariosLoading) return;
@@ -218,7 +198,7 @@ export default function DecisionTrainerPage() {
       setTimeLeft(30); // Reset timer for next scenario
     } else {
       // Category completed - save results to database
-      const completionTime = Date.now() - categoryStartTime;
+      const completionTime = sessionAttempts.reduce((sum, a) => sum + a.timeTakenMs, 0);
       setTotalTime(Math.floor(completionTime / 1000));
       
       if (user?.id && selectedCategory && sessionAttempts.length > 0) {
@@ -280,7 +260,7 @@ export default function DecisionTrainerPage() {
           const mistakes = sessionAttempts
             .filter((a) => !a.isCorrect)
             .map((a) => {
-              const scenario = categoryScenarios.find((s: any) => s.id === a.scenarioId);
+              const scenario = categoryScenarios.find((s: TrainerScenario) => s.id === a.scenarioId);
               return {
                 scenarioId: a.scenarioId,
                 question: scenario?.question || '',
@@ -338,7 +318,6 @@ export default function DecisionTrainerPage() {
     setStats({ correct: 0, total: 0, streak: 0, xp: 0 });
     setTimeLeft(30);
     setTotalTime(0);
-    setCategoryStartTime(() => Date.now());
     setSessionAttempts([]);
     setSessionScenarioIds(null);
   };
@@ -374,6 +353,49 @@ export default function DecisionTrainerPage() {
           <p className="text-muted-foreground">
             {!user ? t('auth.signingIn') : t('test.loadingQuestions')}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin && !premiumLoading && !hasAnyActivePlan) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 max-w-3xl pt-28">
+          <GlassCard className="p-6 border border-border/80 bg-black/80">
+            <h1 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+              <Lightbulb className="w-5 h-5 text-primary" />
+              {t('trainer.premiumRequiredTitle') || 'Unlock Decision Trainer'}
+            </h1>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('trainer.premiumRequiredDescription') ||
+                'Decision Trainer is part of the paid plan. With a paid plan you get full access to all trainer categories, smarter practice modes, and detailed review features.'}
+            </p>
+            <ul className="text-sm text-muted-foreground mb-4 list-disc pl-5 space-y-1">
+              <li>
+                {t('trainer.premiumBenefitUnlimited') || 'Unlimited Decision Trainer practice across all categories.'}
+              </li>
+              <li>
+                {t('trainer.premiumBenefitStudy') || 'Access to related study material and test reviews for deeper learning.'}
+              </li>
+              <li>
+                {t('trainer.premiumBenefitFocus') || 'Smart modes that focus on your weak points and speed.'}
+              </li>
+            </ul>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button asChild className="flex-1">
+                <Link href="/profile">
+                  {t('trainer.premiumUpgradeCta') || 'See plans'}
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="flex-1">
+                <Link href="/dashboard">
+                  {t('auth.backToHome')}
+                </Link>
+              </Button>
+            </div>
+          </GlassCard>
         </div>
       </div>
     );

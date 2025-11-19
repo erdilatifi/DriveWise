@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Navbar } from '@/components/navbar';
@@ -28,6 +29,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+interface ScenarioOption {
+  text: string;
+  isCorrect: boolean;
+  explanation: string;
+}
+
 interface Scenario {
   id: string;
   category: string;
@@ -36,7 +43,7 @@ interface Scenario {
   question_en?: string | null;
   question_sq?: string | null;
   image_url?: string;
-  options: any[];
+  options: ScenarioOption[];
   correct_explanation: string;
   correct_explanation_en?: string | null;
   correct_explanation_sq?: string | null;
@@ -90,7 +97,7 @@ export default function AdminScenariosPageOptimized() {
       { text: '', isCorrect: false, explanation: '' },
       { text: '', isCorrect: false, explanation: '' },
       { text: '', isCorrect: false, explanation: '' },
-    ],
+    ] as ScenarioOption[],
     correct_explanation_en: '',
     correct_explanation_sq: '',
     real_world_tip_en: '',
@@ -281,7 +288,22 @@ export default function AdminScenariosPageOptimized() {
   };
 
   // Form helpers
-  const handleFormFieldChange = (field: 'category' | 'level' | 'question_en' | 'question_sq' | 'correct_explanation_en' | 'correct_explanation_sq' | 'real_world_tip_en' | 'real_world_tip_sq' | 'xp' | 'image_url' | 'chapter_id', value: any) => {
+  type FormFieldKey =
+    | 'category'
+    | 'level'
+    | 'question_en'
+    | 'question_sq'
+    | 'correct_explanation_en'
+    | 'correct_explanation_sq'
+    | 'real_world_tip_en'
+    | 'real_world_tip_sq'
+    | 'xp'
+    | 'image_url'
+    | 'chapter_id';
+
+  type FormFieldValue = string | number | null | Category;
+
+  const handleFormFieldChange = (field: FormFieldKey, value: FormFieldValue) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -314,13 +336,13 @@ export default function AdminScenariosPageOptimized() {
     });
   };
 
-  const handleImageChange = (e: any) => {
-    const file = e.target.files?.[0];
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
     if (!file) return;
     setImageFile(file);
   };
 
-  const handleSubmitScenario = async (e: any) => {
+  const handleSubmitScenario = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (uploading) return;
 

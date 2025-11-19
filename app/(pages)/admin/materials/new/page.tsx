@@ -22,6 +22,7 @@ import {
   useUploadMaterialImage,
   useCreateMaterialImage,
   useMaterials,
+  type Material,
 } from '@/hooks/use-materials';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, ImagePlus, Trash2 } from 'lucide-react';
@@ -69,7 +70,7 @@ export default function NewMaterialPage() {
   const [imageOrderIndex, setImageOrderIndex] = useState<number | ''>('');
 
   const usedChapterIds = new Set(
-    (existingMaterialsData?.materials || []).map((m: any) => m.chapter_id as number),
+    (existingMaterialsData?.materials || []).map((m: Material) => m.chapter_id as number),
   );
 
   useEffect(() => {
@@ -100,8 +101,8 @@ export default function NewMaterialPage() {
       errors.push('A material for this chapter already exists. Please edit it instead.');
     }
 
-    let contentEn: any;
-    let contentSq: any;
+    let contentEn: Record<string, unknown> = {};
+    let contentSq: Record<string, unknown> = {};
 
     try {
       contentEn = JSON.parse(formData.content_en_text || '{}');
@@ -152,8 +153,8 @@ export default function NewMaterialPage() {
       setTimeout(() => {
         router.push(`/admin/materials/${result.id}/edit`);
       }, 500);
-    } catch (error: any) {
-      const message = error?.message || 'Failed to create material';
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to create material';
       if (message.includes('23505')) {
         toast.error('A material for this chapter already exists. Please edit it instead.');
       } else {

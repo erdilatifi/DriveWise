@@ -300,7 +300,7 @@ export default function LeaderboardPage() {
           <GlassCard className="p-6 text-center border border-border/80 bg-black/80">
             <Zap className="w-8 h-8 mx-auto mb-3 text-orange-300" />
             <h3 className="font-bold text-2xl mb-1">
-              {topTen.length > 0 ? Math.max(...topTen.map((e: any) => e.best_streak), 0) : 0}
+              {topTen.length > 0 ? Math.max(...topTen.map((e) => e.best_streak ?? 0), 0) : 0}
             </h3>
             <p className="text-sm text-muted-foreground">{t('leaderboard.longestStreak')}</p>
           </GlassCard>

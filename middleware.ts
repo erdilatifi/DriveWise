@@ -15,6 +15,7 @@ export const config = {
      * - Public pages (/, /login, /register)
      */
     '/dashboard/:path*',
+    '/profile/:path*',
     '/admin/:path*',
     '/category/:path*',
     '/test/:path*',

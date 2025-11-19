@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { GlassCard } from '@/components/ui/glass-card';
@@ -11,6 +11,8 @@ import { BookOpen, Search, ChevronRight } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { useMaterials, type Material } from '@/hooks/use-materials';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/contexts/auth-context';
+import { useGlobalPremium } from '@/hooks/use-subscriptions';
 
 type SectionKey = number;
 
@@ -31,13 +33,12 @@ const SECTION_ORDER: SectionKey[] = [
 ];
 
 export default function MaterialsPage() {
-  const [selectedSection, setSelectedSection] = useState<SectionKey>(1);
-  const [search, setSearch] = useState('');
   const { language, t } = useLanguage();
   const searchParams = useSearchParams();
-
+  const { user, isAdmin } = useAuth();
   const { data, isLoading, error } = useMaterials({ pageSize: 50 });
   const materials = (data?.materials ?? []) as Material[];
+  const { hasAnyActivePlan, isLoading: premiumLoading } = useGlobalPremium(user?.id, isAdmin);
 
   const sectionOrder: SectionKey[] = useMemo(() => {
     const chapterIds = Array.from(
@@ -45,23 +46,22 @@ export default function MaterialsPage() {
     ).sort((a, b) => a - b);
     return chapterIds.length > 0 ? chapterIds : SECTION_ORDER;
   }, [materials]);
-
-  useEffect(() => {
+  const [selectedSection, setSelectedSection] = useState<SectionKey>(() => {
     const chapterParam = searchParams.get('chapter');
-    if (!chapterParam) return;
+    const fallback = sectionOrder[0] ?? SECTION_ORDER[0];
+    if (!chapterParam) return fallback;
 
     const chapter = parseInt(chapterParam, 10);
     if (!Number.isNaN(chapter) && (sectionOrder as number[]).includes(chapter)) {
-      setSelectedSection(chapter as SectionKey);
+      return chapter as SectionKey;
     }
-  }, [searchParams, sectionOrder]);
+    return fallback;
+  });
 
-  useEffect(() => {
+  const [search, setSearch] = useState<string>(() => {
     const searchParam = searchParams.get('search') || searchParams.get('q');
-    if (searchParam && !search) {
-      setSearch(searchParam);
-    }
-  }, [searchParams, search]);
+    return searchParam || '';
+  });
 
   const currentMaterial = useMemo(() => {
     return materials.find((m) => m.chapter_id === selectedSection) ?? null;
@@ -186,6 +186,50 @@ export default function MaterialsPage() {
     );
   }
 
+  if (!isAdmin && !premiumLoading && !hasAnyActivePlan) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-28">
+          <div className="container mx-auto px-4 py-10 max-w-3xl">
+            <GlassCard className="p-6 md:p-8 border border-border/80 bg-black/80">
+              <h1 className="text-2xl font-semibold mb-3">
+                {t('materials.premiumRequiredTitle') || 'Unlock full Study Material access'}
+              </h1>
+              <p className="text-sm text-muted-foreground mb-4">
+                {t('materials.premiumRequiredDescription') ||
+                  'Study Material is part of the paid plan. With any paid plan you get full access to all chapters, explanations, and images – no matter which category you chose.'}
+              </p>
+              <ul className="text-sm text-muted-foreground mb-4 list-disc pl-5 space-y-1">
+                <li>
+                  {t('materials.premiumBenefitAllChapters') || 'Access every chapter and topic explanation.'}
+                </li>
+                <li>
+                  {t('materials.premiumBenefitDeeper') || 'Understand why answers are correct so tests feel easier.'}
+                </li>
+                <li>
+                  {t('materials.premiumBenefitVisuals') || 'See all reference images and diagrams to memorize faster.'}
+                </li>
+              </ul>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button asChild className="flex-1">
+                  <a href="/profile">
+                    {t('materials.premiumUpgradeCta') || 'See plans'}
+                  </a>
+                </Button>
+                <Button asChild variant="outline" className="flex-1">
+                  <a href="/dashboard">
+                    {t('auth.backToHome')}
+                  </a>
+                </Button>
+              </div>
+            </GlassCard>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="min-h-screen bg-background">
@@ -264,7 +308,7 @@ export default function MaterialsPage() {
                   const key = `materials.section.${sectionIndex + 1}`;
                   let label = t(key);
                   if (!label || label === key) {
-                    const materialForChapter = materials.find((m: any) => m.chapter_id === id);
+                    const materialForChapter = materials.find((m: Material) => m.chapter_id === id);
                     label =
                       language === 'sq'
                         ? materialForChapter?.title_sq || `Chapter ${id}`

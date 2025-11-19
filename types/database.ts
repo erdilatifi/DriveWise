@@ -181,6 +181,18 @@ export interface HazardRushLeaderboardEntry {
   created_at: string;
 }
 
+export interface UserPlan {
+  id: string;
+  user_id: string;
+  category: LicenseCategory;
+  plan_tier: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Language metadata
 export const LANGUAGE_INFO: Record<LanguageCode, { name: string; nativeName: string }> = {
   sq: { name: 'Albanian', nativeName: 'Shqip' },

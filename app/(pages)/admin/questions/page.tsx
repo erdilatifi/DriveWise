@@ -78,15 +78,10 @@ export default function QuestionsPage() {
       toast.success('Question deleted successfully');
       setDeleteDialogOpen(false);
       setQuestionToDelete(null);
-    } catch (error: any) {
-      const errorMessage = error?.message || 'Unknown error occurred';
-      toast.error(`Failed to delete question: ${errorMessage}`);
-      console.error('Error deleting question:', {
-        message: error?.message,
-        code: error?.code,
-        details: error?.details,
-        fullError: error,
-      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to delete question: ${message}`);
+      console.error('Error deleting question:', error);
     }
   };
 

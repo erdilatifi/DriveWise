@@ -61,9 +61,9 @@ export default function ResetPasswordPage() {
         router.replace('/dashboard');
         router.refresh();
       }, 800);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Caught error:', error);
-      const errorMessage = error.message || 'Failed to reset password';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to reset password';
       setError(errorMessage);
       toast.error('Error', {
         description: errorMessage,

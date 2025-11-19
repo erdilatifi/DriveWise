@@ -14,6 +14,8 @@ import { createClient } from '@/utils/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuth } from '@/contexts/auth-context';
+import { useCategoryEntitlements } from '@/hooks/use-subscriptions';
 
 // Test question data structure
 interface Question {
@@ -62,6 +64,13 @@ export default function TestPage() {
   const [startTime] = useState(Date.now());
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [lastTestAttemptId, setLastTestAttemptId] = useState<string | null>(null);
+
+  const { user, isAdmin } = useAuth();
+  const { data: entitlementResult } = useCategoryEntitlements(
+    user?.id,
+    category,
+    isAdmin,
+  );
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -471,6 +480,46 @@ export default function TestPage() {
                 {t('test.backToTests')}
               </Link>
             </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!isAdmin && entitlementResult && !entitlementResult.entitlements.canStartNewTest && !showResults) {
+    const used = entitlementResult.testsTakenThisCycle;
+    const remaining = entitlementResult.entitlements.remainingFreeTests ?? 0;
+    const total = used + remaining;
+
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <Card className="max-w-lg w-full border border-border/80 bg-black/80 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.85)]">
+          <CardHeader>
+            <CardTitle className="text-2xl">
+              {t('test.limitReachedTitle') || 'Free test limit reached'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm text-muted-foreground">
+            <p>
+              {t('test.limitReachedDescription') ||
+                `You have used ${used}/${total} free tests for ${CATEGORY_INFO[category].name} this cycle.`}
+            </p>
+            <p>
+              {t('test.limitReachedBenefits') ||
+                'Upgrade to a paid plan for this category to unlock more tests, Decision Trainer, study material, and full test review.'}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Button asChild className="flex-1">
+                <Link href="/profile">
+                  {t('test.upgradeCta') || 'See plans for this category'}
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="flex-1">
+                <Link href={`/category/${category.toLowerCase()}`}>
+                  {t('test.backToTests')}
+                </Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

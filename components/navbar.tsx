@@ -143,6 +143,21 @@ export function Navbar() {
               )}
             </Link>
 
+            {/* Account (logged-in users) */}
+            {user && (
+              <Link
+                href="/profile"
+                className={`text-sm font-semibold transition-all duration-200 relative group/link ${
+                  isActive('/profile') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
+                }`}
+              >
+                Account
+                {isActive('/profile') && (
+                  <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
+                )}
+              </Link>
+            )}
+
             {/* Admin (admins only) */}
             {user && isAdmin && (
               <Link
@@ -303,6 +318,19 @@ export function Navbar() {
               >
                 {t('nav.dashboard')}
               </Link>
+
+              {/* Account (logged-in users) */}
+              {user && (
+                <Link
+                  href="/profile"
+                  className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                    isActive('/profile') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Account
+                </Link>
+              )}
 
               {/* Admin (admins only) */}
               {user && isAdmin && (

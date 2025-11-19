@@ -99,11 +99,12 @@ export default function ForgotPasswordPage() {
         description: 'Check your email for the password reset link. If you don\'t see it, check your spam folder.',
         duration: 5000,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Caught error:', error);
-      setDebugInfo(`Error: ${error.message || 'Unknown error'}`);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setDebugInfo(`Error: ${message}`);
       toast.error('Error', {
-        description: error.message || 'Failed to send reset email. Please try again.',
+        description: message || 'Failed to send reset email. Please try again.',
       });
     } finally {
       setLoading(false);

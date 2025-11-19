@@ -32,6 +32,17 @@ import {
 } from '@/components/ui/dialog';
 import { createClient } from '@/utils/supabase/client';
 
+type ImportedQuestionJson = {
+  category: string;
+  test_number: number | string;
+  question_text: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  correct_answer: string;
+  image_url?: string;
+};
+
 export default function NewQuestionPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -202,17 +213,10 @@ export default function NewQuestionPage() {
       setTimeout(() => {
         router.push('/admin/questions');
       }, 500);
-    } catch (error: any) {
-      const errorMessage = error?.message || 'Unknown error occurred';
-      toast.error(`Failed to create question: ${errorMessage}`);
-      console.error('Error creating question:', {
-        message: error?.message,
-        code: error?.code,
-        details: error?.details,
-        hint: error?.hint,
-        formData: formData,
-        fullError: error,
-      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to create question: ${message}`);
+      console.error('Error creating question:', error, { formData });
     }
   };
 
@@ -224,7 +228,7 @@ export default function NewQuestionPage() {
 
     setImporting(true);
     try {
-      const questions = JSON.parse(jsonInput);
+      const questions = JSON.parse(jsonInput) as unknown;
       
       if (!Array.isArray(questions)) {
         toast.error('JSON must be an array of questions');
@@ -232,13 +236,13 @@ export default function NewQuestionPage() {
       }
 
       // Validate and insert questions
-      const validQuestions = questions.map((q: any) => {
+      const validQuestions = (questions as ImportedQuestionJson[]).map((q) => {
         if (!q.category || !q.test_number || !q.question_text || !q.option_a || !q.option_b || !q.option_c || !q.correct_answer) {
           throw new Error('Each question must have: category, test_number, question_text, option_a, option_b, option_c, correct_answer');
         }
         return {
           category: q.category.toUpperCase(),
-          test_number: parseInt(q.test_number),
+          test_number: parseInt(String(q.test_number), 10),
           question_text: q.question_text,
           option_a: q.option_a,
           option_b: q.option_b,
@@ -262,8 +266,9 @@ export default function NewQuestionPage() {
       setJsonInput('');
       setJsonImportOpen(false);
       router.push('/admin/questions');
-    } catch (error: any) {
-      toast.error(error.message || 'Invalid JSON format');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Invalid JSON format';
+      toast.error(message);
       console.error(error);
     } finally {
       setImporting(false);

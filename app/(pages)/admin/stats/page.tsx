@@ -238,8 +238,9 @@ export default function StatsPage() {
       setDeleteDialogOpen(false);
       setSelectedUser(null);
     },
-    onError: (error: any) => {
-      toast.error(`Failed to delete user: ${error.message}`);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to delete user: ${message}`);
     },
   });
 
@@ -259,8 +260,9 @@ export default function StatsPage() {
       setBlockDialogOpen(false);
       setSelectedUser(null);
     },
-    onError: (error: any) => {
-      toast.error(`Failed to update user: ${error.message}`);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to update user: ${message}`);
     },
   });
 
@@ -329,6 +331,13 @@ export default function StatsPage() {
           <h1 className="text-3xl font-bold">Statistics & User Management</h1>
           <p className="text-sm text-muted-foreground">
             System overview, metrics, and user administration
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Need to adjust plans?{' '}
+            <Link href="/admin/subscriptions" className="underline underline-offset-2">
+              Open subscriptions admin
+            </Link>
+            .
           </p>
         </div>
 

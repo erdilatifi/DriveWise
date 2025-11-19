@@ -108,8 +108,8 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
       errors.push('Order index is required');
     }
 
-    let contentEn: any;
-    let contentSq: any;
+    let contentEn: Record<string, unknown> = {};
+    let contentSq: Record<string, unknown> = {};
 
     try {
       contentEn = JSON.parse(formData.content_en_text || '{}');
@@ -146,8 +146,8 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
       setTimeout(() => {
         router.push('/admin/materials');
       }, 500);
-    } catch (error: any) {
-      const message = error?.message || 'Failed to update material';
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to update material';
       toast.error(message);
       console.error('Error updating material:', error);
     }
@@ -184,8 +184,8 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
       setImageCaptionEn('');
       setImageCaptionSq('');
       setImageOrderIndex('');
-    } catch (error: any) {
-      const message = error?.message || 'Failed to add image';
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to add image';
       toast.error(message);
       console.error('Error adding material image:', error);
     }
@@ -195,8 +195,8 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
     try {
       await deleteMaterialImage.mutateAsync(imageId);
       toast.success('Image deleted');
-    } catch (error: any) {
-      const message = error?.message || 'Failed to delete image';
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to delete image';
       toast.error(message);
       console.error('Error deleting material image:', error);
     }

@@ -80,9 +80,9 @@ export default function MaterialsPage() {
       toast.success('Material deleted successfully');
       setDeleteDialogOpen(false);
       setMaterialToDelete(null);
-    } catch (error: any) {
-      const errorMessage = error?.message || 'Unknown error occurred';
-      toast.error(`Failed to delete material: ${errorMessage}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to delete material: ${message}`);
       console.error('Error deleting material:', error);
     }
   };

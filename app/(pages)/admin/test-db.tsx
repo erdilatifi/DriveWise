@@ -5,8 +5,20 @@ import { createClient } from '@/utils/supabase/client';
 import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
 
+type TestDbResult =
+  | {
+      success: true;
+      message: string;
+      insertedData: unknown;
+    }
+  | {
+      success: false;
+      error: string;
+      details: unknown;
+    };
+
 export default function TestDBPage() {
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<TestDbResult | null>(null);
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
 
@@ -79,11 +91,12 @@ export default function TestDBPage() {
         message: 'All tests passed! Database is working correctly.',
         insertedData: insertData,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const details = error instanceof Error ? error.message : String(error);
       setResult({
         success: false,
         error: 'Unexpected error',
-        details: error.message || error.toString(),
+        details,
       });
     } finally {
       setLoading(false);

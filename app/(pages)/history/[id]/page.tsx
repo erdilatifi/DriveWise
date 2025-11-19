@@ -11,6 +11,9 @@ import { ArrowLeft, ArrowRight, CheckCircle, XCircle, CheckSquare } from 'lucide
 import { motion } from 'framer-motion';
 import { useParams, useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuth } from '@/contexts/auth-context';
+import { useCategoryEntitlements } from '@/hooks/use-subscriptions';
+import type { LicenseCategory } from '@/types/database';
 
 interface Answer {
   id: string;
@@ -39,6 +42,7 @@ export default function ReviewPage() {
   const testId = params.id as string;
   const supabase = createClient();
   const { language, t } = useLanguage();
+  const { user, isAdmin } = useAuth();
 
   interface TestInfo {
     id: string;
@@ -54,6 +58,12 @@ export default function ReviewPage() {
   const [testInfo, setTestInfo] = useState<TestInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
+
+  const { data: entitlementResult } = useCategoryEntitlements(
+    user?.id,
+    (testInfo?.category as LicenseCategory | undefined) || undefined,
+    isAdmin,
+  );
 
   useEffect(() => {
     fetchTestDetails();
@@ -128,6 +138,48 @@ export default function ReviewPage() {
         <Navbar />
         <div className="container mx-auto px-6 py-8 max-w-7xl flex items-center justify-center pt-28">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin && entitlementResult && !entitlementResult.entitlements.canReviewTestsInDetail) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <Navbar />
+        <div className="container mx-auto px-6 py-8 max-w-3xl pt-28">
+          <GlassCard className="p-8 border border-border/80 bg-black/85">
+            <h1 className="text-2xl font-semibold mb-3">
+              {t('history.reviewPaywallTitle') || 'Detailed review is part of the paid plan'}
+            </h1>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('history.reviewPaywallDescription') ||
+                'On the free plan you can see a simple test history, but question-by-question review with explanations is unlocked with a paid plan for this category.'}
+            </p>
+            <ul className="text-sm text-muted-foreground mb-4 list-disc pl-5 space-y-1">
+              <li>
+                {t('history.reviewPaywallBenefit1') || 'See every question, your answer, and the correct answer.'}
+              </li>
+              <li>
+                {t('history.reviewPaywallBenefit2') || 'Read explanations so you remember why answers are correct.'}
+              </li>
+              <li>
+                {t('history.reviewPaywallBenefit3') || 'Spot patterns in your mistakes and fix them faster.'}
+              </li>
+            </ul>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button asChild className="flex-1">
+                <Link href="/profile">
+                  {t('history.reviewPaywallUpgradeCta') || 'See plans & upgrade'}
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="flex-1">
+                <Link href="/history">
+                  {t('history.backToHistory')}
+                </Link>
+              </Button>
+            </div>
+          </GlassCard>
         </div>
       </div>
     );

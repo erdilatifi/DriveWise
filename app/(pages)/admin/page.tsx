@@ -47,7 +47,7 @@ export default function AdminPage() {
         <div className="mb-8 space-y-2">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <p className="text-sm text-muted-foreground">
-            Manage quiz questions and monitor system performance
+            Manage questions, content, users, and subscriptions
           </p>
         </div>
 
@@ -117,6 +117,25 @@ export default function AdminPage() {
           >
             <GlassCard hover className="h-full flex flex-col p-6 border border-border/80 bg-black/80">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+                <BarChart3 className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Subscriptions</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                View and manage user plans and billing status
+              </p>
+              <Button asChild className="w-full">
+                <Link href="/admin/subscriptions">Manage Subscriptions</Link>
+              </Button>
+            </GlassCard>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <GlassCard hover className="h-full flex flex-col p-6 border border-border/80 bg-black/80">
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                 <BookOpen className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-lg font-semibold mb-2">Decision Trainer</h3>
@@ -132,7 +151,7 @@ export default function AdminPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.6 }}
           >
             <GlassCard hover className="h-full flex flex-col p-6 border border-border/80 bg-black/80">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
