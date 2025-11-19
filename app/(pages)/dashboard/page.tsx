@@ -408,25 +408,38 @@ export default function DashboardPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.45 }}
                     >
-                      <GlassCard className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-border/80 bg-black/80">
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                            <Brain className="w-5 h-5 text-primary" />
-                          </div>
+                      <GlassCard className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 border border-border/80 bg-black/80">
+                        <div className="flex items-start gap-4 max-w-md">
+                  
                           <div>
                             <h2 className="text-sm font-semibold mb-1">{t('dashboard.trainerProgressTitle')}</h2>
-                            <p className="text-xs text-muted-foreground">
-                              {trainerStats.totalScenarios} {t('dashboard.trainerScenarios')} · {trainerStats.accuracy}% {t('dashboard.trainerAccuracy')} · {trainerStats.totalXp} {t('dashboard.trainerXp')}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground mt-1">
-                              {t('dashboard.trainerBestStreak')}: {trainerStats.bestStreak} · {t('dashboard.trainerCategoriesPracticed')}: {trainerStats.categoriesCompleted}
-                            </p>
+                            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
+                              <span>
+                                {trainerStats.totalScenarios} {t('dashboard.trainerScenarios')}
+                              </span>
+                              <span>
+                                {trainerStats.accuracy}% {t('dashboard.trainerAccuracy')}
+                              </span>
+                              <span>
+                                {trainerStats.totalXp} {t('dashboard.trainerXp')}
+                              </span>
+                            </div>
+                            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
+                              <span>
+                                {t('dashboard.trainerBestStreak')}: {trainerStats.bestStreak}
+                              </span>
+                              <span>
+                                {t('dashboard.trainerCategoriesPracticed')}: {trainerStats.categoriesCompleted}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex flex-col items-stretch gap-2 w-full md:w-auto">
-                          <div className="flex gap-2 text-[11px] text-muted-foreground">
-                            <span className="font-semibold">{t('dashboard.trainerAchievementsLabel')}</span>
-                            <span>
+                        <div className="flex flex-col items-stretch gap-3 w-full md:w-auto">
+                          <div className="text-[11px] text-muted-foreground">
+                            <span className="font-semibold block">
+                              {t('dashboard.trainerAchievementsLabel')}
+                            </span>
+                            <span className="block mt-0.5 leading-relaxed break-words">
                               {trainerStats.totalScenarios >= 1 && t('trainer.firstSteps')}
                               {trainerStats.totalAttempts >= 20 && trainerStats.accuracy >= 80 && `, ${t('trainer.accuracyAce')}`}
                               {trainerStats.bestStreak >= 10 && `, ${t('trainer.streakMaster')}`}

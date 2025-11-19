@@ -706,6 +706,28 @@ export default function TestPage() {
   }
 
   const question = questions[currentQuestion];
+
+  if (!question) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <Card className="max-w-md w-full border border-border/80 bg-card/95 backdrop-blur-xl">
+          <CardHeader>
+            <CardTitle>{t('test.noQuestionsTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">
+              {t('test.noQuestionsDescription')}
+            </p>
+            <Button asChild>
+              <Link href={`/category/${category.toLowerCase()}`}>
+                {t('test.backToTests')}
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   const questionText = language === 'en'
     ? (question.question_text_en || question.question_text)
     : (question.question_text_sq || question.question_text);

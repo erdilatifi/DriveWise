@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Navbar } from '@/components/navbar';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Check, X, Lightbulb, Trophy, Zap, Timer } from 'lucide-react';
+import { ArrowLeft, Check, X, Lightbulb, Trophy, Zap, Timer, TrafficCone, Octagon, User, GitBranch, AlertTriangle, Car } from 'lucide-react';
 import Link from 'next/link';
 import { CATEGORY_INFO, type Category } from '@/data/scenarios';
 import { useScenarios, type Scenario as TrainerScenario } from '@/hooks/use-scenarios';
@@ -18,12 +18,21 @@ import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/language-context';
 // import Confetti from 'react-canvas-confetti';
 
+const CATEGORY_ICONS: Record<Category, React.ReactNode> = {
+  'traffic-lights': <TrafficCone className="w-5 h-5 text-primary" />,
+  signs: <Octagon className="w-5 h-5 text-primary" />,
+  pedestrians: <User className="w-5 h-5 text-primary" />,
+  'right-of-way': <GitBranch className="w-5 h-5 text-primary" />,
+  hazards: <AlertTriangle className="w-5 h-5 text-primary" />,
+  parking: <Car className="w-5 h-5 text-primary" />,
+};
+
 export default function DecisionTrainerPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { t } = useLanguage();
   const { data: categoryProgressData } = useDecisionTrainerProgress(user?.id);
-   const { data: trainerStats } = useDecisionTrainerStats(user?.id);
+  const { data: trainerStats } = useDecisionTrainerStats(user?.id);
   
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
@@ -63,6 +72,27 @@ export default function DecisionTrainerPage() {
   // Fetch scenarios from database
   const { data: rawScenarios = [], isLoading: scenariosLoading, error: scenariosError } = useScenarios(selectedCategory || undefined);
   const scenarios = (rawScenarios ?? []) as TrainerScenario[];
+
+  const toastBaseClass =
+    'text-[13px] rounded-xl px-3 py-2 shadow-[0_18px_60px_rgba(0,0,0,0.9)] backdrop-blur-sm';
+
+  const toastStyles = {
+    success: {
+      className:
+        toastBaseClass +
+        ' bg-emerald-500/15 border border-emerald-400/70 text-emerald-50',
+    },
+    error: {
+      className:
+        toastBaseClass +
+        ' bg-red-500/15 border border-red-500/70 text-red-50',
+    },
+    info: {
+      className:
+        toastBaseClass +
+        ' bg-primary/10 border border-primary/70 text-foreground',
+    },
+  } as const;
   
   // Mutation for completing category
   const completeCategoryMutation = useCompleteCategory();
@@ -82,7 +112,7 @@ export default function DecisionTrainerPage() {
         if (prev <= 1) {
           // Time's up - auto submit wrong answer
           if (selectedOptions.length === 0) {
-            toast.error(t('trainer.toastTimesUp'));
+            toast.error(t('trainer.toastTimesUp'), toastStyles.error);
             handleNext();
           }
           return 0;
@@ -171,12 +201,12 @@ export default function DecisionTrainerPage() {
     }));
 
     if (isCorrect) {
-      toast.success(`${t('trainer.toastCorrect')} +${currentScenario.xp} XP`);
+      toast.success(`${t('trainer.toastCorrect')} +${currentScenario.xp} XP`, toastStyles.success);
       if (stats.streak > 0 && stats.streak % 5 === 0) {
         // Trigger confetti on streak milestones
       }
     } else {
-      toast.error(t('trainer.toastIncorrect'));
+      toast.error(t('trainer.toastIncorrect'), toastStyles.error);
     }
   };
 
@@ -201,11 +231,8 @@ export default function DecisionTrainerPage() {
           });
           
           toast.success(
-            `🎉 Category Complete!\n` +
-            `XP Earned: ${result.sessionStats.totalXpEarned}\n` +
-            `Accuracy: ${result.sessionStats.accuracy}%\n` +
-            `Best Streak: ${result.sessionStats.maxStreak}`,
-            { duration: 5000 }
+            `${t('test.congratulations')} – ${result.sessionStats.accuracy}% ${t('test.accuracy')}, +${result.sessionStats.totalXpEarned} XP`,
+            { ...toastStyles.success, duration: 5000 }
           );
 
           const mistakes = sessionAttempts
@@ -233,7 +260,7 @@ export default function DecisionTrainerPage() {
           });
         } catch (error) {
           console.error('Error saving results:', error);
-          toast.error(t('trainer.toastSyncFailed'));
+          toast.error(t('trainer.toastSyncFailed'), toastStyles.error);
 
           const totalXpEarned = sessionAttempts.reduce((sum, a) => sum + a.xpEarned, 0);
           const correctCount = sessionAttempts.filter((a) => a.isCorrect).length;
@@ -298,6 +325,12 @@ export default function DecisionTrainerPage() {
   };
 
   const startCategory = (category: Category) => {
+    const availableScenarios = (scenarios || []).filter((s) => s.category === category);
+    if (!availableScenarios.length) {
+      toast.error(t('trainer.noScenariosTitle'), toastStyles.error);
+      return;
+    }
+
     setSelectedCategory(category);
     setCurrentScenarioIndex(0);
     setSelectedOptions([]);
@@ -306,7 +339,7 @@ export default function DecisionTrainerPage() {
     setTimeLeft(30);
     setTotalTime(0);
     setCategoryStartTime(() => Date.now());
-    setSessionAttempts([]); // Reset session attempts
+    setSessionAttempts([]);
     setSessionScenarioIds(null);
   };
 
@@ -314,7 +347,7 @@ export default function DecisionTrainerPage() {
     const progressList = (categoryProgressData || []) as DecisionTrainerProgress[];
     const withAttempts = progressList.filter((p) => p.total_attempts > 0);
     if (withAttempts.length === 0) {
-      toast.error(t('trainer.toastWeakLocked'));
+      toast.error(t('trainer.toastWeakLocked'), toastStyles.error);
       return;
     }
 
@@ -329,7 +362,7 @@ export default function DecisionTrainerPage() {
     startCategory(weakestCategory);
     const info = CATEGORY_INFO[weakestCategory];
     if (info) {
-      toast.info(`${t('trainer.toastFocusingWeak')} ${info.name}`);
+      toast.info(`${t('trainer.toastFocusingWeak')} ${info.name}`, toastStyles.info);
     }
   };
 
@@ -387,6 +420,28 @@ export default function DecisionTrainerPage() {
                 </div>
               ))}
             </div>
+          </GlassCard>
+        </div>
+      </div>
+    );
+  }
+
+  if (selectedCategory && !scenariosLoading && categoryScenarios.length === 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 max-w-4xl pt-28">
+          <GlassCard className="p-6 border border-border/80 bg-black/80">
+            <h1 className="text-xl font-semibold mb-2 flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-primary" />
+              {t('trainer.noScenariosTitle')}
+            </h1>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('trainer.noScenariosSubtitle')}
+            </p>
+            <Button variant="outline" onClick={() => setSelectedCategory(null)}>
+              {t('auth.backToHome')}
+            </Button>
           </GlassCard>
         </div>
       </div>
@@ -461,7 +516,9 @@ export default function DecisionTrainerPage() {
 
           {lastSessionSummary && (
             <div className="mb-6">
-              <GlassCard className="p-6">
+              <GlassCard className="p-6 border border-border/80 bg-black/80 relative overflow-hidden">
+                <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-70" />
+                <div className="pointer-events-none absolute -right-24 bottom-0 w-40 h-40 rounded-full bg-primary/15 blur-3xl" />
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                   <div>
                     <h2 className="text-lg font-bold flex items-center gap-2">
@@ -591,6 +648,12 @@ export default function DecisionTrainerPage() {
                       description: t('trainer.categoryExplorerDesc'),
                       unlocked: trainerStats.categoriesCompleted >= 3,
                     },
+                    {
+                      id: 'consistency-pro',
+                      label: t('trainer.consistencyPro'),
+                      description: t('trainer.consistencyProDesc'),
+                      unlocked: trainerStats.totalScenarios >= 50,
+                    },
                   ];
 
                   const unlockedCount = achievements.filter((a) => a.unlocked).length;
@@ -707,8 +770,8 @@ export default function DecisionTrainerPage() {
                   onClick={() => startCategory(key as Category)}
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl">
-                      {info.icon}
+                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                      {CATEGORY_ICONS[key as Category]}
                     </div>
                     <div className="flex-1">
                       <h3 className="text-lg md:text-xl font-semibold mb-1">{info.name}</h3>
@@ -774,7 +837,9 @@ export default function DecisionTrainerPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div>
               <h1 className="text-3xl font-bold flex items-center gap-2">
-                <span className="text-4xl">{categoryInfo.icon}</span>
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  {CATEGORY_ICONS[selectedCategory as Category]}
+                </div>
                 {categoryInfo.name}
               </h1>
               <p className="text-muted-foreground">{t('test.question')} {currentScenarioIndex + 1} {t('test.of')} {categoryScenarios.length}</p>
@@ -919,7 +984,10 @@ export default function DecisionTrainerPage() {
                         </div>
                         
                         <div className="bg-background/50 p-3 rounded-lg">
-                          <p className="text-sm"><strong>💡 </strong>{currentScenario.real_world_tip}</p>
+                          <div className="flex items-start gap-2">
+                            <Lightbulb className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                            <p className="text-sm text-muted-foreground">{currentScenario.real_world_tip}</p>
+                          </div>
                         </div>
 
                         {currentScenario.chapter_id && (

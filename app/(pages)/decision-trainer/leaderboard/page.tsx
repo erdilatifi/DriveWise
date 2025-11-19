@@ -209,7 +209,8 @@ export default function LeaderboardPage() {
                 </Button>
               </div>
             ) : (
-              topTen.map((entry, index) => {
+              <>
+                {topTen.map((entry, index) => {
                 const rank = index + 1;
                 const isCurrentUser = entry.user_id === user.id;
                 
@@ -224,49 +225,59 @@ export default function LeaderboardPage() {
                         : 'border-border/70 bg-black/70'
                     }`}
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                      <div className="w-12 flex justify-center">
-                        {getRankIcon(rank)}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      {/* Left: rank + identity + basic stats */}
+                      <div className="flex items-start gap-3 flex-1">
+                        <div className="w-10 flex justify-center mt-0.5">
+                          {getRankIcon(rank)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-bold truncate">
+                              {entry.full_name || entry.email?.split('@')[0] || 'Anonymous'}
+                            </h3>
+                            {isCurrentUser && (
+                              <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full border border-primary/30">
+                                You
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs sm:text-sm text-muted-foreground">
+                            <span>{entry.total_scenarios} scenarios</span>
+                            <span>{entry.accuracy}% accuracy</span>
+                            <span>{entry.categories_completed} categories</span>
+                            {entry.best_time_seconds && (
+                              <span className="text-blue-500">
+                                ⏱️ {formatTime(entry.best_time_seconds)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-bold">
-                            {entry.full_name || entry.email?.split('@')[0] || 'Anonymous'}
-                          </h3>
-                          {isCurrentUser && (
-                            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">You</span>
-                          )}
+
+                      {/* Right: XP + best streak, stacked nicely on mobile */}
+                      <div className="flex w-full sm:w-auto justify-between sm:justify-end gap-6 text-sm">
+                        <div className="text-center sm:text-right min-w-[90px]">
+                          <div className="flex items-center justify-center sm:justify-end gap-1 text-xl font-semibold text-primary">
+                            <Zap className="w-4 h-4" />
+                            <span className="tabular-nums">{entry.total_xp}</span>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground uppercase tracking-wide">XP</div>
                         </div>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
-                          <span>{entry.total_scenarios} scenarios</span>
-                          <span>{entry.accuracy}% accuracy</span>
-                          <span>{entry.categories_completed} categories</span>
-                          {entry.best_time_seconds && (
-                            <span className="text-blue-500">⏱️ {formatTime(entry.best_time_seconds)}</span>
-                          )}
+
+                        <div className="text-center sm:text-right min-w-[90px]">
+                          <div className="flex items-center justify-center sm:justify-end gap-1 text-lg font-semibold text-orange-300">
+                            <Zap className="w-3 h-3" />
+                            <span className="tabular-nums">{entry.best_streak}</span>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Best Streak</div>
                         </div>
-                      </div>
-                      
-                      <div className="text-center sm:text-right">
-                        <div className="flex items-center gap-2 text-2xl font-semibold text-primary">
-                          <Zap className="w-5 h-5" />
-                          {entry.total_xp}
-                        </div>
-                        <div className="text-xs text-muted-foreground">XP</div>
-                      </div>
-                      
-                      <div className="text-right">
-                        <div className="flex items-center justify-end gap-2 text-xl font-semibold text-orange-300">
-                          <Zap className="w-4 h-4" />
-                          {entry.best_streak}
-                        </div>
-                        <div className="text-xs text-muted-foreground">Best Streak</div>
                       </div>
                     </div>
                   </div>
                 );
-              })
+              })}
+              </>
             )}
           </div>
         </GlassCard>

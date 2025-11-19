@@ -1,32 +1,52 @@
-'use client';
+"use client";
 
-import { Toaster as Sonner } from 'sonner';
+import type React from "react";
+import { Toaster as Sonner, type ToasterProps } from "sonner";
 
-export function Toaster() {
+export function Toaster(props: ToasterProps) {
   return (
     <Sonner
+      // Your app is dark by design, so force dark theme
+      theme="dark"
       position="top-right"
-      richColors
       closeButton
       expand={false}
       duration={3000}
+      className="toaster group"
       toastOptions={{
         classNames: {
-          toast: 'bg-card/95 backdrop-blur-xl text-card-foreground border-2 border-border shadow-xl shadow-primary/5 rounded-xl',
-          title: 'text-foreground font-semibold text-base',
-          description: 'text-muted-foreground text-sm',
-          actionButton: 'bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg font-medium',
-          cancelButton: 'bg-muted text-muted-foreground hover:bg-muted/80 rounded-lg',
-          closeButton: 'bg-card/50 border-border hover:bg-muted/50 rounded-lg transition-colors',
-          success: 'border-green-500/30 bg-green-500/10 backdrop-blur-xl',
-          error: 'border-red-500/30 bg-red-500/10 backdrop-blur-xl',
-          warning: 'border-yellow-500/30 bg-yellow-500/10 backdrop-blur-xl',
-          info: 'border-blue-500/30 bg-blue-500/10 backdrop-blur-xl',
-        },
-        style: {
-          backdropFilter: 'blur(12px)',
+          // Base toast surface – uses your card + border + radius tokens
+          toast:
+            "bg-card text-card-foreground border border-border rounded-[var(--radius)] shadow-lg shadow-primary/15 px-4 py-3",
+
+          // Typography aligned with your theme
+          title: "text-foreground font-semibold text-sm",
+          description: "text-muted-foreground text-xs",
+
+          // Actions keep the orange accent feel
+          actionButton:
+            "bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium transition-colors",
+          cancelButton:
+            "bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md transition-colors",
+
+          // Close button is subtle, not screaming
+          closeButton:
+            "text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-md p-1 transition-colors",
         },
       }}
+      // Use Sonner's CSS variables so its internals follow your theme tokens
+      style={
+        {
+          // Normal/default toast colors
+          "--normal-bg": "hsl(var(--popover))",
+          "--normal-border": "hsl(var(--border))",
+          "--normal-text": "hsl(var(--popover-foreground))",
+
+          // Corner radius consistent with the rest of the UI
+          "--border-radius": "var(--radius)",
+        } as React.CSSProperties
+      }
+      {...props}
     />
   );
 }
