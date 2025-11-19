@@ -108,12 +108,12 @@ export function useGlobalDailyStreak(userId?: string) {
 
       const activeDayTimestamps: number[] = [];
 
-      (testAttempts || []).forEach((a: any) => {
+      (testAttempts || []).forEach((a: { completed_at: string }) => {
         const d = new Date(a.completed_at);
         activeDayTimestamps.push(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime());
       });
 
-      (dtAttempts || []).forEach((a: any) => {
+      (dtAttempts || []).forEach((a: { created_at: string }) => {
         const d = new Date(a.created_at);
         activeDayTimestamps.push(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime());
       });
@@ -395,7 +395,7 @@ export function useDeleteTestAttempt() {
 
       if (error) throw error;
     },
-    onSuccess: (_, testId) => {
+    onSuccess: () => {
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['test-attempts'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
@@ -492,13 +492,13 @@ export function useWeakTopics(userId?: string) {
       if (questionsError) throw questionsError;
 
       const topicByQuestionId = new Map<string, string | null>();
-      (questions || []).forEach((q: any) => {
+      (questions || []).forEach((q: { id: string; topic: string | null }) => {
         topicByQuestionId.set(q.id, q.topic ?? null);
       });
 
       const topicStatsMap: Record<string, { total: number; correct: number }> = {};
 
-      answers.forEach((ans: any) => {
+      answers.forEach((ans: { question_id: string; is_correct: boolean }) => {
         const topic = topicByQuestionId.get(ans.question_id);
         if (!topic) return;
 

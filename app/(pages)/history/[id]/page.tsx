@@ -124,7 +124,7 @@ export default function ReviewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background text-foreground">
         <Navbar />
         <div className="container mx-auto px-6 py-8 max-w-7xl flex items-center justify-center pt-28">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -135,10 +135,10 @@ export default function ReviewPage() {
 
   if (!testInfo || answers.length === 0) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background text-foreground">
         <Navbar />
         <div className="container mx-auto px-6 py-8 max-w-7xl pt-28">
-          <GlassCard className="p-12 text-center">
+          <GlassCard className="p-12 text-center border border-border/80 bg-black/80">
             <p className="text-muted-foreground mb-4">{t('history.notFoundTitle')}</p>
             <Button asChild>
               <Link href="/history">{t('history.backToHistory')}</Link>
@@ -182,14 +182,16 @@ export default function ReviewPage() {
   const question = answer?.question;
   const totalQuestions = answers.length;
   const passed = testInfo.percentage >= 80;
+  const isMixedTest = testInfo.test_number === 'mixed';
+  const isPersonalizedTest = testInfo.test_number === 'personalized';
 
   // Handle missing question data
   if (!question) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background text-foreground">
         <Navbar />
         <div className="container mx-auto px-6 py-8 max-w-7xl pt-28">
-          <GlassCard className="p-12 text-center">
+          <GlassCard className="p-12 text-center border border-border/80 bg-black/80">
             <p className="text-muted-foreground mb-4">{t('history.missingQuestionTitle')}</p>
             <Button asChild>
               <Link href="/history">{t('history.backToHistory')}</Link>
@@ -214,8 +216,10 @@ export default function ReviewPage() {
     ? (question.explanation_en || question.explanation_sq || '')
     : (question.explanation_sq || question.explanation_en || '');
 
+  const topicQuery = question.topic ? encodeURIComponent(question.topic) : '';
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
       <motion.div
@@ -260,7 +264,7 @@ export default function ReviewPage() {
         {/* Topic analytics / weakness insights */}
         {topicStats.length > 0 && (
           <div className="mb-6 max-w-4xl mx-auto">
-            <GlassCard className="p-4">
+            <GlassCard className="p-4 border border-border/80 bg-black/80">
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
                   <div>
@@ -317,8 +321,60 @@ export default function ReviewPage() {
           </div>
         )}
 
+        {/* Next steps and practice suggestions */}
+        <div className="mb-6 max-w-4xl mx-auto">
+          <GlassCard className="p-4 border border-border/80 bg-black/80">
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-semibold">{t('test.nextStepsTitle')}</p>
+                <p className="text-sm text-muted-foreground">
+                  {passed ? (
+                    isMixedTest || isPersonalizedTest
+                      ? t('test.nextStepsPassedMixedOrPersonalized')
+                      : t('test.nextStepsPassedStandard')
+                  ) : (
+                    isPersonalizedTest
+                      ? t('test.nextStepsFailedPersonalized')
+                      : t('test.nextStepsFailedStandard')
+                  )}
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button variant="outline" className="flex-1" asChild>
+                  <Link href={`/category/${testInfo.category.toLowerCase()}`}>
+                    {t('test.backToTests')}
+                  </Link>
+                </Button>
+
+                {!isPersonalizedTest && (
+                  <Button variant="outline" className="flex-1" asChild>
+                    <Link href={`/test/${testInfo.category.toLowerCase()}/personalized`}>
+                      {t('test.practiceWeakPointsCta')}
+                    </Link>
+                  </Button>
+                )}
+
+                {!isMixedTest && (
+                  <Button variant="outline" className="flex-1" asChild>
+                    <Link href={`/test/${testInfo.category.toLowerCase()}/mixed`}>
+                      {t('test.mixedTestCta')}
+                    </Link>
+                  </Button>
+                )}
+
+                <Button variant="outline" className="flex-1" asChild>
+                  <Link href="/decision-trainer">
+                    {t('test.decisionTrainerCta')}
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </GlassCard>
+        </div>
+
         {/* Question Card */}
-        <Card className={`${question.image_url ? 'max-w-6xl' : 'max-w-4xl'} mx-auto mb-6`}>
+        <Card className={`${question.image_url ? 'max-w-6xl' : 'max-w-4xl'} mx-auto mb-6 border border-border/80 bg-black/80`}>
           <CardContent className="p-6">
             {/* Question Header */}
             <div className="flex items-center gap-3 mb-6">
@@ -428,6 +484,16 @@ export default function ReviewPage() {
                   <div className="mt-6 p-4 rounded-lg bg-muted/40 border border-border">
                     <p className="text-sm font-semibold mb-1">{t('history.explanationTitle')}</p>
                     <p className="text-sm text-muted-foreground whitespace-pre-line">{explanationText}</p>
+                  </div>
+                )}
+
+                {question.topic && topicQuery && (
+                  <div className="mt-4">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/materials?search=${topicQuery}`}>
+                        {t('materials.title')}
+                      </Link>
+                    </Button>
                   </div>
                 )}
               </div>

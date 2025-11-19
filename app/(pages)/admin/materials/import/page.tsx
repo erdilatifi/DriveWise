@@ -18,7 +18,7 @@ export default function ImportMaterialsPage() {
 
   if (loading || !user || !isAdmin) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-muted-foreground">{loading ? 'Loading...' : 'Authenticating...'}</p>
@@ -28,11 +28,11 @@ export default function ImportMaterialsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       <div className="pt-28">
         <div className="container mx-auto px-4 py-10 max-w-3xl">
-          <GlassCard className="p-6 space-y-4">
+          <GlassCard className="p-6 space-y-4 border border-border/80 bg-black/80">
             <div>
               <h1 className="text-2xl font-bold mb-1">Study Materials Import</h1>
               <p className="text-sm text-muted-foreground">

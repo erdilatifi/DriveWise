@@ -66,112 +66,160 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10 relative overflow-hidden">
       {/* Premium background effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-background"></div>
-      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
-      
-      <Card className="w-full max-w-md relative border-primary/20 bg-card/95 backdrop-blur-xl shadow-2xl shadow-primary/10">
-        <CardHeader className="text-center space-y-4">
-          <div className="relative mx-auto w-20 h-20">
-            <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full"></div>
-            <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-primary/30 shadow-xl shadow-primary/20">
-              <Image 
-                src="/logo-white.png" 
-                alt="DriveWise Logo" 
-                width={80} 
-                height={80}
-                className="w-full h-full object-cover"
-              />
-            </div>
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-background" />
+      <div className="pointer-events-none absolute -top-40 right-0 w-[420px] h-[420px] bg-primary/15 rounded-full blur-3xl opacity-80" />
+      <div className="pointer-events-none absolute -bottom-40 left-0 w-[420px] h-[420px] bg-primary/5 rounded-full blur-3xl opacity-80" />
+      <div className="pointer-events-none absolute inset-x-10 top-40 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-60" />
+
+      <div className="relative z-10 w-full max-w-5xl grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] items-center">
+        {/* Left: benefits / bullet points */}
+        <div className="hidden lg:flex flex-col gap-6 text-sm text-muted-foreground">
+          <div className="space-y-2">
+            <p className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-black/60 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="h-1.5 w-6 bg-gradient-to-r from-orange-500 to-amber-300 rounded-full" />
+              Create your DriveWise account
+            </p>
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
+              Built for focused, exam-ready practice.
+            </h1>
+            <p className="text-sm text-muted-foreground max-w-md">
+              Personalised tests, decision trainer scenarios, and rich analytics help you understand exactly what to study next.
+            </p>
           </div>
-          <div>
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">{t('auth.createAccount')}</CardTitle>
-            <CardDescription className="text-base mt-2">
-              {t('auth.createAccountDescription')}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleRegister} className="space-y-4">
-            {error && (
-              <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-                {error}
+
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-start gap-2">
+              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <span>Track pass rate, weak topics, and streak in a clear dashboard.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-orange-400" />
+              <span>Practice with mixed and personalised tests that feel like the real exam.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-sky-400" />
+              <span>Review every answer with explanations and materials links.</span>
+            </li>
+          </ul>
+        </div>
+
+        {/* Right: register card */}
+        <Card className="w-full max-w-md justify-self-center relative border border-border/80 bg-black/80 backdrop-blur-xl shadow-2xl shadow-primary/10">
+          <CardHeader className="text-center space-y-4">
+            <div className="relative mx-auto w-20 h-20">
+              <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full" />
+              <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-primary/30 shadow-xl shadow-primary/20">
+                <Image
+                  src="/logo-white.png"
+                  alt="DriveWise Logo"
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover"
+                />
               </div>
-            )}
+            </div>
+            <div>
+              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                {t('auth.createAccount')}
+              </CardTitle>
+              <CardDescription className="text-base mt-2">
+                {t('auth.createAccountDescription')}
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleRegister} className="space-y-4">
+              {error && (
+                <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                  {error}
+                </div>
+              )}
 
-            <div className="space-y-2">
-              <Label htmlFor="fullName">{t('auth.fullName')}</Label>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="John Doe"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
+              <div className="space-y-2">
+                <Label htmlFor="fullName">{t('auth.fullName')}</Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="John Doe"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">{t('auth.email')}</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">{t('auth.password')}</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full shadow-lg shadow-primary/20 h-12 text-base font-semibold"
                 disabled={loading}
-              />
-            </div>
+              >
+                {loading ? t('auth.creatingAccount') : t('auth.signUp')}
+              </Button>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">{t('auth.email')}</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
+              <div className="text-center text-sm pt-4">
+                <span className="text-muted-foreground">{t('auth.alreadyHaveAccount')} </span>
+                <Link
+                  href="/login"
+                  className="text-primary hover:text-primary/80 font-semibold transition-colors"
+                >
+                  {t('auth.signIn')}
+                </Link>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">{t('auth.password')}</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <Button type="submit" className="w-full shadow-lg shadow-primary/20 h-12 text-base font-semibold" disabled={loading}>
-              {loading ? t('auth.creatingAccount') : t('auth.signUp')}
-            </Button>
-
-            <div className="text-center text-sm pt-4">
-              <span className="text-muted-foreground">{t('auth.alreadyHaveAccount')} </span>
-              <Link href="/login" className="text-primary hover:text-primary/80 font-semibold transition-colors">
-                {t('auth.signIn')}
-              </Link>
-            </div>
-
-            <div className="text-center pt-2">
-              <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                ← {t('auth.backToHome')}
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+              <div className="text-center pt-2">
+                <Link
+                  href="/"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  ← {t('auth.backToHome')}
+                </Link>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
+

@@ -8,11 +8,12 @@ import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Check, X, Lightbulb, Trophy, Zap } from 'lucide-react';
+import { ArrowLeft, Check, X, Lightbulb, Trophy, Zap, Timer } from 'lucide-react';
 import Link from 'next/link';
 import { CATEGORY_INFO, type Category } from '@/data/scenarios';
-import { useScenarios } from '@/hooks/use-scenarios';
+import { useScenarios, type Scenario as TrainerScenario } from '@/hooks/use-scenarios';
 import { useCompleteCategory, useDecisionTrainerProgress, useDecisionTrainerStats } from '@/hooks/use-decision-trainer';
+import type { DecisionTrainerProgress } from '@/hooks/use-decision-trainer';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/language-context';
 // import Confetti from 'react-canvas-confetti';
@@ -60,7 +61,8 @@ export default function DecisionTrainerPage() {
   // const [confettiInstance, setConfettiInstance] = useState<any>(null);
 
   // Fetch scenarios from database
-  const { data: scenarios = [], isLoading: scenariosLoading, error: scenariosError } = useScenarios(selectedCategory || undefined);
+  const { data: rawScenarios = [], isLoading: scenariosLoading, error: scenariosError } = useScenarios(selectedCategory || undefined);
+  const scenarios = (rawScenarios ?? []) as TrainerScenario[];
   
   // Mutation for completing category
   const completeCategoryMutation = useCompleteCategory();
@@ -109,14 +111,14 @@ export default function DecisionTrainerPage() {
     const shuffled = [...scenarios].sort(() => Math.random() - 0.5);
     const subset = shuffled
       .slice(0, Math.min(maxQuestions, shuffled.length))
-      .map((s: any) => s.id as string);
+      .map((s) => s.id as string);
     setSessionScenarioIds(subset);
     setCurrentScenarioIndex(0);
   }, [selectedCategory, scenariosLoading, scenarios, mode, sessionScenarioIds]);
 
   const categoryScenarios = selectedCategory
     ? (sessionScenarioIds
-        ? (scenarios as any[]).filter((s) => sessionScenarioIds.includes(s.id))
+        ? scenarios.filter((s) => sessionScenarioIds.includes(s.id))
         : scenarios)
     : scenarios;
   const currentScenario = categoryScenarios[currentScenarioIndex];
@@ -139,7 +141,7 @@ export default function DecisionTrainerPage() {
 
     // Check if answer is correct - user must select ALL correct options and NO incorrect ones
     const correctOptionIndices = currentScenario.options
-      .map((option: any, index: number) => (option.isCorrect ? index : -1))
+      .map((option, index) => (option.isCorrect ? index : -1))
       .filter((index: number) => index !== -1);
     
     const isCorrect = selectedOptions.length === correctOptionIndices.length &&
@@ -209,7 +211,7 @@ export default function DecisionTrainerPage() {
           const mistakes = sessionAttempts
             .filter((a) => !a.isCorrect)
             .map((a) => {
-              const scenario = categoryScenarios.find((s: any) => s.id === a.scenarioId);
+              const scenario = categoryScenarios.find((s) => s.id === a.scenarioId);
               return {
                 scenarioId: a.scenarioId,
                 question: scenario?.question || '',
@@ -309,7 +311,7 @@ export default function DecisionTrainerPage() {
   };
 
   const handleStartWeakPoints = () => {
-    const progressList = (categoryProgressData || []) as any[];
+    const progressList = (categoryProgressData || []) as DecisionTrainerProgress[];
     const withAttempts = progressList.filter((p) => p.total_attempts > 0);
     if (withAttempts.length === 0) {
       toast.error(t('trainer.toastWeakLocked'));
@@ -395,27 +397,41 @@ export default function DecisionTrainerPage() {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 py-8 max-w-7xl pt-28">
+        <div className="container mx-auto px-4 py-8 max-w-7xl pt-28 relative">
+          <div className="pointer-events-none absolute inset-x-0 top-20 h-px bg-gradient-to-r from-transparent via-orange-400/35 to-transparent opacity-70" />
+          <div className="pointer-events-none absolute hidden md:block left-1/2 top-24 bottom-10 w-px bg-gradient-to-b from-orange-400/30 via-transparent to-transparent opacity-70" />
+
           <div className="mb-8">
-            <Button variant="ghost" asChild className="mb-4">
-              <Link href="/dashboard">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                {t('auth.backToHome')}
-              </Link>
-            </Button>
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-4xl font-bold mb-2">📚 {t('trainer.title')}</h1>
-                <p className="text-muted-foreground">{t('dashboard.keepGoing')}</p>
+          <Button variant="ghost" asChild className="mb-4">
+            <Link href="/dashboard">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              {t('auth.backToHome')}
+            </Link>
+          </Button>
+          <GlassCard className="p-5 md:p-6 border border-border/80 bg-black/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-40 w-40 rounded-full bg-primary/20 blur-3xl opacity-60" />
+            <div className="relative space-y-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/5 px-3 py-1 text-[11px] font-medium text-primary">
+                <Zap className="w-4 h-4" />
+                <span>{t('trainer.practiceModes')}</span>
               </div>
-              <Button asChild variant="outline">
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+                {t('trainer.title')}
+              </h1>
+              <p className="text-sm md:text-base text-muted-foreground">
+                {t('dashboard.keepGoing')}
+              </p>
+            </div>
+            <div className="relative">
+              <Button asChild variant="outline" className="mt-2 md:mt-0">
                 <Link href="/decision-trainer/leaderboard">
                   <Trophy className="w-4 h-4 mr-2" />
                   {t('trainer.leaderboard')}
                 </Link>
               </Button>
             </div>
-          </div>
+          </GlassCard>
+        </div>
 
           {scenariosError && (
             <div className="mb-6">
@@ -514,7 +530,7 @@ export default function DecisionTrainerPage() {
                     </Button>
 
                     {/* Weak points mode (if available via handleStartWeakPoints) */}
-                    {(categoryProgressData || []).some((p: any) => p.total_attempts > 0) && (
+                    {(categoryProgressData || []).some((p) => p.total_attempts > 0) && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -542,7 +558,7 @@ export default function DecisionTrainerPage() {
 
           {trainerStats && (
             <div className="mb-6">
-              <GlassCard className="p-6">
+              <GlassCard className="p-6 border border-border/80 bg-black/80">
                 {(() => {
                   const achievements = [
                     {
@@ -597,8 +613,8 @@ export default function DecisionTrainerPage() {
                             key={ach.id}
                             className={`border rounded-lg px-3 py-2 text-xs ${
                               ach.unlocked
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border/60 bg-background/40 opacity-80'
+                                ? 'border-primary/60 bg-primary/15'
+                                : 'border-border/70 bg-black/60 opacity-80'
                             }`}
                           >
                             <div className="font-semibold flex items-center gap-1 mb-1">
@@ -620,7 +636,7 @@ export default function DecisionTrainerPage() {
             </div>
           )}
           
-          <GlassCard className="p-4 mb-6">
+          <GlassCard className="p-4 mb-6 border border-border/80 bg-black/80">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-primary" />
@@ -650,7 +666,7 @@ export default function DecisionTrainerPage() {
                 >
                   {t('trainer.quick10')}
                 </Button>
-                {(categoryProgressData || []).some((p: any) => p.total_attempts > 0) && (
+                {(categoryProgressData || []).some((p) => p.total_attempts > 0) && (
                   <Button
                     size="sm"
                     variant={mode === 'weak' ? 'default' : 'outline'}
@@ -666,7 +682,7 @@ export default function DecisionTrainerPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Object.entries(CATEGORY_INFO).map(([key, info]) => {
               const categoryCount = scenarios.filter((scenario) => scenario.category === key).length;
-              const progressForCategory = (categoryProgressData || []).find((p: any) => p.category === key);
+              const progressForCategory = (categoryProgressData || []).find((p) => p.category === key);
               const totalAttempts = progressForCategory?.total_attempts ?? 0;
               const correctAnswers = progressForCategory?.correct_answers ?? 0;
               const accuracy = totalAttempts > 0 ? Math.round((correctAnswers / totalAttempts) * 100) : null;
@@ -687,28 +703,30 @@ export default function DecisionTrainerPage() {
               return (
                 <GlassCard
                   key={key}
-                  className="p-6 hover:border-primary/50 transition-all cursor-pointer"
+                  className="p-6 md:p-7 border border-border/80 bg-black/80 hover:border-primary/60 hover:shadow-[0_22px_60px_rgba(0,0,0,0.9)] transition-all cursor-pointer"
                   onClick={() => startCategory(key as Category)}
                 >
                   <div className="flex items-start gap-4">
-                    <div className="text-5xl">{info.icon}</div>
+                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl">
+                      {info.icon}
+                    </div>
                     <div className="flex-1">
-                      <h3 className="text-xl font-bold mb-2">{info.name}</h3>
-                      <p className="text-sm text-muted-foreground">{info.description}</p>
-                      <div className="mt-1">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClass}`}>
+                      <h3 className="text-lg md:text-xl font-semibold mb-1">{info.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">{info.description}</p>
+                      <div className="flex flex-wrap items-center gap-2 mb-2 text-xs">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${statusClass}`}
+                        >
                           {statusLabel}
                         </span>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm mt-2">
                         <span className="text-muted-foreground">
                           {categoryCount} {t('trainer.scenariosShort')}
                           {accuracy !== null && ` · ${accuracy}% ${t('trainer.accuracyShort')}`}
                         </span>
-                        <Button size="sm" className="w-full sm:w-auto">
-                          {t('categories.startPractice')} →
-                        </Button>
                       </div>
+                      <Button size="sm" className="w-full sm:w-auto">
+                        {t('categories.startPractice')} →
+                      </Button>
                     </div>
                   </div>
                 </GlassCard>
@@ -724,7 +742,7 @@ export default function DecisionTrainerPage() {
   const progress = ((currentScenarioIndex + 1) / categoryScenarios.length) * 100;
   const correctOptionIndices = currentScenario
     ? currentScenario.options
-        .map((option: any, index: number) => (option.isCorrect ? index : -1))
+        .map((option, index) => (option.isCorrect ? index : -1))
         .filter((index: number) => index !== -1)
     : [];
   const optionLetter = (index: number) => String.fromCharCode(65 + index);
@@ -770,8 +788,11 @@ export default function DecisionTrainerPage() {
             </div>
             <div className="flex flex-wrap sm:flex-nowrap gap-4 justify-start sm:justify-end">
               <div className="text-center min-w-[90px]">
-                <div className={`text-3xl font-bold ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-blue-500'}`}>
-                  ⏱️ {timeLeft}s
+                <div className={`flex items-center justify-center gap-1.5 text-2xl font-semibold ${
+                  timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-sky-400'
+                }`}>
+                  <Timer className="w-5 h-5" />
+                  <span>{timeLeft}s</span>
                 </div>
                 <div className="text-xs text-muted-foreground">{t('test.timeLeft')}</div>
               </div>
@@ -780,7 +801,7 @@ export default function DecisionTrainerPage() {
                 <div className="text-xs text-muted-foreground">{t('dashboard.trainerXp')}</div>
               </div>
               <div className="text-center min-w-[70px]">
-                <div className="text-2xl font-bold text-green-500">{stats.streak}</div>
+                <div className="text-2xl font-bold text-amber-300">{stats.streak}</div>
                 <div className="text-xs text-muted-foreground">{t('dashboard.streak')}</div>
               </div>
             </div>
@@ -792,11 +813,11 @@ export default function DecisionTrainerPage() {
         </div>
 
         {currentScenario && (
-          <GlassCard className="p-8">
+          <GlassCard className="p-6 md:p-8 border border-border/80 bg-black/80">
             <h2 className="text-2xl font-bold mb-6">{currentScenario.question}</h2>
 
             <div className="space-y-3 mb-6">
-              {currentScenario.options.map((option: any, index: number) => {
+              {currentScenario.options.map((option, index: number) => {
                 const isSelected = selectedOptions.includes(index);
                 const isCorrect = option.isCorrect;
                 const showCorrect = showResult && isCorrect;
@@ -808,28 +829,28 @@ export default function DecisionTrainerPage() {
                     key={index}
                     onClick={() => handleSelectOption(index)}
                     disabled={showResult}
-                    className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
+                    className={`w-full p-4 md:p-5 rounded-xl border-2 text-left transition-all ${
                       showCorrect
-                        ? 'border-green-500 bg-green-500/10'
+                        ? 'border-green-500/80 bg-green-500/15'
                         : showWrong
-                        ? 'border-red-500 bg-red-500/10'
+                        ? 'border-red-500/80 bg-red-500/15'
                         : showMissed
-                        ? 'border-yellow-500 bg-yellow-500/10'
+                        ? 'border-yellow-500/80 bg-yellow-500/12'
                         : isSelected
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/50'
+                        ? 'border-primary/70 bg-primary/10 shadow-[0_18px_50px_rgba(0,0,0,0.9)]'
+                        : 'border-border/70 bg-black/60 hover:border-primary/50 hover:bg-black/80'
                     }`}
                     whileHover={{ scale: showResult ? 1 : 1.02 }}
                     whileTap={{ scale: showResult ? 1 : 0.98 }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                        <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center ${
                           isSelected 
                             ? 'border-primary bg-primary text-primary-foreground' 
-                            : 'border-border'
+                            : 'border-border bg-black/60'
                         }`}>
-                          {isSelected && <Check className="w-3 h-3" />}
+                          {isSelected && <Check className="w-3.5 h-3.5" />}
                         </div>
                         <span className="font-medium break-words text-left">{option.text}</span>
                       </div>
@@ -945,7 +966,7 @@ export default function DecisionTrainerPage() {
         )}
 
         <div className="mt-8">
-          <GlassCard className="p-6">
+          <GlassCard className="p-6 border border-border/80 bg-black/80">
             <h3 className="font-bold mb-4 flex items-center gap-2">
               <Trophy className="w-5 h-5 text-primary" />
               {t('test.sessionStats')}

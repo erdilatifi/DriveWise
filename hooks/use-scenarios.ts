@@ -46,7 +46,8 @@ export function useScenarios(category?: Category) {
       // fall back to only filtering by is_active so scenarios still appear.
       if (error) {
         // Postgres undefined_column error
-        if ((error as any).code === '42703') {
+        const pgError = error as { code?: string };
+        if (pgError.code === '42703') {
           const { data: fallbackData, error: fallbackError } = await baseQuery;
           if (fallbackError) throw fallbackError;
           return fallbackData as Scenario[];

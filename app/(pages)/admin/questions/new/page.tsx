@@ -286,7 +286,7 @@ export default function NewQuestionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
       <motion.div
@@ -386,7 +386,7 @@ export default function NewQuestionPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          <GlassCard className="p-6 space-y-6">
+          <GlassCard className="p-6 space-y-6 border border-border/80 bg-black/80">
             {/* Category and Test Number */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">

@@ -20,7 +20,7 @@ export interface Scenario {
   level: number;
   question: string;
   image_url?: string;
-  options: any[];
+  options: unknown[];
   correct_explanation: string;
   real_world_tip: string;
   xp: number;
@@ -34,7 +34,7 @@ export interface ScenarioInput {
   level: number;
   question: string;
   image_url?: string;
-  options: any[];
+  options: unknown[];
   correct_explanation: string;
   real_world_tip: string;
   xp: number;

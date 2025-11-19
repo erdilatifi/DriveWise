@@ -204,7 +204,7 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
       <motion.div
@@ -235,7 +235,7 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          <GlassCard className="p-6 space-y-6">
+          <GlassCard className="p-6 space-y-6 border border-border/80 bg-black/80">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>

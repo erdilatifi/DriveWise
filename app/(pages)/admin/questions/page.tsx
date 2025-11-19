@@ -129,10 +129,10 @@ export default function QuestionsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background text-foreground">
         <Navbar />
         <div className="container mx-auto px-6 py-8 max-w-7xl">
-          <GlassCard className="p-6">
+          <GlassCard className="p-6 border border-border/80 bg-black/80">
             <p className="text-destructive">Error loading questions: {error.message}</p>
           </GlassCard>
         </div>
@@ -141,7 +141,7 @@ export default function QuestionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
       <motion.div
@@ -183,7 +183,7 @@ export default function QuestionsPage() {
         </div>
 
         {/* Filters */}
-        <GlassCard className="p-6 mb-6">
+        <GlassCard className="p-6 mb-6 border border-border/80 bg-black/80">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -219,7 +219,7 @@ export default function QuestionsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <GlassCard className="p-6">
+            <GlassCard className="p-6 border border-border/80 bg-black/80">
               {/* Category Header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -240,7 +240,7 @@ export default function QuestionsPage() {
                 {questionsByCategory?.[category]?.map((question) => (
                     <div
                       key={question.id}
-                      className="p-4 rounded-xl border border-border bg-card/50 hover:border-primary/30 transition-colors"
+                      className="p-4 rounded-xl border border-border/80 bg-black/70 hover:border-primary/40 transition-colors"
                     >
                       <div className="flex flex-col md:flex-row justify-between gap-4">
                         <div className="flex-1">
@@ -303,7 +303,7 @@ export default function QuestionsPage() {
           ))}
 
         {categories.length === 0 && (
-          <GlassCard className="p-12 text-center">
+          <GlassCard className="p-12 text-center border border-border/80 bg-black/80">
             <p className="text-muted-foreground">No questions found. Add your first question to get started.</p>
             <Button asChild className="mt-4">
               <Link href="/admin/questions/new">

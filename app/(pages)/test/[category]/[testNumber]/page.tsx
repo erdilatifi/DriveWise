@@ -537,7 +537,7 @@ export default function TestPage() {
         </header>
 
         <div className="container mx-auto px-4 py-16">
-          <Card className="max-w-2xl mx-auto border-primary/20 bg-card/95 backdrop-blur-xl shadow-2xl shadow-primary/10">
+          <Card className="max-w-2xl mx-auto border border-border/80 bg-black/80 backdrop-blur-xl shadow-[0_30px_100px_rgba(0,0,0,0.9)]">
             <CardHeader className="text-center space-y-6">
               <div className="relative mx-auto w-24 h-24">
                 <div className={`absolute inset-0 blur-2xl rounded-full ${
@@ -606,15 +606,36 @@ export default function TestPage() {
                     )}
                   </p>
                   {weakTopics.length > 0 && (
-                    <p className="text-xs text-amber-500 mt-2">
-                      {t('test.weakTopicsInThisTest')}{': '}
-                      {weakTopics.map((tTopic, idx) => (
-                        <span key={tTopic.topic}>
-                          {idx > 0 && ', '}
-                          {tTopic.topic}
-                        </span>
-                      ))}
-                    </p>
+                    <>
+                      <p className="text-xs text-amber-500 mt-2">
+                        {t('test.weakTopicsInThisTest')}{': '}
+                        {weakTopics.map((tTopic, idx) => (
+                          <span key={tTopic.topic}>
+                            {idx > 0 && ', '}
+                            {tTopic.topic}
+                          </span>
+                        ))}
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {weakTopics.map((tTopic) => {
+                          const query = encodeURIComponent(tTopic.topic);
+                          return (
+                            <Button
+                              key={tTopic.topic}
+                              size="sm"
+                              variant="outline"
+                              className="text-xs px-3 py-1"
+                              asChild
+                            >
+                              <Link href={`/materials?search=${query}`}>
+                                {t('materials.title')}
+                              </Link>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </>
                   )}
                 </div>
 
@@ -689,6 +710,7 @@ export default function TestPage() {
     ? (question.question_text_en || question.question_text)
     : (question.question_text_sq || question.question_text);
   const currentAnswer = answers[question.id];
+  const topicQuery = question.topic ? encodeURIComponent(question.topic) : '';
 
   const options = [
     {
@@ -738,7 +760,7 @@ export default function TestPage() {
 
       {/* Question */}
       <div className="container mx-auto px-4 py-8">
-        <Card className={`${question.image_url ? 'max-w-6xl' : 'max-w-3xl'} mx-auto border-primary/20 bg-card/95 backdrop-blur-xl shadow-xl shadow-primary/5`}>
+        <Card className={`${question.image_url ? 'max-w-6xl' : 'max-w-3xl'} mx-auto border border-border/80 bg-black/80 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.85)]`}>
           <CardHeader>
             <div className="text-sm text-primary font-medium mb-3">
               {categoryInfo.name} - {
@@ -748,6 +770,23 @@ export default function TestPage() {
               }
             </div>
             <CardTitle className="text-2xl md:text-3xl">{questionText}</CardTitle>
+            {question.topic && topicQuery && (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {question.topic}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-[11px]"
+                  asChild
+                >
+                  <Link href={`/materials?search=${topicQuery}`}>
+                    {t('materials.title')}
+                  </Link>
+                </Button>
+              </div>
+            )}
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Side-by-side layout when image exists */}
@@ -777,20 +816,20 @@ export default function TestPage() {
                     return (
                       <div
                         key={option.id}
-                        className={`flex items-center space-x-3 p-4 rounded-lg border transition-colors cursor-pointer ${
+                        className={`flex items-center gap-3 p-4 md:p-5 rounded-xl border transition-colors cursor-pointer ${
                           isSelected
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:border-primary/50'
+                            ? 'border-primary/70 bg-primary/10 shadow-[0_18px_50px_rgba(0,0,0,0.9)]'
+                            : 'border-border/70 bg-black/60 hover:border-primary/50 hover:bg-black/80'
                         }`}
                         onClick={() => handleAnswer(option.id)}
                       >
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                        <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center ${
                           isSelected
-                            ? 'border-primary bg-primary'
-                            : 'border-border'
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-border bg-black/60'
                         }`}>
                           {isSelected && (
-                            <CheckSquare className="w-4 h-4 text-primary-foreground" />
+                            <CheckSquare className="w-3.5 h-3.5" />
                           )}
                         </div>
                         <Label className="cursor-pointer flex-1 font-medium">

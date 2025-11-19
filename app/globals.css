@@ -87,7 +87,6 @@
       /* Deep neutral charcoal base */
       linear-gradient(to bottom, #050510 0%, #040413 40%, #03030f 100%);
 
-    background-attachment: fixed;
     color: hsl(var(--foreground));
     font-feature-settings: "rlig" 1, "calt" 1;
   }

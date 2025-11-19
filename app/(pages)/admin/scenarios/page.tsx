@@ -515,7 +515,7 @@ export default function AdminScenariosPageOptimized() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
       <div className="container mx-auto px-6 py-8 max-w-7xl pt-28">
@@ -542,7 +542,7 @@ export default function AdminScenariosPageOptimized() {
         </div>
 
         {/* Filters and Search */}
-        <GlassCard className="p-6 mb-6">
+        <GlassCard className="p-6 mb-6 border border-border/80 bg-black/80">
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
             <div className="flex flex-col sm:flex-row gap-4 flex-1">
               {/* Search */}
@@ -623,7 +623,7 @@ export default function AdminScenariosPageOptimized() {
         {loading ? (
           <LoadingSkeleton />
         ) : scenarios.length === 0 ? (
-          <GlassCard className="p-12 text-center">
+          <GlassCard className="p-12 text-center border border-border/80 bg-black/80">
             <div className="text-6xl mb-4">🎯</div>
             <h3 className="text-xl font-bold mb-2">No scenarios found</h3>
             <p className="text-muted-foreground mb-4">
@@ -641,7 +641,7 @@ export default function AdminScenariosPageOptimized() {
             {/* Scenarios Grid */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
               {scenarios.map((scenario) => (
-                <GlassCard key={scenario.id} className="p-6 hover:shadow-lg transition-shadow">
+                <GlassCard key={scenario.id} className="p-6 border border-border/80 bg-black/80 hover:border-primary/50 hover:shadow-[0_22px_60px_rgba(0,0,0,0.9)] transition-all">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex gap-2">
                       <Badge variant="outline">
@@ -788,9 +788,9 @@ export default function AdminScenariosPageOptimized() {
 
       {/* Add / Edit Scenario Form */}
       {showForm && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center">
           <div className="w-full max-w-4xl mx-4">
-            <GlassCard className="p-6 max-h-[90vh] overflow-y-auto">
+            <GlassCard className="p-6 border border-border/80 bg-black/90 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold">
                   {editingScenario ? 'Edit Scenario' : 'Add Scenario'}

@@ -34,7 +34,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
       <motion.div
@@ -58,7 +58,7 @@ export default function AdminPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <GlassCard hover className="p-6">
+            <GlassCard hover className="h-full flex flex-col p-6 border border-border/80 bg-black/80">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                 <FileText className="w-6 h-6 text-primary" />
               </div>
@@ -77,7 +77,7 @@ export default function AdminPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <GlassCard hover className="p-6">
+            <GlassCard hover className="h-full flex flex-col p-6 border border-border/80 bg-black/80">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                 <Plus className="w-6 h-6 text-primary" />
               </div>
@@ -96,7 +96,7 @@ export default function AdminPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <GlassCard hover className="p-6">
+            <GlassCard hover className="h-full flex flex-col p-6 border border-border/80 bg-black/80">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                 <BarChart3 className="w-6 h-6 text-primary" />
               </div>
@@ -115,7 +115,7 @@ export default function AdminPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <GlassCard hover className="p-6">
+            <GlassCard hover className="h-full flex flex-col p-6 border border-border/80 bg-black/80">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                 <BookOpen className="w-6 h-6 text-primary" />
               </div>
@@ -134,7 +134,7 @@ export default function AdminPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
           >
-            <GlassCard hover className="p-6">
+            <GlassCard hover className="h-full flex flex-col p-6 border border-border/80 bg-black/80">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                 <BookOpen className="w-6 h-6 text-primary" />
               </div>

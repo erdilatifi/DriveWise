@@ -1,13 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/utils/supabase/client';
 
+type MaterialContent = Record<string, unknown>;
+
 export interface Material {
   id: string;
   chapter_id: number;
   title_en: string;
   title_sq: string;
-  content_en: Record<string, any>;
-  content_sq: Record<string, any>;
+  content_en: MaterialContent;
+  content_sq: MaterialContent;
   order_index: number;
   is_published: boolean;
   created_at: string;
@@ -30,8 +32,8 @@ export interface MaterialInput {
   chapter_id: number;
   title_en: string;
   title_sq: string;
-  content_en: Record<string, any>;
-  content_sq: Record<string, any>;
+  content_en: MaterialContent;
+  content_sq: MaterialContent;
   order_index: number;
   is_published?: boolean;
 }

@@ -65,10 +65,10 @@ export default function TranslationModePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background text-foreground">
         <Navbar />
         <div className="container mx-auto px-6 py-8 max-w-7xl pt-28">
-          <GlassCard className="p-6 flex items-center gap-3 text-destructive">
+          <GlassCard className="p-6 flex items-center gap-3 text-destructive border border-border/80 bg-black/80">
             <AlertTriangle className="w-5 h-5" />
             <p>Error loading questions for translation: {error.message}</p>
           </GlassCard>
@@ -93,7 +93,7 @@ export default function TranslationModePage() {
   const totalPages = Math.ceil(totalQuestions / itemsPerPage) || 1;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
       <motion.div
@@ -124,7 +124,7 @@ export default function TranslationModePage() {
         </div>
 
         {/* Filters */}
-        <GlassCard className="p-6 mb-6">
+        <GlassCard className="p-6 mb-6 border border-border/80 bg-black/80">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -175,7 +175,7 @@ export default function TranslationModePage() {
         </GlassCard>
 
         {/* Translation table */}
-        <GlassCard className="p-0 overflow-hidden">
+        <GlassCard className="p-0 overflow-hidden border border-border/80 bg-black/80">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-muted/60 border-b border-border">

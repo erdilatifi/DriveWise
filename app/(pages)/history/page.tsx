@@ -30,6 +30,7 @@ export default function HistoryPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clearAllDialogOpen, setClearAllDialogOpen] = useState(false);
   const [testToDelete, setTestToDelete] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'passed' | 'failed'>('all');
   const testsPerPage = 6;
 
   // Use TanStack Query for data fetching
@@ -40,6 +41,13 @@ export default function HistoryPage() {
   const tests = historyData?.tests || [];
   const totalTests = historyData?.totalCount || 0;
   const totalPages = historyData?.totalPages || 1;
+
+  const filteredTests = tests.filter((test) => {
+    const passed = test.percentage >= 80;
+    if (statusFilter === 'passed') return passed;
+    if (statusFilter === 'failed') return !passed;
+    return true;
+  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -100,7 +108,7 @@ export default function HistoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background text-foreground">
         <Navbar />
         <div className="container mx-auto px-6 py-8 max-w-7xl pt-28">
           {/* Header skeleton */}
@@ -122,7 +130,7 @@ export default function HistoryPage() {
           {/* Tests list skeleton */}
           <div className="space-y-4 mb-8">
             {Array.from({ length: 3 }).map((_, i) => (
-              <GlassCard key={i} className="p-6">
+              <GlassCard key={i} className="p-6 border border-border/80 bg-black/80">
                 <div className="flex items-center justify-between gap-4">
                   <Skeleton className="w-12 h-12 rounded-xl" />
                   <div className="flex-1 space-y-2">
@@ -147,7 +155,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
       <motion.div
@@ -190,10 +198,40 @@ export default function HistoryPage() {
         </div>
 
         {/* Tests List */}
-        {tests.length > 0 ? (
+        {totalTests > 0 ? (
           <>
-            <div className="space-y-4 mb-8">
-              {tests.map((test) => {
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <p className="text-sm text-muted-foreground">
+                Filter by result
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant={statusFilter === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('all')}
+                >
+                  All
+                </Button>
+                <Button
+                  variant={statusFilter === 'passed' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('passed')}
+                >
+                  Passed
+                </Button>
+                <Button
+                  variant={statusFilter === 'failed' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('failed')}
+                >
+                  Failed
+                </Button>
+              </div>
+            </div>
+
+            {filteredTests.length > 0 ? (
+              <div className="space-y-4 mb-8">
+                {filteredTests.map((test) => {
                 const passed = test.percentage >= 80;
                 return (
                   <motion.div
@@ -202,7 +240,7 @@ export default function HistoryPage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <GlassCard className="p-5 sm:p-6 hover:border-primary/40 transition-colors">
+                    <GlassCard className="p-5 sm:p-6 border border-border/80 bg-black/80 hover:border-primary/40 transition-colors">
                       <div className="flex flex-col gap-3">
                         {/* Top row: icon + basic info */}
                         <div className="flex items-center justify-between gap-3">
@@ -277,8 +315,14 @@ export default function HistoryPage() {
                     </GlassCard>
                   </motion.div>
                 );
-              })}
-            </div>
+                })}
+              </div>
+            ) : (
+              <GlassCard className="p-12 text-center mb-8 border border-border/80 bg-black/80">
+                <p className="text-muted-foreground mb-2">No tests in this filter yet</p>
+                <p className="text-xs text-muted-foreground">Try changing the filter or take a new test.</p>
+              </GlassCard>
+            )}
 
             {/* Delete Single Test Dialog */}
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -330,7 +374,7 @@ export default function HistoryPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <GlassCard className="p-4">
+              <GlassCard className="p-4 border border-border/80 bg-black/80">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   {/* Page Info */}
                   <div className="text-sm text-muted-foreground">
@@ -395,7 +439,7 @@ export default function HistoryPage() {
             )}
           </>
         ) : (
-          <GlassCard className="p-12 text-center">
+          <GlassCard className="p-12 text-center border border-border/80 bg-black/80">
             <p className="text-muted-foreground mb-4">No test history yet</p>
             <Button asChild>
               <Link href="/">Start Your First Test</Link>

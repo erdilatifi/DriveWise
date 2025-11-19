@@ -307,7 +307,7 @@ export default function StatsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
       <motion.div
@@ -335,7 +335,7 @@ export default function StatsPage() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <GlassCard className="p-6">
+            <GlassCard className="h-full flex flex-col justify-between p-6 border border-border/80 bg-black/80">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                   <Users className="w-6 h-6 text-primary" />
@@ -348,7 +348,7 @@ export default function StatsPage() {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <GlassCard className="p-6">
+            <GlassCard className="h-full flex flex-col justify-between p-6 border border-border/80 bg-black/80">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                   <FileText className="w-6 h-6 text-primary" />
@@ -361,7 +361,7 @@ export default function StatsPage() {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <GlassCard className="p-6">
+            <GlassCard className="h-full flex flex-col justify-between p-6 border border-border/80 bg-black/80">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                   <BarChart3 className="w-6 h-6 text-primary" />
@@ -374,7 +374,7 @@ export default function StatsPage() {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-            <GlassCard className="p-6">
+            <GlassCard className="h-full flex flex-col justify-between p-6 border border-border/80 bg-black/80">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
                   <CheckCircle className="w-6 h-6 text-green-500" />
@@ -386,7 +386,7 @@ export default function StatsPage() {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-            <GlassCard className="p-6">
+            <GlassCard className="h-full flex flex-col justify-between p-6 border border-border/80 bg-black/80">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center">
                   <XCircle className="w-6 h-6 text-red-500" />
@@ -398,7 +398,7 @@ export default function StatsPage() {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-            <GlassCard className="p-6">
+            <GlassCard className="h-full flex flex-col justify-between p-6 border border-border/80 bg-black/80">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-primary" />
@@ -413,7 +413,7 @@ export default function StatsPage() {
         </div>
 
         {/* User Management Section */}
-        <GlassCard className="p-6 mb-8">
+        <GlassCard className="p-6 mb-8 border border-border/80 bg-black/80">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div>
               <h2 className="text-xl font-semibold">User Management</h2>
@@ -445,7 +445,7 @@ export default function StatsPage() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-border hover:border-primary/30 transition-colors bg-card/50"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-border/80 hover:border-primary/40 transition-colors bg-black/80"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
@@ -564,11 +564,11 @@ export default function StatsPage() {
         </GlassCard>
 
         {/* Questions by Category */}
-        <GlassCard className="p-6">
+        <GlassCard className="p-6 border border-border/80 bg-black/90">
           <h2 className="text-lg font-semibold mb-6">Questions by Category</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {Object.entries(stats?.categoryCounts || {}).map(([category, count]) => (
-              <div key={category} className="text-center p-4 rounded-xl bg-card/50 border border-border">
+              <div key={category} className="text-center p-4 rounded-xl bg-black/80 border border-border/80">
                 <p className="text-2xl font-bold text-primary mb-1">{count}</p>
                 <p className="text-sm text-muted-foreground">Category {category}</p>
               </div>
@@ -577,7 +577,7 @@ export default function StatsPage() {
         </GlassCard>
 
         {/* Content coverage overview */}
-        <GlassCard className="p-6 mt-8">
+        <GlassCard className="p-6 mt-8 border border-border/80 bg-black/80">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Questions per test */}
             <div>
@@ -595,7 +595,7 @@ export default function StatsPage() {
                       <div
                         key={key}
                         className={`flex items-center justify-between px-2 py-1 rounded ${
-                          low ? 'bg-amber-500/10 border border-amber-500/40' : 'bg-card/40 border border-border/60'
+                          low ? 'bg-amber-500/15 border border-amber-500/50' : 'bg-black/60 border border-border/70'
                         }`}
                       >
                         <span className="font-medium">Cat {category} · Test {testNumber}</span>
@@ -622,7 +622,7 @@ export default function StatsPage() {
                   <p className="font-semibold mb-1">By Category</p>
                   <div className="space-y-1">
                     {Object.entries(stats?.scenarioCategoryCounts || {}).map(([category, count]) => (
-                      <div key={category} className="flex items-center justify-between px-2 py-1 rounded bg-card/40 border border-border/60">
+                      <div key={category} className="flex items-center justify-between px-2 py-1 rounded bg-black/60 border border-border/70">
                         <span className="font-medium">Category {category}</span>
                         <span className="text-muted-foreground">{count} scenarios</span>
                       </div>
@@ -637,7 +637,7 @@ export default function StatsPage() {
                   <p className="font-semibold mb-1">By Level</p>
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(stats?.scenarioLevelCounts || {}).map(([level, count]) => (
-                      <div key={level} className="px-2 py-1 rounded-full bg-card/40 border border-border/60">
+                      <div key={level} className="px-2 py-1 rounded-full bg-black/60 border border-border/70">
                         <span className="font-medium mr-1">L{level}</span>
                         <span className="text-muted-foreground">{count}</span>
                       </div>
@@ -665,7 +665,7 @@ export default function StatsPage() {
                     <div
                       key={chapterId}
                       className={`flex items-center justify-between px-2 py-1 rounded ${
-                        low ? 'bg-red-500/10 border border-red-500/40' : 'bg-card/40 border border-border/60'
+                        low ? 'bg-red-500/15 border border-red-500/50' : 'bg-black/60 border border-border/70'
                       }`}
                     >
                       <span className="font-medium">Chapter {chapterId}</span>

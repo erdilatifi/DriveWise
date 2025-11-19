@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
 
 type Language = 'sq' | 'en';
 
@@ -562,20 +562,18 @@ const translations: Record<Language, Record<string, string>> = {
     'leaderboard.highestXp': 'XP më i lartë',
     'leaderboard.topAccuracy': 'Saktësia më e mirë',
     'leaderboard.longestStreak': 'Seria më e gjatë',
-    'leaderboard.yourRank': 'Pozicioni yt',
   },
 };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('en');
-
-  useEffect(() => {
-    // Load language from localStorage
-    const savedLanguage = localStorage.getItem('language') as Language;
-    if (savedLanguage && (savedLanguage === 'sq' || savedLanguage === 'en')) {
-      setLanguageState(prev => savedLanguage);
+  const [language, setLanguageState] = useState<Language>(() => {
+    if (typeof window === 'undefined') return 'en';
+    const savedLanguage = localStorage.getItem('language') as Language | null;
+    if (savedLanguage === 'sq' || savedLanguage === 'en') {
+      return savedLanguage;
     }
-  }, []);
+    return 'en';
+  });
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);

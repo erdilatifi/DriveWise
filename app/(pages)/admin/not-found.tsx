@@ -5,8 +5,8 @@ import { Home, Shield } from 'lucide-react';
 
 export default function AdminNotFound() {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <GlassCard className="p-8 max-w-lg text-center">
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+      <GlassCard className="p-8 max-w-lg text-center border border-border/80 bg-black/80">
         <Shield className="w-20 h-20 mx-auto mb-4 text-yellow-500" />
         <h1 className="text-5xl font-bold mb-2">404</h1>
         <h2 className="text-2xl font-semibold mb-2">Admin Page Not Found</h2>
