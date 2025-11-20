@@ -131,7 +131,7 @@ export default function AdminSubscriptionsPage() {
           <GlassCard className="p-6 border border-border/80 bg-black/85">
             <p className="text-sm font-semibold text-destructive mb-1">Failed to load subscriptions</p>
             <p className="text-xs text-muted-foreground break-words">
-              {error instanceof Error ? error.message : String(error)}
+              Something went wrong while loading subscription data. Please try again later.
             </p>
           </GlassCard>
         </div>
@@ -140,6 +140,14 @@ export default function AdminSubscriptionsPage() {
   }
 
   const profiles = data?.profiles || [];
+  const totalPaidUsers = useMemo(() => {
+    if (!data?.plans) return 0;
+    const usersWithPlans = new Set<string>();
+    for (const plan of data.plans) {
+      usersWithPlans.add(plan.user_id);
+    }
+    return usersWithPlans.size;
+  }, [data]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -153,6 +161,9 @@ export default function AdminSubscriptionsPage() {
             </h1>
             <p className="text-sm text-muted-foreground">
               See all users, their plans by category, and quickly grant or extend access while payments are in testing.
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Paying users (with at least one plan): <span className="font-semibold">{totalPaidUsers}</span>
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">

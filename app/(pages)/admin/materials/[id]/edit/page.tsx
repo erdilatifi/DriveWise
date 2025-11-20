@@ -24,6 +24,7 @@ import {
   useCreateMaterialImage,
   useDeleteMaterialImage,
 } from '@/hooks/use-materials';
+import type { LicenseCategory } from '@/types/database';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, ImagePlus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -36,6 +37,7 @@ interface EditMaterialPageProps {
 
 interface MaterialFormState {
   chapter_id: number;
+  category: LicenseCategory;
   order_index: number;
   title_en: string;
   title_sq: string;
@@ -57,6 +59,7 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
 
   const [formData, setFormData] = useState<MaterialFormState>({
     chapter_id: 1,
+    category: 'B',
     order_index: 1,
     title_en: '',
     title_sq: '',
@@ -80,6 +83,7 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
     if (material) {
       setFormData({
         chapter_id: material.chapter_id,
+        category: (material.category as LicenseCategory) || 'B',
         order_index: material.order_index,
         title_en: material.title_en,
         title_sq: material.title_sq,
@@ -133,6 +137,7 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
       await updateMaterial.mutateAsync({
         id,
         chapter_id: formData.chapter_id,
+        category: formData.category,
         order_index: formData.order_index,
         title_en: formData.title_en.trim(),
         title_sq: formData.title_sq.trim(),

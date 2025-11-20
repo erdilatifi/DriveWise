@@ -224,6 +224,7 @@ CREATE TABLE IF NOT EXISTS student_instructor_links (
 CREATE TABLE IF NOT EXISTS study_materials (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   chapter_id INTEGER NOT NULL,
+  category license_category,
   title_en TEXT NOT NULL,
   title_sq TEXT NOT NULL,
   content_en JSONB NOT NULL,
@@ -245,6 +246,40 @@ CREATE TABLE IF NOT EXISTS material_images (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- ===================================================================
+-- STEP 14b: Payments - Orders and Transactions
+-- ===================================================================
+
+CREATE TABLE IF NOT EXISTS orders (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
+  category license_category NOT NULL,
+  plan_tier VARCHAR(20) NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  currency VARCHAR(10) NOT NULL DEFAULT 'EUR',
+  status VARCHAR(20) NOT NULL DEFAULT 'pending', -- pending, paid, failed, cancelled
+  paysera_order_id VARCHAR(100),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS payment_transactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  provider VARCHAR(50) NOT NULL,
+  provider_status VARCHAR(50) NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  currency VARCHAR(10) NOT NULL,
+  raw_payload JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_paysera_order_id ON orders(paysera_order_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_order_id ON payment_transactions(order_id);
 
 -- ===================================================================
 -- STEP 14: Create VIEWS
@@ -327,6 +362,9 @@ DROP TRIGGER IF EXISTS update_study_materials_updated_at ON study_materials;
 DROP TRIGGER IF EXISTS update_material_images_updated_at ON material_images;
 DROP TRIGGER IF EXISTS update_dt_scenarios_updated_at ON decision_trainer_scenarios;
 
+DROP TRIGGER IF EXISTS update_orders_updated_at ON orders;
+DROP TRIGGER IF EXISTS update_payment_transactions_updated_at ON payment_transactions;
+
 -- Create triggers for updated_at
 CREATE TRIGGER update_user_profiles_updated_at 
   BEFORE UPDATE ON user_profiles
@@ -350,6 +388,16 @@ CREATE TRIGGER update_material_images_updated_at
 
 CREATE TRIGGER update_dt_scenarios_updated_at 
   BEFORE UPDATE ON decision_trainer_scenarios
+  FOR EACH ROW 
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_orders_updated_at 
+  BEFORE UPDATE ON orders
+  FOR EACH ROW 
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_payment_transactions_updated_at 
+  BEFORE UPDATE ON payment_transactions
   FOR EACH ROW 
   EXECUTE FUNCTION update_updated_at_column();
 
@@ -395,6 +443,8 @@ ALTER TABLE decision_trainer_scenarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE decision_trainer_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE decision_trainer_attempts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE decision_trainer_badges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payment_transactions ENABLE ROW LEVEL SECURITY;
 
 -- ===================================================================
 -- STEP 19: Create STORAGE BUCKETS

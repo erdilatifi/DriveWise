@@ -144,6 +144,7 @@ export default function ReviewPage() {
   }
 
   if (!isAdmin && entitlementResult && !entitlementResult.entitlements.canReviewTestsInDetail) {
+    const pricingCategory = ((testInfo?.category || 'B') as string).toUpperCase();
     return (
       <div className="min-h-screen bg-background text-foreground">
         <Navbar />
@@ -169,7 +170,7 @@ export default function ReviewPage() {
             </ul>
             <div className="flex flex-col sm:flex-row gap-3">
               <Button asChild className="flex-1">
-                <Link href="/profile">
+                <Link href={`/pricing?category=${pricingCategory}`}>
                   {t('history.reviewPaywallUpgradeCta') || 'See plans & upgrade'}
                 </Link>
               </Button>

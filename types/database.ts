@@ -193,6 +193,31 @@ export interface UserPlan {
   updated_at: string;
 }
 
+export interface Order {
+  id: string;
+  user_id: string;
+  category: LicenseCategory;
+  plan_tier: string;
+  amount_cents: number;
+  currency: string;
+  status: string;
+  paysera_order_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentTransaction {
+  id: string;
+  order_id: string;
+  provider: string;
+  provider_status: string;
+  amount_cents: number;
+  currency: string;
+  raw_payload: any;
+  created_at: string;
+  updated_at: string;
+}
+
 // Language metadata
 export const LANGUAGE_INFO: Record<LanguageCode, { name: string; nativeName: string }> = {
   sq: { name: 'Albanian', nativeName: 'Shqip' },

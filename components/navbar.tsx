@@ -115,6 +115,14 @@ export function Navbar() {
               Tests
             </Link>
 
+            {/* Pricing section on landing */}
+            <Link
+              href="/#pricing"
+              className={`text-sm font-semibold transition-all duration-200 relative group/link text-foreground/80 hover:text-foreground`}
+            >
+              Pricing
+            </Link>
+
             {/* Decision Trainer (logged-in users) */}
             {user && (
               <Link
@@ -293,6 +301,15 @@ export function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Tests
+              </Link>
+
+              {/* Pricing */}
+              <Link
+                href="/#pricing"
+                className="px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-foreground/80 hover:bg-primary/5 hover:text-foreground"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Pricing
               </Link>
 
               {/* Decision Trainer (logged-in users) */}

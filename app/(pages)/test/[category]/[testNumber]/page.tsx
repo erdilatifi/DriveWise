@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,16 +40,22 @@ interface Question {
 }
 
 // Lazily load the rating modal to keep the main test bundle small
-const RatingModal = dynamic(() => import('@/components/rating-modal').then(mod => mod.RatingModal), {
-  ssr: false,
-});
+const RatingModal = dynamic(
+  () => import('@/components/rating-modal').then((mod) => mod.RatingModal),
+  {
+    ssr: false,
+  },
+);
+
+// Single browser Supabase client (avoids re-creating in effects)
+const supabase = createClient();
 
 export default function TestPage() {
   const params = useParams();
   const router = useRouter();
-  const supabase = createClient();
   const queryClient = useQueryClient();
   const { t, language } = useLanguage();
+
   const category = (params.category as string).toUpperCase() as LicenseCategory;
   const testNumber = params.testNumber as string;
 
@@ -56,12 +63,12 @@ export default function TestPage() {
   const isPersonalizedTest = testNumber === 'personalized';
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
+  const [answers, setAnswers] = useState<Record<string, string[]>>({});
   const [showResults, setShowResults] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [startTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(Date.now());
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [lastTestAttemptId, setLastTestAttemptId] = useState<string | null>(null);
 
@@ -75,163 +82,66 @@ export default function TestPage() {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
         if (!user) {
           router.push('/login');
           return;
         }
+
         setUserId(user.id);
+        setStartTime(Date.now());
 
-        // Check test type
-        const isMixed = testNumber === 'mixed';
-        const isPersonalized = testNumber === 'personalized';
+        const loadedQuestions = await loadQuestionsForTest({
+          supabase,
+          userId: user.id,
+          category,
+          testNumber,
+        });
 
-        if (isPersonalized) {
-          // First, get user's test attempts for this category
-          const { data: testAttempts } = await supabase
-            .from('test_attempts')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('category', category);
-
-          const testAttemptIds = testAttempts?.map(t => t.id) || [];
-
-          // Fetch questions user got wrong
-          let wrongQuestionIds: string[] = [];
-          
-          if (testAttemptIds.length > 0) {
-            const { data: wrongAnswers, error: answersError } = await supabase
-              .from('test_attempt_answers')
-              .select('question_id')
-              .eq('is_correct', false)
-              .in('test_attempt_id', testAttemptIds);
-
-            if (answersError) {
-              console.error('Error fetching wrong answers:', answersError);
-            }
-
-            // Get unique question IDs
-            wrongQuestionIds = [...new Set(wrongAnswers?.map(a => a.question_id) || [])];
-          }
-          
-          let personalizedQuestions = [];
-
-          if (wrongQuestionIds.length > 0) {
-            // Fetch the actual questions
-            const { data: wrongQuestions, error: questionsError } = await supabase
-              .from('admin_questions')
-              .select('*')
-              .in('id', wrongQuestionIds)
-              .eq('category', category);
-
-            if (questionsError) {
-              console.error('Error fetching questions:', questionsError);
-            } else {
-              personalizedQuestions = wrongQuestions || [];
-            }
-          }
-
-          // If we don't have enough questions (need 10), fill with random
-          if (personalizedQuestions.length < 10) {
-            const { data: allQuestions, error: allError } = await supabase
-              .from('admin_questions')
-              .select('*')
-              .eq('category', category);
-
-            if (!allError && allQuestions) {
-              // Filter out questions we already have
-              const existingIds = personalizedQuestions.map(q => q.id);
-              const availableQuestions = allQuestions.filter(q => !existingIds.includes(q.id));
-              
-              // Shuffle and add needed amount
-              const shuffled = availableQuestions.sort(() => 0.5 - Math.random());
-              const needed = 10 - personalizedQuestions.length;
-              personalizedQuestions = [...personalizedQuestions, ...shuffled.slice(0, needed)];
-            }
-          }
-
-          // Shuffle final list and take 10
-          const finalQuestions = personalizedQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
-          setQuestions(finalQuestions);
-
-        } else if (isMixed) {
-          // Fetch random questions from all tests in this category
-          const { data, error } = await supabase
-            .from('admin_questions')
-            .select('*')
-            .eq('category', category);
-
-          if (error) {
-            console.error('Error fetching questions:', error);
-            return;
-          }
-
-          if (data && data.length > 0) {
-            // Shuffle and take 10 random questions
-            const shuffled = data.sort(() => 0.5 - Math.random());
-            const randomQuestions = shuffled.slice(0, Math.min(10, data.length));
-            setQuestions(randomQuestions);
-          } else {
-            console.warn('No questions found for this category');
-          }
-        } else {
-          // Fetch questions for specific test number
-          const { data, error } = await supabase
-            .from('admin_questions')
-            .select('*')
-            .eq('category', category)
-            .eq('test_number', parseInt(testNumber));
-
-          if (error) {
-            console.error('Error fetching questions:', error);
-            return;
-          }
-
-          if (data && data.length > 0) {
-            setQuestions(data);
-          } else {
-            console.warn('No questions found for this test');
-          }
-        }
+        setQuestions(loadedQuestions);
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error loading questions:', error);
+        toast.error('Could not load test questions. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchQuestions();
-  }, [category, testNumber, router, supabase]);
+  }, [category, testNumber, router]);
 
   const categoryInfo = CATEGORY_INFO[category];
   const totalQuestions = questions.length;
   const progress = totalQuestions > 0 ? ((currentQuestion + 1) / totalQuestions) * 100 : 0;
 
+  const answeredCount = questions.reduce((count, q) => {
+    const userAnswer = answers[q.id];
+    return userAnswer && userAnswer.length > 0 ? count + 1 : count;
+  }, 0);
+  const allAnswered = totalQuestions > 0 && answeredCount === totalQuestions;
+
   const handleAnswer = (value: string) => {
-    if (questions.length > 0) {
-      const question = questions[currentQuestion];
-      const questionText = language === 'en'
-        ? (question.question_text_en || question.question_text)
-        : (question.question_text_sq || question.question_text);
-      // Always use array mode for multiple selection
-      const currentAnswers = (answers[question.id] as string[]) || [];
-      const newAnswers = currentAnswers.includes(value)
-        ? currentAnswers.filter(a => a !== value)
-        : [...currentAnswers, value];
-      setAnswers({ ...answers, [question.id]: newAnswers });
-    }
+    if (questions.length === 0) return;
+    const question = questions[currentQuestion];
+    const currentAnswers = answers[question.id] || [];
+    const newAnswers = currentAnswers.includes(value)
+      ? currentAnswers.filter((a) => a !== value)
+      : [...currentAnswers, value];
+    setAnswers({ ...answers, [question.id]: newAnswers });
   };
 
   const handleNext = () => {
     if (currentQuestion < totalQuestions - 1) {
-      setCurrentQuestion(currentQuestion + 1);
+      setCurrentQuestion((prev) => prev + 1);
     }
   };
 
   const handlePrevious = () => {
     if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion - 1);
+      setCurrentQuestion((prev) => prev - 1);
     }
   };
 
@@ -241,13 +151,16 @@ export default function TestPage() {
 
     try {
       // Calculate score
-      const score = calculateScore();
+      const score = calculateScore(questions, answers);
       const timeElapsed = Math.floor((Date.now() - startTime) / 1000);
 
       // Ensure user profile exists before saving test
       console.log('🔍 Checking if user profile exists for:', userId);
-      
-      const { data: existingProfile, error: profileCheckError } = await supabase
+
+      const {
+        data: existingProfile,
+        error: profileCheckError,
+      } = await supabase
         .from('user_profiles')
         .select('id')
         .eq('id', userId)
@@ -259,16 +172,24 @@ export default function TestPage() {
 
       if (!existingProfile) {
         console.log('👤 User profile not found, creating...');
-        
-        // Create profile if it doesn't exist
-        const { data: { user } } = await supabase.auth.getUser();
+
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
         if (user) {
-          const { data: newProfile, error: profileError } = await supabase
+          const {
+            data: newProfile,
+            error: profileError,
+          } = await supabase
             .from('user_profiles')
             .insert({
               id: user.id,
               email: user.email || '',
-              full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+              full_name:
+                user.user_metadata?.full_name ||
+                user.email?.split('@')[0] ||
+                'User',
             })
             .select()
             .single();
@@ -279,7 +200,7 @@ export default function TestPage() {
             setShowResults(true);
             return;
           }
-          
+
           console.log('✅ User profile created:', newProfile);
         } else {
           console.error('❌ No authenticated user found');
@@ -291,13 +212,14 @@ export default function TestPage() {
         console.log('✅ User profile exists');
       }
 
-
-
-      const { data: testAttempt, error: attemptError } = await supabase
+      const {
+        data: testAttempt,
+        error: attemptError,
+      } = await supabase
         .from('test_attempts')
         .insert({
           user_id: userId,
-          category: category,
+          category,
           test_number: testNumber,
           score: score.correct,
           total_questions: score.total,
@@ -309,12 +231,7 @@ export default function TestPage() {
         .single();
 
       if (attemptError) {
-        console.error('❌ ERROR SAVING TEST ATTEMPT!');
-        console.error('Full error object:', JSON.stringify(attemptError, null, 2));
-        console.error('Error message:', attemptError.message);
-        console.error('Error code:', attemptError.code);
-        console.error('Error details:', attemptError.details);
-        console.error('Error hint:', attemptError.hint);
+        console.error('❌ ERROR SAVING TEST ATTEMPT!', attemptError);
         toast.error('Failed to save test results: ' + attemptError.message);
         setShowResults(true);
         return;
@@ -328,46 +245,42 @@ export default function TestPage() {
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats', userId] });
 
       // Check if this is the user's first test
-      const { count: testCount } = await supabase
+      const {
+        count: testCount,
+      } = await supabase
         .from('test_attempts')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
 
       // Check if user has already rated the app
-      const { data: userProfile } = await supabase
+      const {
+        data: userProfile,
+      } = await supabase
         .from('user_profiles')
         .select('app_rating')
         .eq('id', userId)
         .single();
 
-      // Show rating modal if this is first test and user hasn't rated yet
       const isUserFirstTest = testCount === 1 && !userProfile?.app_rating;
 
       // Save individual answers
       if (testAttempt) {
-        console.log('Test attempt saved successfully:', testAttempt.id);
         console.log('Number of questions to save:', questions.length);
-        
+
         const answersToSave = questions.map((q) => {
-          const userAnswer = answers[q.id];
-          const correctAnswers = q.correct_answers && q.correct_answers.length > 0 
-            ? q.correct_answers 
-            : [q.correct_answer];
-          
-          // Check if answer is correct
-          let isCorrect = false;
-          if (Array.isArray(userAnswer)) {
-            isCorrect = userAnswer.length === correctAnswers.length && 
-                       userAnswer.every(a => correctAnswers.includes(a));
-          } else {
-            isCorrect = correctAnswers.includes(userAnswer);
-          }
-          
-          // Convert answer to string for database
-          const selectedAnswerString = Array.isArray(userAnswer) 
-            ? userAnswer.join(',') 
-            : userAnswer || null;
-          
+          const userAnswer = answers[q.id] || [];
+          const correctAnswers =
+            q.correct_answers && q.correct_answers.length > 0
+              ? q.correct_answers
+              : [q.correct_answer];
+
+          const isCorrect =
+            userAnswer.length === correctAnswers.length &&
+            userAnswer.every((a) => correctAnswers.includes(a));
+
+          const selectedAnswerString =
+            userAnswer.length > 0 ? userAnswer.join(',') : null;
+
           return {
             test_attempt_id: testAttempt.id,
             question_id: q.id,
@@ -376,27 +289,30 @@ export default function TestPage() {
           };
         });
 
-        console.log('Sample answer to save:', answersToSave[0]);
-
-        const { data: savedAnswers, error: answersError } = await supabase
+        const {
+          data: savedAnswers,
+          error: answersError,
+        } = await supabase
           .from('test_attempt_answers')
           .insert(answersToSave)
           .select();
 
         if (answersError) {
-          console.error('❌ ERROR SAVING ANSWERS!');
-          console.error('Error:', answersError);
-          console.error('Error code:', answersError.code);
-          console.error('Test score was saved, but answers could not be saved for review.');
+          console.error('❌ ERROR SAVING ANSWERS!', answersError);
+          console.error(
+            'Test score was saved, but answers could not be saved for review.',
+          );
         } else {
-          console.log('✅ Answers saved successfully:', savedAnswers?.length || 0);
+          console.log(
+            '✅ Answers saved successfully:',
+            savedAnswers?.length || 0,
+          );
         }
       }
 
       setShowResults(true);
-      
-      // Show rating modal after a short delay if it's the first test
-      if (testCount === 1 && !userProfile?.app_rating) {
+
+      if (isUserFirstTest) {
         setTimeout(() => {
           setShowRatingModal(true);
         }, 1500);
@@ -407,34 +323,8 @@ export default function TestPage() {
     }
   };
 
-  const calculateScore = () => {
-    let correct = 0;
-    questions.forEach((q) => {
-      const userAnswer = answers[q.id];
-      const correctAnswers = q.correct_answers && q.correct_answers.length > 0 
-        ? q.correct_answers 
-        : [q.correct_answer];
-      
-      // Check if answer is correct
-      if (Array.isArray(userAnswer)) {
-        // Multiple answers - must match exactly
-        if (userAnswer.length === correctAnswers.length && 
-            userAnswer.every(a => correctAnswers.includes(a))) {
-          correct++;
-        }
-      } else {
-        // Single answer
-        if (correctAnswers.includes(userAnswer)) {
-          correct++;
-        }
-      }
-    });
-    return {
-      correct,
-      total: totalQuestions,
-      percentage: totalQuestions > 0 ? Math.round((correct / totalQuestions) * 100) : 0,
-    };
-  };
+  const score = calculateScore(questions, answers);
+  const weakTopics = showResults ? computeWeakTopics(questions, answers) : [];
 
   if (loading) {
     return (
@@ -486,7 +376,12 @@ export default function TestPage() {
     );
   }
 
-  if (!isAdmin && entitlementResult && !entitlementResult.entitlements.canStartNewTest && !showResults) {
+  if (
+    !isAdmin &&
+    entitlementResult &&
+    !entitlementResult.entitlements.canStartNewTest &&
+    !showResults
+  ) {
     const used = entitlementResult.testsTakenThisCycle;
     const remaining = entitlementResult.entitlements.remainingFreeTests ?? 0;
     const total = used + remaining;
@@ -502,7 +397,9 @@ export default function TestPage() {
           <CardContent className="space-y-4 text-sm text-muted-foreground">
             <p>
               {t('test.limitReachedDescription') ||
-                `You have used ${used}/${total} free tests for ${CATEGORY_INFO[category].name} this cycle.`}
+                `You have used ${used}/${total} free tests for ${
+                  CATEGORY_INFO[category].name
+                } this cycle.`}
             </p>
             <p>
               {t('test.limitReachedBenefits') ||
@@ -510,7 +407,7 @@ export default function TestPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Button asChild className="flex-1">
-                <Link href="/profile">
+                <Link href={`/pricing?category=${category}`}>
                   {t('test.upgradeCta') || 'See plans for this category'}
                 </Link>
               </Button>
@@ -527,50 +424,7 @@ export default function TestPage() {
   }
 
   if (showResults) {
-    const score = calculateScore();
     const passed = score.percentage >= 80;
-
-    // Build simple per-topic statistics for this test attempt
-    const topicStatsMap: Record<string, { total: number; correct: number }> = {};
-
-    questions.forEach((q) => {
-      const topic = q.topic;
-      if (!topic) return;
-
-      if (!topicStatsMap[topic]) {
-        topicStatsMap[topic] = { total: 0, correct: 0 };
-      }
-
-      const userAnswer = answers[q.id];
-      const correctAnswers = q.correct_answers && q.correct_answers.length > 0
-        ? q.correct_answers
-        : [q.correct_answer];
-
-      let isCorrect = false;
-      if (Array.isArray(userAnswer)) {
-        isCorrect = userAnswer.length === correctAnswers.length &&
-                   userAnswer.every(a => correctAnswers.includes(a));
-      } else {
-        isCorrect = correctAnswers.includes(userAnswer as string);
-      }
-
-      topicStatsMap[topic].total += 1;
-      if (isCorrect) {
-        topicStatsMap[topic].correct += 1;
-      }
-    });
-
-    const topicStats = Object.entries(topicStatsMap).map(([topic, stats]) => {
-      const accuracy = stats.total > 0 ? stats.correct / stats.total : 0;
-      return {
-        topic,
-        total: stats.total,
-        correct: stats.correct,
-        accuracy,
-      };
-    }).sort((a, b) => a.accuracy - b.accuracy);
-
-    const weakTopics = topicStats.filter(t => t.total >= 2 && t.accuracy < 0.8).slice(0, 3);
 
     return (
       <div className="min-h-screen bg-background">
@@ -589,15 +443,23 @@ export default function TestPage() {
           <Card className="max-w-2xl mx-auto border border-border/80 bg-black/80 backdrop-blur-xl shadow-[0_30px_100px_rgba(0,0,0,0.9)]">
             <CardHeader className="text-center space-y-6">
               <div className="relative mx-auto w-24 h-24">
-                <div className={`absolute inset-0 blur-2xl rounded-full ${
-                  passed ? 'bg-primary/30' : 'bg-destructive/30'
-                }`}></div>
-                <div className={`relative w-24 h-24 rounded-2xl flex items-center justify-center ${
-                  passed ? 'bg-gradient-to-br from-primary/20 to-primary/10 border-2 border-primary/30' : 'bg-gradient-to-br from-destructive/20 to-destructive/10 border-2 border-destructive/30'
-                }`}>
-                  <CheckCircle className={`w-14 h-14 ${
-                    passed ? 'text-primary' : 'text-destructive'
-                  }`} />
+                <div
+                  className={`absolute inset-0 blur-2xl rounded-full ${
+                    passed ? 'bg-primary/30' : 'bg-destructive/30'
+                  }`}
+                />
+                <div
+                  className={`relative w-24 h-24 rounded-2xl flex items-center justify-center ${
+                    passed
+                      ? 'bg-gradient-to-br from-primary/20 to-primary/10 border-2 border-primary/30'
+                      : 'bg-gradient-to-br from-destructive/20 to-destructive/10 border-2 border-destructive/30'
+                  }`}
+                >
+                  <CheckCircle
+                    className={`w-14 h-14 ${
+                      passed ? 'text-primary' : 'text-destructive'
+                    }`}
+                  />
                 </div>
               </div>
               <div>
@@ -605,35 +467,47 @@ export default function TestPage() {
                   {passed ? t('test.congratulations') : t('test.keepPracticing')}
                 </CardTitle>
                 <p className="text-muted-foreground text-lg">
-                  {categoryInfo.name} - {
-                    testNumber === 'mixed' ? t('test.mixedName') : 
-                    testNumber === 'personalized' ? t('test.personalizedName') :
-                    `${t('test.test')} ${testNumber}`
-                  }
+                  {categoryInfo.name} -{' '}
+                  {testNumber === 'mixed'
+                    ? t('test.mixedName')
+                    : testNumber === 'personalized'
+                    ? t('test.personalizedName')
+                    : `${t('test.test')} ${testNumber}`}
                 </p>
               </div>
             </CardHeader>
             <CardContent className="space-y-8">
               <div className="text-center">
-                <div className={`text-7xl font-bold mb-3 ${
-                  passed ? 'text-primary' : 'text-destructive'
-                }`}>{score.percentage}%</div>
+                <div
+                  className={`text-7xl font-bold mb-3 ${
+                    passed ? 'text-primary' : 'text-destructive'
+                  }`}
+                >
+                  {score.percentage}%
+                </div>
                 <p className="text-muted-foreground text-lg">
-                  {score.correct} {t('test.of')} {score.total} {t('test.correctAnswers')}
+                  {score.correct} {t('test.of')} {score.total}{' '}
+                  {t('test.correctAnswers')}
                 </p>
               </div>
 
               <div className="space-y-3">
                 <div className="flex justify-between text-sm font-medium">
                   <span>{t('test.passingScore')}: 80%</span>
-                  <span className={passed ? 'text-primary' : 'text-destructive'}>
-                    {passed ? `✓ ${t('test.passed')}` : `✗ ${t('test.failed')}`}
+                  <span
+                    className={passed ? 'text-primary' : 'text-destructive'}
+                  >
+                    {passed
+                      ? `✓ ${t('test.passed')}`
+                      : `✗ ${t('test.failed')}`}
                   </span>
                 </div>
                 <div className="w-full bg-secondary rounded-full h-3 overflow-hidden">
-                  <div 
+                  <div
                     className={`h-3 rounded-full transition-all ${
-                      passed ? 'bg-gradient-to-r from-primary to-primary/80' : 'bg-gradient-to-r from-destructive to-destructive/80'
+                      passed
+                        ? 'bg-gradient-to-r from-primary to-primary/80'
+                        : 'bg-gradient-to-r from-destructive to-destructive/80'
                     }`}
                     style={{ width: `${score.percentage}%` }}
                   />
@@ -642,22 +516,27 @@ export default function TestPage() {
 
               <div className="space-y-4">
                 <div className="border rounded-lg p-4 bg-muted/40">
-                  <h3 className="text-sm font-semibold mb-1">{t('test.nextStepsTitle')}</h3>
+                  <h3 className="text-sm font-semibold mb-1">
+                    {t('test.nextStepsTitle')}
+                  </h3>
                   <p className="text-sm text-muted-foreground">
                     {passed ? (
-                      isMixedTest || isPersonalizedTest
-                        ? t('test.nextStepsPassedMixedOrPersonalized')
-                        : t('test.nextStepsPassedStandard')
+                      isMixedTest || isPersonalizedTest ? (
+                        t('test.nextStepsPassedMixedOrPersonalized')
+                      ) : (
+                        t('test.nextStepsPassedStandard')
+                      )
+                    ) : isPersonalizedTest ? (
+                      t('test.nextStepsFailedPersonalized')
                     ) : (
-                      isPersonalizedTest
-                        ? t('test.nextStepsFailedPersonalized')
-                        : t('test.nextStepsFailedStandard')
+                      t('test.nextStepsFailedStandard')
                     )}
                   </p>
                   {weakTopics.length > 0 && (
                     <>
                       <p className="text-xs text-amber-500 mt-2">
-                        {t('test.weakTopicsInThisTest')}{': '}
+                        {t('test.weakTopicsInThisTest')}
+                        {': '}
                         {weakTopics.map((tTopic, idx) => (
                           <span key={tTopic.topic}>
                             {idx > 0 && ', '}
@@ -705,9 +584,29 @@ export default function TestPage() {
 
                   <Button
                     className="flex-1"
-                    onClick={() => {
-                      // Reload page to reset everything
-                      window.location.reload();
+                    onClick={async () => {
+                      if (!userId) return;
+                      try {
+                        setLoading(true);
+                        setShowResults(false);
+                        setAnswers({});
+                        setCurrentQuestion(0);
+                        setLastTestAttemptId(null);
+                        setShowRatingModal(false);
+                        setStartTime(Date.now());
+                        const reloaded = await loadQuestionsForTest({
+                          supabase,
+                          userId,
+                          category,
+                          testNumber,
+                        });
+                        setQuestions(reloaded);
+                      } catch (error) {
+                        console.error('Error reloading test:', error);
+                        toast.error('Could not restart test. Please try again.');
+                      } finally {
+                        setLoading(false);
+                      }
                     }}
                   >
                     {t('test.retakeTest')}
@@ -742,7 +641,6 @@ export default function TestPage() {
           </Card>
         </div>
 
-        {/* Rating Modal */}
         {userId && (
           <RatingModal
             open={showRatingModal}
@@ -777,30 +675,35 @@ export default function TestPage() {
       </div>
     );
   }
-  const questionText = language === 'en'
-    ? (question.question_text_en || question.question_text)
-    : (question.question_text_sq || question.question_text);
-  const currentAnswer = answers[question.id];
+
+  const questionText =
+    language === 'en'
+      ? question.question_text_en || question.question_text
+      : question.question_text_sq || question.question_text;
+  const currentAnswer = answers[question.id] || [];
   const topicQuery = question.topic ? encodeURIComponent(question.topic) : '';
 
   const options = [
     {
       id: 'A',
-      text: language === 'en'
-        ? (question.option_a_en || question.option_a)
-        : (question.option_a_sq || question.option_a),
+      text:
+        language === 'en'
+          ? question.option_a_en || question.option_a
+          : question.option_a_sq || question.option_a,
     },
     {
       id: 'B',
-      text: language === 'en'
-        ? (question.option_b_en || question.option_b)
-        : (question.option_b_sq || question.option_b),
+      text:
+        language === 'en'
+          ? question.option_b_en || question.option_b
+          : question.option_b_sq || question.option_b,
     },
     {
       id: 'C',
-      text: language === 'en'
-        ? (question.option_c_en || question.option_c)
-        : (question.option_c_sq || question.option_c),
+      text:
+        language === 'en'
+          ? question.option_c_en || question.option_c
+          : question.option_c_sq || question.option_c,
     },
   ];
 
@@ -817,11 +720,12 @@ export default function TestPage() {
               </Link>
             </Button>
             <div className="text-sm font-semibold px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary">
-              {t('test.question')} {currentQuestion + 1} {t('test.of')} {totalQuestions}
+              {t('test.question')} {currentQuestion + 1} {t('test.of')}{' '}
+              {totalQuestions}
             </div>
           </div>
           <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-            <div 
+            <div
               className="bg-gradient-to-r from-primary to-primary/80 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
@@ -831,16 +735,23 @@ export default function TestPage() {
 
       {/* Question */}
       <div className="container mx-auto px-4 py-8">
-        <Card className={`${question.image_url ? 'max-w-6xl' : 'max-w-3xl'} mx-auto border border-border/80 bg-black/80 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.85)]`}>
+        <Card
+          className={`${
+            question.image_url ? 'max-w-6xl' : 'max-w-3xl'
+          } mx-auto border border-border/80 bg-black/80 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.85)]`}
+        >
           <CardHeader>
             <div className="text-sm text-primary font-medium mb-3">
-              {categoryInfo.name} - {
-                testNumber === 'mixed' ? t('test.mixedName') : 
-                testNumber === 'personalized' ? t('test.personalizedName') :
-                `${t('test.test')} ${testNumber}`
-              }
+              {categoryInfo.name} -{' '}
+              {testNumber === 'mixed'
+                ? t('test.mixedName')
+                : testNumber === 'personalized'
+                ? t('test.personalizedName')
+                : `${t('test.test')} ${testNumber}`}
             </div>
-            <CardTitle className="text-2xl md:text-3xl">{questionText}</CardTitle>
+            <CardTitle className="text-2xl md:text-3xl">
+              {questionText}
+            </CardTitle>
             {question.topic && topicQuery && (
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className="text-xs text-muted-foreground">
@@ -861,7 +772,13 @@ export default function TestPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Side-by-side layout when image exists */}
-            <div className={question.image_url ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : ""}>
+            <div
+              className={
+                question.image_url
+                  ? 'grid grid-cols-1 lg:grid-cols-2 gap-6'
+                  : ''
+              }
+            >
               {/* Image Section */}
               {question.image_url && (
                 <div className="flex flex-col">
@@ -873,7 +790,9 @@ export default function TestPage() {
                       style={{ maxHeight: '400px' }}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground text-center mt-2">{t('test.questionImage')}</p>
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    {t('test.questionImage')}
+                  </p>
                 </div>
               )}
 
@@ -881,9 +800,7 @@ export default function TestPage() {
               <div className="flex flex-col justify-center">
                 <div className="space-y-3">
                   {options.map((option) => {
-                    const isSelected = Array.isArray(currentAnswer) 
-                      ? currentAnswer.includes(option.id)
-                      : currentAnswer === option.id;
+                    const isSelected = currentAnswer.includes(option.id);
                     return (
                       <div
                         key={option.id}
@@ -894,17 +811,21 @@ export default function TestPage() {
                         }`}
                         onClick={() => handleAnswer(option.id)}
                       >
-                        <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center ${
-                          isSelected
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'border-border bg-black/60'
-                        }`}>
+                        <div
+                          className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center ${
+                            isSelected
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : 'border-border bg-black/60'
+                          }`}
+                        >
                           {isSelected && (
                             <CheckSquare className="w-3.5 h-3.5" />
                           )}
                         </div>
                         <Label className="cursor-pointer flex-1 font-medium">
-                          <span className="font-semibold mr-2">{option.id}.</span>
+                          <span className="font-semibold mr-2">
+                            {option.id}.
+                          </span>
                           {option.text}
                         </Label>
                       </div>
@@ -927,7 +848,7 @@ export default function TestPage() {
               {currentQuestion === totalQuestions - 1 ? (
                 <Button
                   onClick={handleSubmit}
-                  disabled={Object.keys(answers).length !== totalQuestions}
+                  disabled={!allAnswered}
                   className="flex-1"
                 >
                   {t('test.submitTest')}
@@ -936,7 +857,7 @@ export default function TestPage() {
               ) : (
                 <Button
                   onClick={handleNext}
-                  disabled={!currentAnswer}
+                  disabled={currentAnswer.length === 0}
                   className="flex-1"
                 >
                   {t('test.next')}
@@ -948,41 +869,60 @@ export default function TestPage() {
             {/* Question Navigator - Smart Pagination */}
             <div className="border-t pt-3">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-muted-foreground">{t('test.question')} {currentQuestion + 1} {t('test.of')} {totalQuestions}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('test.question')} {currentQuestion + 1} {t('test.of')}{' '}
+                  {totalQuestions}
+                </p>
                 <div className="flex items-center gap-1">
-                  <span className={`w-2 h-2 rounded-full ${answers[question.id] ? 'bg-primary' : 'bg-secondary'}`} />
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      currentAnswer.length > 0 ? 'bg-primary' : 'bg-secondary'
+                    }`}
+                  />
                   <span className="text-xs text-muted-foreground">
-                    {Object.keys(answers).length}/{totalQuestions} {t('test.answeredLabel')}
+                    {answeredCount}/{totalQuestions}{' '}
+                    {t('test.answeredLabel')}
                   </span>
                 </div>
               </div>
-              
+
               {/* Compact scrollable navigation */}
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 5))}
+                  onClick={() =>
+                    setCurrentQuestion(Math.max(0, currentQuestion - 5))
+                  }
                   disabled={currentQuestion === 0}
                   className="p-1 rounded hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ArrowLeft className="w-3 h-3" />
                 </button>
-                
+
                 <div className="flex-1 overflow-x-auto scrollbar-hide">
                   <div className="flex gap-1">
                     {questions.map((q, idx) => {
-                      // Show current question and 4 on each side
                       const distance = Math.abs(idx - currentQuestion);
-                      if (distance > 4 && idx !== 0 && idx !== totalQuestions - 1) return null;
-                      
-                      // Show ellipsis
+                      if (
+                        distance > 4 &&
+                        idx !== 0 &&
+                        idx !== totalQuestions - 1
+                      )
+                        return null;
+
                       if (distance === 5) {
                         return (
-                          <span key={`ellipsis-${idx}`} className="px-1 text-xs text-muted-foreground">
+                          <span
+                            key={`ellipsis-${idx}`}
+                            className="px-1 text-xs text-muted-foreground"
+                          >
                             ...
                           </span>
                         );
                       }
-                      
+
+                      const answeredForQ =
+                        answers[q.id] && answers[q.id].length > 0;
+
                       return (
                         <button
                           key={q.id}
@@ -990,7 +930,7 @@ export default function TestPage() {
                           className={`min-w-[28px] h-7 px-2 rounded text-xs font-medium transition-colors whitespace-nowrap ${
                             idx === currentQuestion
                               ? 'bg-primary text-primary-foreground'
-                              : answers[q.id]
+                              : answeredForQ
                               ? 'bg-primary/20 text-primary'
                               : 'bg-secondary hover:bg-secondary/80'
                           }`}
@@ -1001,9 +941,13 @@ export default function TestPage() {
                     })}
                   </div>
                 </div>
-                
+
                 <button
-                  onClick={() => setCurrentQuestion(Math.min(totalQuestions - 1, currentQuestion + 5))}
+                  onClick={() =>
+                    setCurrentQuestion(
+                      Math.min(totalQuestions - 1, currentQuestion + 5),
+                    )
+                  }
                   disabled={currentQuestion === totalQuestions - 1}
                   className="p-1 rounded hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -1016,4 +960,261 @@ export default function TestPage() {
       </div>
     </div>
   );
+}
+
+/* Helpers */
+
+function shuffleArray<T>(items: T[]): T[] {
+  return [...items].sort(() => 0.5 - Math.random());
+}
+
+async function getPersonalizedQuestions({
+  supabase,
+  userId,
+  category,
+}: {
+  supabase: SupabaseClient;
+  userId: string;
+  category: LicenseCategory;
+}): Promise<Question[]> {
+  const { data: testAttempts, error: attemptsError } = await supabase
+    .from('test_attempts')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('category', category);
+
+  if (attemptsError) {
+    console.error(
+      'Error fetching test attempts for personalized test:',
+      attemptsError,
+    );
+    return [];
+  }
+
+  const testAttemptIds = testAttempts?.map((t) => t.id) || [];
+  if (testAttemptIds.length === 0) return [];
+
+  const { data: wrongAnswers, error: answersError } = await supabase
+    .from('test_attempt_answers')
+    .select('question_id')
+    .eq('is_correct', false)
+    .in('test_attempt_id', testAttemptIds);
+
+  if (answersError) {
+    console.error(
+      'Error fetching wrong answers for personalized test:',
+      answersError,
+    );
+    return [];
+  }
+
+  const wrongQuestionIds = [
+    ...new Set(wrongAnswers?.map((a) => a.question_id) || []),
+  ];
+  if (wrongQuestionIds.length === 0) return [];
+
+  const { data: wrongQuestions, error: questionsError } = await supabase
+    .from('admin_questions')
+    .select('*')
+    .in('id', wrongQuestionIds)
+    .eq('category', category);
+
+  if (questionsError) {
+    console.error('Error fetching personalized questions:', questionsError);
+    return [];
+  }
+
+  let personalizedQuestions: Question[] = (wrongQuestions || []) as Question[];
+
+  if (personalizedQuestions.length < 10) {
+    const { data: allQuestions, error: allError } = await supabase
+      .from('admin_questions')
+      .select('*')
+      .eq('category', category);
+
+    if (allError) {
+      console.error(
+        'Error fetching fallback questions for personalized test:',
+        allError,
+      );
+    } else if (allQuestions && allQuestions.length > 0) {
+      const existingIds = new Set(personalizedQuestions.map((q) => q.id));
+      const availableQuestions = (allQuestions as Question[]).filter(
+        (q) => !existingIds.has(q.id),
+      );
+      const shuffled = shuffleArray(availableQuestions);
+      const needed = 10 - personalizedQuestions.length;
+      personalizedQuestions = [
+        ...personalizedQuestions,
+        ...shuffled.slice(0, Math.max(0, needed)),
+      ];
+    }
+  }
+
+  return shuffleArray(personalizedQuestions).slice(0, 10);
+}
+
+async function getMixedQuestions({
+  supabase,
+  category,
+}: {
+  supabase: SupabaseClient;
+  category: LicenseCategory;
+}): Promise<Question[]> {
+  const { data, error } = await supabase
+    .from('admin_questions')
+    .select('*')
+    .eq('category', category);
+
+  if (error) {
+    console.error('Error fetching mixed questions:', error);
+    return [];
+  }
+
+  if (!data || data.length === 0) {
+    console.warn('No questions found for mixed test in category', category);
+    return [];
+  }
+
+  const shuffled = shuffleArray(data as Question[]);
+  return shuffled.slice(0, Math.min(10, shuffled.length));
+}
+
+async function getFixedTestQuestions({
+  supabase,
+  category,
+  testNumber,
+}: {
+  supabase: SupabaseClient;
+  category: LicenseCategory;
+  testNumber: string;
+}): Promise<Question[]> {
+  const parsedNumber = parseInt(testNumber, 10);
+  if (Number.isNaN(parsedNumber)) {
+    console.error('Invalid test number for fixed test:', testNumber);
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('admin_questions')
+    .select('*')
+    .eq('category', category)
+    .eq('test_number', parsedNumber);
+
+  if (error) {
+    console.error('Error fetching fixed test questions:', error);
+    return [];
+  }
+
+  if (!data || data.length === 0) {
+    console.warn('No questions found for fixed test', { category, testNumber });
+    return [];
+  }
+
+  return data as Question[];
+}
+
+async function loadQuestionsForTest({
+  supabase,
+  userId,
+  category,
+  testNumber,
+}: {
+  supabase: SupabaseClient;
+  userId: string;
+  category: LicenseCategory;
+  testNumber: string;
+}): Promise<Question[]> {
+  if (testNumber === 'personalized') {
+    const personalized = await getPersonalizedQuestions({
+      supabase,
+      userId,
+      category,
+    });
+    if (personalized.length > 0) return personalized;
+    return getMixedQuestions({ supabase, category });
+  }
+
+  if (testNumber === 'mixed') {
+    return getMixedQuestions({ supabase, category });
+  }
+
+  return getFixedTestQuestions({ supabase, category, testNumber });
+}
+
+function calculateScore(
+  questions: Question[],
+  answers: Record<string, string[]>,
+) {
+  const totalQuestions = questions.length;
+  let correct = 0;
+
+  questions.forEach((q) => {
+    const userAnswer = answers[q.id] || [];
+    const correctAnswers =
+      q.correct_answers && q.correct_answers.length > 0
+        ? q.correct_answers
+        : [q.correct_answer];
+
+    const isCorrect =
+      userAnswer.length === correctAnswers.length &&
+      userAnswer.every((a) => correctAnswers.includes(a));
+
+    if (isCorrect) correct += 1;
+  });
+
+  return {
+    correct,
+    total: totalQuestions,
+    percentage:
+      totalQuestions > 0
+        ? Math.round((correct / totalQuestions) * 100)
+        : 0,
+  };
+}
+
+function computeWeakTopics(
+  questions: Question[],
+  answers: Record<string, string[]>,
+) {
+  const topicStatsMap: Record<string, { total: number; correct: number }> = {};
+
+  questions.forEach((q) => {
+    const topic = q.topic;
+    if (!topic) return;
+
+    if (!topicStatsMap[topic]) {
+      topicStatsMap[topic] = { total: 0, correct: 0 };
+    }
+
+    const userAnswer = answers[q.id] || [];
+    const correctAnswers =
+      q.correct_answers && q.correct_answers.length > 0
+        ? q.correct_answers
+        : [q.correct_answer];
+
+    const isCorrect =
+      userAnswer.length === correctAnswers.length &&
+      userAnswer.every((a) => correctAnswers.includes(a));
+
+    topicStatsMap[topic].total += 1;
+    if (isCorrect) {
+      topicStatsMap[topic].correct += 1;
+    }
+  });
+
+  const topicStats = Object.entries(topicStatsMap)
+    .map(([topic, stats]) => {
+      const accuracy =
+        stats.total > 0 ? stats.correct / stats.total : 0;
+      return {
+        topic,
+        total: stats.total,
+        correct: stats.correct,
+        accuracy,
+      };
+    })
+    .sort((a, b) => a.accuracy - b.accuracy);
+
+  return topicStats.filter((t) => t.total >= 2 && t.accuracy < 0.8).slice(0, 3);
 }

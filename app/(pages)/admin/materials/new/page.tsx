@@ -24,12 +24,14 @@ import {
   useMaterials,
   type Material,
 } from '@/hooks/use-materials';
+import type { LicenseCategory } from '@/types/database';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, ImagePlus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
 interface MaterialFormState {
   chapter_id: number;
+  category: LicenseCategory;
   order_index: number;
   title_en: string;
   title_sq: string;
@@ -55,6 +57,7 @@ export default function NewMaterialPage() {
 
   const [formData, setFormData] = useState<MaterialFormState>({
     chapter_id: 1,
+    category: 'B',
     order_index: 1,
     title_en: '',
     title_sq: '',
@@ -125,6 +128,7 @@ export default function NewMaterialPage() {
     try {
       const result = await createMaterial.mutateAsync({
         chapter_id: formData.chapter_id,
+        category: formData.category,
         order_index: formData.order_index,
         title_en: formData.title_en.trim(),
         title_sq: formData.title_sq.trim(),
@@ -235,8 +239,8 @@ export default function NewMaterialPage() {
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <GlassCard className="p-6 space-y-6 border border-border/80 bg-black/80">
-            {/* Chapter and Order */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Chapter, Category and Order */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="chapter_id">Chapter *</Label>
                 <Select
@@ -263,6 +267,29 @@ export default function NewMaterialPage() {
                         </SelectItem>
                       );
                     })}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category">Category *</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      category: value as LicenseCategory,
+                    })
+                  }
+                >
+                  <SelectTrigger id="category">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A">Category A</SelectItem>
+                    <SelectItem value="B">Category B</SelectItem>
+                    <SelectItem value="C">Category C</SelectItem>
+                    <SelectItem value="D">Category D</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

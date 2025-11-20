@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [initialized, setInitialized] = useState(false);
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const checkIfBlocked = useCallback(async (userId: string, skipProfileUpdate = false) => {
     try {
@@ -244,6 +246,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setUserProfile(null);
     setIsBlocked(false);
+    queryClient.clear();
     
     await supabase.auth.signOut();
     
@@ -253,7 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Reset loading after redirect (shorter timeout)
     setTimeout(() => setLoading(false), 50);
-  }, [supabase, router]);
+  }, [supabase, router, queryClient]);
 
   const refreshUser = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();

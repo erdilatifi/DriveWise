@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,9 @@ import { useLanguage } from '@/contexts/language-context';
 import { useMaterials, type Material } from '@/hooks/use-materials';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/auth-context';
-import { useGlobalPremium } from '@/hooks/use-subscriptions';
+import { useGlobalPremium, useUserPlans } from '@/hooks/use-subscriptions';
+import type { LicenseCategory } from '@/types/database';
+import { isPlanCurrentlyActive } from '@/lib/subscriptions';
 
 type SectionKey = number;
 
@@ -36,7 +39,26 @@ export default function MaterialsPage() {
   const { language, t } = useLanguage();
   const searchParams = useSearchParams();
   const { user, isAdmin } = useAuth();
-  const { data, isLoading, error } = useMaterials({ pageSize: 50 });
+  const { data: userPlans } = useUserPlans(user?.id);
+  const allowedCategories = useMemo<LicenseCategory[]>(() => {
+    if (isAdmin) {
+      return ['A', 'B', 'C', 'D'];
+    }
+    const now = new Date();
+    return (userPlans || [])
+      .filter((plan) =>
+        plan.status === 'active' &&
+        isPlanCurrentlyActive({ startDate: plan.start_date, endDate: plan.end_date }, now),
+      )
+      .map((plan) => plan.category as LicenseCategory);
+  }, [userPlans, isAdmin]);
+
+  const primaryCategory = !isAdmin ? allowedCategories[0] : undefined;
+
+  const { data, isLoading, error } = useMaterials({
+    pageSize: 50,
+    category: primaryCategory,
+  });
   const materials = (data?.materials ?? []) as Material[];
   const { hasAnyActivePlan, isLoading: premiumLoading } = useGlobalPremium(user?.id, isAdmin);
 
@@ -139,6 +161,22 @@ export default function MaterialsPage() {
         : materialForSelected?.title_en || `Chapter ${selectedSection}`;
   }
 
+  // Try to interpret content as a structured chapter JSON as described in the schema
+  const chapter = (currentSectionContent as any)?.chapter as
+    | {
+        code?: string;
+        title?: string;
+        description?: string;
+        sections?: Array<{
+          order?: number;
+          title?: string;
+          points?: unknown;
+        }>;
+      }
+    | undefined;
+
+  const chapterSections = Array.isArray(chapter?.sections) ? chapter!.sections : [];
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -186,7 +224,7 @@ export default function MaterialsPage() {
     );
   }
 
-  if (!isAdmin && !premiumLoading && !hasAnyActivePlan) {
+  if (!isAdmin && !premiumLoading && (!hasAnyActivePlan || allowedCategories.length === 0)) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -194,33 +232,32 @@ export default function MaterialsPage() {
           <div className="container mx-auto px-4 py-10 max-w-3xl">
             <GlassCard className="p-6 md:p-8 border border-border/80 bg-black/80">
               <h1 className="text-2xl font-semibold mb-3">
-                {t('materials.premiumRequiredTitle') || 'Unlock full Study Material access'}
+                {t('materials.premiumRequiredTitle')}
               </h1>
               <p className="text-sm text-muted-foreground mb-4">
-                {t('materials.premiumRequiredDescription') ||
-                  'Study Material is part of the paid plan. With any paid plan you get full access to all chapters, explanations, and images – no matter which category you chose.'}
+                {t('materials.premiumRequiredDescription')}
               </p>
               <ul className="text-sm text-muted-foreground mb-4 list-disc pl-5 space-y-1">
                 <li>
-                  {t('materials.premiumBenefitAllChapters') || 'Access every chapter and topic explanation.'}
+                  {t('materials.premiumBenefitAllChapters')}
                 </li>
                 <li>
-                  {t('materials.premiumBenefitDeeper') || 'Understand why answers are correct so tests feel easier.'}
+                  {t('materials.premiumBenefitDeeper')}
                 </li>
                 <li>
-                  {t('materials.premiumBenefitVisuals') || 'See all reference images and diagrams to memorize faster.'}
+                  {t('materials.premiumBenefitVisuals')}
                 </li>
               </ul>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button asChild className="flex-1">
-                  <a href="/profile">
-                    {t('materials.premiumUpgradeCta') || 'See plans'}
-                  </a>
+                  <Link href="/pricing?category=B">
+                    {t('materials.premiumUpgradeCta')}
+                  </Link>
                 </Button>
                 <Button asChild variant="outline" className="flex-1">
-                  <a href="/dashboard">
+                  <Link href="/dashboard">
                     {t('auth.backToHome')}
-                  </a>
+                  </Link>
                 </Button>
               </div>
             </GlassCard>
@@ -241,7 +278,7 @@ export default function MaterialsPage() {
                 {t('materials.errorLoadFailed')}
               </p>
               <p className="text-xs text-muted-foreground break-words">
-                {error instanceof Error ? error.message : String(error)}
+                {t('error.message')}
               </p>
             </GlassCard>
           </div>
@@ -408,6 +445,48 @@ export default function MaterialsPage() {
                     <p className="text-sm text-muted-foreground">
                       {t('materials.noResults')}
                     </p>
+                  ) : chapter && chapterSections.length > 0 ? (
+                    <div className="space-y-5">
+                      <div className="space-y-2">
+                        {chapter.title && (
+                          <h2 className="text-xl font-semibold tracking-tight">
+                            {chapter.title}
+                          </h2>
+                        )}
+                        {chapter.description && (
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {chapter.description}
+                          </p>
+                        )}
+                      </div>
+
+                      {chapterSections.map((section, index) => {
+                        const key = section.order ?? index;
+                        const pointsRaw = section.points;
+                        const pointsArray = Array.isArray(pointsRaw)
+                          ? (pointsRaw as unknown[])
+                          : typeof pointsRaw === 'string'
+                            ? [pointsRaw]
+                            : [];
+
+                        return (
+                          <div key={key} className="space-y-2">
+                            {section.title && (
+                              <h3 className="text-base font-semibold">
+                                {section.title}
+                              </h3>
+                            )}
+                            {pointsArray.length > 0 && (
+                              <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                                {pointsArray.map((p, idx) => (
+                                  <li key={idx}>{typeof p === 'string' ? p : String(p)}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   ) : (
                     Object.entries(currentSectionContent).map(([key, value]) => (
                       <section key={key} className="space-y-2">

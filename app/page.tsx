@@ -1029,9 +1029,12 @@ export default function HomePage() {
               <li>• Detailed explanations for every answer</li>
             </ul>
 
-            <button className="mt-5 inline-flex w-full items-center justify-center rounded-2xl border border-border/80 bg-black/60 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground hover:border-orange-400 hover:text-orange-200 transition">
+            <Link
+              href="/pricing?plan=PLAN_A&category=B"
+              className="mt-5 inline-flex w-full items-center justify-center rounded-2xl border border-border/80 bg-black/60 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground hover:border-orange-400 hover:text-orange-200 transition"
+            >
               Choose 1 Month
-            </button>
+            </Link>
           </div>
         </motion.div>
 
@@ -1095,9 +1098,12 @@ export default function HomePage() {
                 <li>• Most savings and most popular among DriveWise learners</li>
               </ul>
 
-              <button className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 to-orange-300 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-black shadow-[0_0_35px_rgba(249,115,22,0.8)] hover:brightness-110 transition">
+              <Link
+                href="/pricing?plan=PLAN_C&category=B"
+                className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 to-orange-300 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-black shadow-[0_0_35px_rgba(249,115,22,0.8)] hover:brightness-110 transition"
+              >
                 Choose 3 Months
-              </button>
+              </Link>
 
               <p className="mt-3 text-[11px] text-muted-foreground text-center">
                 Best balance of time, price, and exam confidence.
@@ -1145,9 +1151,12 @@ export default function HomePage() {
               <li>• Perfect if your exam date might move</li>
             </ul>
 
-            <button className="mt-5 inline-flex w-full items-center justify-center rounded-2xl border border-border/80 bg-black/60 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground hover:border-orange-400 hover:text-orange-200 transition">
+            <Link
+              href="/pricing?plan=PLAN_B&category=B"
+              className="mt-5 inline-flex w-full items-center justify-center rounded-2xl border border-border/80 bg-black/60 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground hover:border-orange-400 hover:text-orange-200 transition"
+            >
               Choose 2 Months
-            </button>
+            </Link>
           </div>
         </motion.div>
       </div>

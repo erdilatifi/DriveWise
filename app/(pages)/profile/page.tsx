@@ -2,104 +2,49 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import { useAuth } from '@/contexts/auth-context';
 import { useLanguage } from '@/contexts/language-context';
 import { useUserPlans, useGlobalPremium } from '@/hooks/use-subscriptions';
-import { useTestAttempts } from '@/hooks/use-test-attempts';
-import { BILLING_CONFIG, countTestsInCurrentCycle, isPlanCurrentlyActive } from '@/lib/subscriptions';
-import { createPaymentSession, activatePlanForUser } from '@/lib/payments';
+import { BILLING_CONFIG, type PaidPlanTier } from '@/lib/subscriptions';
+import { createClient } from '@/utils/supabase/client';
+import { AlertTriangle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-
-const LICENSE_CATEGORIES: LicenseCategory[] = ['A', 'B', 'C', 'D'];
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, loading: authLoading, isAdmin, userProfile } = useAuth();
+  const { user, loading: authLoading, isAdmin, userProfile, refreshUser, signOut } = useAuth();
   const { t } = useLanguage();
-
-  const [updatingCategory, setUpdatingCategory] = useState<LicenseCategory | null>(null);
+  const [fullNameInput, setFullNameInput] = useState(
+    userProfile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '',
+  );
+  const [savingName, setSavingName] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
 
   const { data: plans } = useUserPlans(user?.id || undefined);
   const { hasAnyActivePlan } = useGlobalPremium(user?.id, isAdmin);
-  const { data: attempts } = useTestAttempts(user?.id || undefined);
-
-  const attemptsArray = (attempts || []) as { category: string; completed_at: string }[];
-
-  const testsByCategoryThisCycle: Record<LicenseCategory, number> = useMemo(() => {
-    const now = new Date();
-    const result: Record<LicenseCategory, number> = {
-      A: 0,
-      B: 0,
-      C: 0,
-      D: 0,
-    };
-    for (const cat of LICENSE_CATEGORIES) {
-      result[cat] = countTestsInCurrentCycle({
-        attempts: attemptsArray,
-        category: cat,
-        now,
-      });
-    }
-    return result;
-  }, [attemptsArray]);
-
-  let mostActiveCategory: LicenseCategory | null = null;
-  let mostActiveCount = 0;
-  for (const cat of LICENSE_CATEGORIES) {
-    const used = testsByCategoryThisCycle[cat];
-    if (used > mostActiveCount) {
-      mostActiveCount = used;
-      mostActiveCategory = cat;
-    }
-  }
-
-  const handlePlanChange = async (category: LicenseCategory) => {
-    if (!user || isAdmin) return;
-
-    setUpdatingCategory(category);
-    try {
-      const planTier = BILLING_CONFIG.bestValuePlan;
-      const successUrl = window.location.origin + '/profile';
-      const cancelUrl = successUrl;
-
-      const session = await createPaymentSession({
-        userId: user.id,
-        category,
-        planTier,
-        successUrl,
-        cancelUrl,
-      });
-
-      if (session.status === 'succeeded') {
-        await activatePlanForUser({
-          userId: user.id,
-          category,
-          planTier,
-        });
-        toast.success('Plan updated', {
-          description: `Your plan for category ${category} is now active.`,
-        });
-        router.refresh();
-      } else if (session.redirectUrl) {
-        window.location.href = session.redirectUrl;
-      } else {
-        toast.error('Payment did not complete. Please try again.');
-      }
-    } catch (error: unknown) {
-      console.error('Error during plan change:', error);
-      const description = error instanceof Error ? error.message : 'Please try again later.';
-      toast.error('Could not start payment.', {
-        description,
-      });
-    } finally {
-      setUpdatingCategory(null);
-    }
-  };
+  const paidPlans = useMemo(() => {
+    return (plans || []).filter((p) => p.plan_tier && p.plan_tier !== 'FREE');
+  }, [plans]);
 
   if (authLoading || !user) {
     return (
@@ -118,17 +63,82 @@ export default function ProfilePage() {
     userProfile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
   const email = user.email || userProfile?.email || '';
 
-  const getPlanForCategory = (category: LicenseCategory) => {
-    if (!plans) return null;
-    const row = plans.find((p) => p.category === category);
-    if (!row) return null;
-    const active =
-      row.status === 'active' &&
-      isPlanCurrentlyActive({ startDate: row.start_date, endDate: row.end_date });
-    return {
-      raw: row,
-      isActive: active,
-    };
+  const supabase = createClient();
+
+  const handleSaveName = async () => {
+    if (!user) return;
+    const trimmed = fullNameInput.trim();
+    if (!trimmed) {
+      toast.error('Name cannot be empty');
+      return;
+    }
+
+    setSavingName(true);
+    try {
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .update({ full_name: trimmed })
+        .eq('id', user.id);
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { full_name: trimmed },
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
+      await refreshUser();
+
+      toast.success('Name updated', {
+        description: 'Your display name has been updated successfully.',
+      });
+    } catch (error: unknown) {
+      const description = error instanceof Error ? error.message : 'Please try again later.';
+      toast.error('Could not update name.', { description });
+    } finally {
+      setSavingName(false);
+    }
+  };
+
+  const handleConfirmDeleteAccount = async () => {
+    if (!user) return;
+    setDeletingAccount(true);
+    try {
+      const response = await fetch('/api/account/delete', {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        let description = 'Please try again later.';
+        try {
+          const body = await response.json();
+          if (body?.error) {
+            description = body.error;
+          }
+        } catch {
+          // ignore JSON parse errors
+        }
+        throw new Error(description);
+      }
+
+      toast.success('Account deleted', {
+        description: 'Your account and all associated data have been deleted.',
+      });
+
+      setDeleteDialogOpen(false);
+
+      await signOut();
+    } catch (error: unknown) {
+      const description = error instanceof Error ? error.message : 'Please try again later.';
+      toast.error('Could not delete account.', { description });
+    } finally {
+      setDeletingAccount(false);
+    }
   };
 
   return (
@@ -144,8 +154,8 @@ export default function ProfilePage() {
               {!isAdmin && (
                 <p className="mt-1 text-xs text-muted-foreground">
                   {hasAnyActivePlan
-                    ? 'You have at least one active paid plan. See details by category below.'
-                    : 'You are currently on the free plan. You can start a paid plan for any category below.'}
+                    ? 'You have at least one active paid plan. See details below.'
+                    : 'You are currently on the free plan. Start a paid plan to unlock all premium features.'}
                 </p>
               )}
               {isAdmin && (
@@ -168,133 +178,256 @@ export default function ProfilePage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-sm font-semibold tracking-tight">
-                  {t('profile.planStatusTitle') || 'Plans & usage by license category'}
+                  {t('profile.accountSettingsTitle')}
                 </h2>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Track your current plan, remaining days, and test usage for each category.
+                  {t('profile.accountSettingsDescription')}
                 </p>
-                {mostActiveCategory && mostActiveCount > 0 && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Most active this cycle: Category {mostActiveCategory} - {CATEGORY_INFO[mostActiveCategory].name}{' '}
-                    ({mostActiveCount} tests).
-                  </p>
-                )}
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              {LICENSE_CATEGORIES.map((cat) => {
-                const info = CATEGORY_INFO[cat];
-                const planInfo = getPlanForCategory(cat);
-                const planRow = planInfo?.raw;
-                const isActive = planInfo?.isActive || false;
-                const isPaid = !!planRow;
-
-                const statusLabel = isPaid ? 'Paid' : 'Free';
-                const statusClass = isPaid
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/40'
-                  : 'bg-muted text-muted-foreground';
-
-                const testsUsed = testsByCategoryThisCycle[cat];
-                const freeLimit = BILLING_CONFIG.freeTestLimitPerCategory;
-
-                const endDate = planRow?.end_date ? new Date(planRow.end_date) : null;
-                const now = new Date();
-                const remainingDays = endDate
-                  ? Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
-                  : null;
-
-                const isProcessing = updatingCategory === cat;
-
-                return (
-                  <div
-                    key={cat}
-                    className="rounded-xl border border-border/80 bg-black/70 p-4 flex flex-col gap-3"
+              <div className="space-y-2">
+                <Label htmlFor="full-name">{t('profile.displayNameLabel')}</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="full-name"
+                    value={fullNameInput}
+                    onChange={(e) => setFullNameInput(e.target.value)}
+                    className="text-sm"
+                  />
+                  <Button
+                    size="sm"
+                    type="button"
+                    onClick={handleSaveName}
+                    disabled={savingName || !fullNameInput.trim() || fullNameInput.trim() === displayName}
+                    className="whitespace-nowrap"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Category {cat}</p>
-                        <p className="text-sm font-semibold">{info.name}</p>
-                      </div>
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClass}`}
-                      >
-                        {statusLabel}
-                      </span>
-                    </div>
+                    {savingName ? 'Saving...' : 'Save'}
+                  </Button>
+                </div>
+              </div>
 
-                    {isPaid && planRow && (
+              <div className="space-y-2">
+                <Label htmlFor="account-email">{t('profile.emailLabel')}</Label>
+                <Input id="account-email" value={email} disabled className="text-sm" />
+                <p className="text-xs text-muted-foreground">
+                  {t('profile.emailHelp')}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 border-t border-border/60 pt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-destructive mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-destructive">{t('profile.dangerZoneTitle')}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t('profile.dangerZoneDescription')}
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="inline-flex items-center gap-2 self-start md:self-auto"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2 className="w-4 h-4" />
+                {t('profile.deleteAccountButton')}
+              </Button>
+            </div>
+          </GlassCard>
+
+          <GlassCard className="p-6 md:p-7 border border-border/80 bg-black/85">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-sm font-semibold tracking-tight">
+                  {t('plans.profilePaidPlansTitle') || 'Your paid plans'}
+                </h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {paidPlans.length > 0
+                    ? 'These are your paid plans by license category. You can extend them from the pricing page.'
+                    : 'You do not have any paid plans yet. Start a plan from the pricing page to unlock all premium features.'}
+                </p>
+              </div>
+              {!isAdmin && paidPlans.length > 0 && (
+                <Button size="sm" variant="outline" asChild>
+                  <Link href="/pricing">{t('plans.profileExtendViaPricingCta') || 'Go to pricing'}</Link>
+                </Button>
+              )}
+            </div>
+
+            {paidPlans.length === 0 && !isAdmin && (
+              <div className="mt-2">
+                <Button asChild>
+                  <Link href="/pricing">{t('plans.profileExtendViaPricingCta') || 'Go to pricing'}</Link>
+                </Button>
+              </div>
+            )}
+
+            {paidPlans.length > 0 && (
+              <div className="mt-4 space-y-3">
+                {paidPlans.map((plan) => {
+                  const category = (plan.category as LicenseCategory) || 'B';
+                  const info = CATEGORY_INFO[category];
+                  const startDate = plan.start_date ? new Date(plan.start_date) : null;
+                  const endDate = plan.end_date ? new Date(plan.end_date) : null;
+                  const now = new Date();
+
+                  let progressPct = 0;
+                  let remainingDays: number | null = null;
+                  if (startDate && endDate) {
+                    const totalMs = endDate.getTime() - startDate.getTime();
+                    const usedMs = Math.min(Math.max(now.getTime() - startDate.getTime(), 0), Math.max(totalMs, 0));
+                    progressPct = totalMs > 0 ? Math.min(100, Math.max(0, (usedMs / totalMs) * 100)) : 100;
+                    const diffDays = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                    remainingDays = diffDays > 0 ? diffDays : 0;
+                  }
+
+                  const isActive = plan.status === 'active' && endDate && endDate.getTime() >= now.getTime();
+                  const statusLabel = isActive ? 'Active' : 'Expired';
+                  const statusClass = isActive
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/40'
+                    : 'bg-muted text-muted-foreground border border-border/60';
+
+                  const planTier = plan.plan_tier as PaidPlanTier;
+                  const planDef = BILLING_CONFIG.plans[planTier] || null;
+
+                  return (
+                    <div
+                      key={plan.id}
+                      className="rounded-xl border border-border/80 bg-black/70 p-4 flex flex-col gap-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">
+                            Category {category}
+                          </p>
+                          <p className="text-sm font-semibold">{info?.name || category}</p>
+                        </div>
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClass}`}
+                        >
+                          {statusLabel}
+                        </span>
+                      </div>
+                      {isActive && remainingDays !== null && remainingDays <= 7 && (
+                        <p className="mt-1 text-[11px] text-amber-400">
+                          Expiring soon
+                        </p>
+                      )}
+
                       <div className="text-xs text-muted-foreground space-y-1">
                         <p>
-                          Plan: <span className="font-medium">{planRow.plan_tier}</span>
+                          Plan:{' '}
+                          <span className="font-medium">
+                            {planDef?.label || plan.plan_tier}
+                          </span>
                         </p>
                         <p>
-                          {t('profile.expiresOnLabel') || 'Expires on:'}{' '}
-                          {endDate ? endDate.toLocaleDateString() : '-'}
+                          Starts:{' '}
+                          <span className="font-medium">
+                            {startDate ? startDate.toLocaleDateString() : '-'}
+                          </span>
+                        </p>
+                        <p>
+                          Ends:{' '}
+                          <span className="font-medium">
+                            {endDate ? endDate.toLocaleDateString() : '-'}
+                          </span>
                           {remainingDays !== null && (
                             <span className="text-muted-foreground/70">
                               {' '}
-                              ({remainingDays} {t('profile.daysRemaining') || 'days left'})
+                              ({remainingDays} days left)
                             </span>
                           )}
                         </p>
-                        <p>
-                          Tests this cycle:{' '}
-                          <span className="font-medium">{testsUsed}</span>
-                        </p>
                       </div>
-                    )}
 
-                    {!isPaid && !isAdmin && (
-                      <p className="text-xs text-muted-foreground">
-                        {t('profile.freeUsageLabel') || 'Free usage this cycle:'}{' '}
-                        <span className="font-medium">
-                          {testsUsed}/{freeLimit} {t('profile.testsLabel') || 'tests'}
-                        </span>
-                      </p>
-                    )}
+                      {startDate && endDate && (
+                        <div className="mt-1">
+                          <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                            <div
+                              className="h-2 rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all"
+                              style={{ width: `${progressPct}%` }}
+                            />
+                          </div>
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            Time used: {Math.round(progressPct)}%
+                          </p>
+                        </div>
+                      )}
 
-                    <div className="mt-auto flex gap-2">
-                      {(!isPaid || !isActive) && !isAdmin && (
-                        <Button
-                          size="sm"
-                          variant="default"
-                          className="text-xs flex-1"
-                          onClick={() => handlePlanChange(cat)}
-                          disabled={isProcessing}
-                        >
-                          {t('profile.upgradeCta') || 'Start plan'}
-                        </Button>
-                      )}
-                      {isPaid && isActive && !isAdmin && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-xs flex-1"
-                          onClick={() => handlePlanChange(cat)}
-                          disabled={isProcessing}
-                        >
-                          {t('profile.extendCta') || 'Extend / renew'}
-                        </Button>
-                      )}
-                      {isAdmin && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-xs flex-1"
-                          onClick={() => router.push('/admin/subscriptions')}
-                        >
-                          {t('profile.previewCta') || 'Manage users'}
-                        </Button>
+                      {!isAdmin && (
+                        <div className="mt-1 flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs flex-1"
+                            asChild
+                          >
+                            <Link href={`/pricing?category=${category}&plan=${plan.plan_tier}`}>
+                              {t('plans.profileExtendViaPricingCta') || 'Go to pricing'}
+                            </Link>
+                          </Button>
+                        </div>
                       )}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </GlassCard>
         </div>
       </div>
+
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) {
+            setDeleteConfirmInput('');
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-4 h-4" />
+              {t('profile.deleteDialogTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('profile.deleteDialogDescription')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="mt-4 space-y-2">
+            <Label htmlFor="delete-confirm" className="text-xs">
+              {t('profile.deleteDialogConfirmLabel')}
+            </Label>
+            <Input
+              id="delete-confirm"
+              value={deleteConfirmInput}
+              onChange={(e) => setDeleteConfirmInput(e.target.value)}
+              placeholder="DELETE"
+              className="text-sm"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
+              {t('profile.deleteDialogCancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteAccount}
+              disabled={deletingAccount || deleteConfirmInput !== 'DELETE'}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingAccount ? t('profile.deleteDialogConfirming') : t('profile.deleteDialogConfirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
@@ -15,11 +14,6 @@ export default function Error({
   reset: () => void;
 }) {
   const { t } = useLanguage();
-
-  useEffect(() => {
-    // Log error for debugging (only in console, never show to user)
-    console.error('Application error:', error);
-  }, [error]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">

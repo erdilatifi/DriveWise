@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/utils/supabase/client';
+import type { LicenseCategory } from '@/types/database';
 
 type MaterialContent = Record<string, unknown>;
 
 export interface Material {
   id: string;
   chapter_id: number;
+  category?: LicenseCategory | null;
   title_en: string;
   title_sq: string;
   content_en: MaterialContent;
@@ -30,6 +32,7 @@ export interface MaterialImage {
 
 export interface MaterialInput {
   chapter_id: number;
+  category?: LicenseCategory;
   title_en: string;
   title_sq: string;
   content_en: MaterialContent;
@@ -49,6 +52,7 @@ export interface MaterialImageInput {
 export interface MaterialsQueryParams {
   search?: string;
   chapterId?: number;
+  category?: LicenseCategory;
   page?: number;
   pageSize?: number;
   includeUnpublished?: boolean;
@@ -61,11 +65,18 @@ export interface MaterialsPageResult {
 
 // Fetch materials with optional pagination and filters, including related images
 export function useMaterials(params: MaterialsQueryParams = {}) {
-  const { search, chapterId, page = 1, pageSize = 50, includeUnpublished = false } = params;
+  const {
+    search,
+    chapterId,
+    category,
+    page = 1,
+    pageSize = 50,
+    includeUnpublished = false,
+  } = params;
   const supabase = createClient();
 
   return useQuery<MaterialsPageResult>({
-    queryKey: ['materials', search, chapterId, page, pageSize, includeUnpublished],
+    queryKey: ['materials', search, chapterId, category, page, pageSize, includeUnpublished],
     queryFn: async () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
@@ -77,6 +88,10 @@ export function useMaterials(params: MaterialsQueryParams = {}) {
 
       if (chapterId) {
         query = query.eq('chapter_id', chapterId);
+      }
+
+      if (category) {
+        query = query.eq('category', category);
       }
 
       if (!includeUnpublished) {

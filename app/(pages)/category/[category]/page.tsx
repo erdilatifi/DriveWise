@@ -89,7 +89,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                       {loading ? '...' : testCount} {t('category.mockTests')}
                     </span>
                     <span className="text-muted-foreground text-[11px]">
-                      {t('category.mockTestsHint')}
+                      {t('category.mock_tests_hint')}
                     </span>
                   </div>
                 </div>
