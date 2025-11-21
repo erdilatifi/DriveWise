@@ -2,13 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/utils/supabase/sever';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 
-interface Params {
-  params: {
-    id: string;
-  };
-}
-
-export async function GET(_req: NextRequest, { params }: Params) {
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const supabase = await createServerClient();
     const {
@@ -19,6 +16,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
     if (error || !user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
+
+    const { id } = await params;
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -40,7 +39,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const { data: order, error: orderError } = await adminClient
       .from('orders')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (orderError || !order) {
