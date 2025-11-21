@@ -38,15 +38,34 @@ export function Navbar() {
   const handleLogout = async () => {
     try {
       setMobileMenuOpen(false);
-      toast.success('Logged out successfully');
       await signOut();
+      toast.success(t('auth.logoutSuccess'));
     } catch (error) {
       console.error('Logout error:', error);
-      toast.error('Error logging out');
+      toast.error(t('auth.logoutError'));
     }
   };
 
   const isActive = (path: string) => pathname === path;
+
+  const desktopLinkBase =
+    'text-sm font-semibold transition-all duration-200 relative group/nav-link';
+  const desktopLinkActive = 'text-primary';
+  const desktopLinkInactive = 'text-foreground/80 hover:text-foreground';
+
+  const renderDesktopLink = (href: string, label: string, active: boolean) => (
+    <Link
+      href={href}
+      className={`${desktopLinkBase} ${active ? desktopLinkActive : desktopLinkInactive}`}
+    >
+      {label}
+      <span
+        className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full transition-all duration-200 ${
+          active ? 'w-full' : 'w-0 group-hover/nav-link:w-full'
+        }`}
+      />
+    </Link>
+  );
 
   return (
     <nav className={`fixed left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${
@@ -82,104 +101,39 @@ export function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             {/* Home */}
-            <Link
-              href="/"
-              className={`text-sm font-semibold transition-all duration-200 relative group/link ${
-                isActive('/') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
-              }`}
-            >
-              {t('nav.home')}
-              {isActive('/') && (
-                <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
-              )}
-            </Link>
+            {renderDesktopLink('/', t('nav.home'), isActive('/'))}
 
-            {/* Materials */}
-            <Link
-              href="/materials"
-              className={`text-sm font-semibold transition-all duration-200 relative group/link ${
-                isActive('/materials') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
-              }`}
-            >
-              {t('nav.materials')}
-              {isActive('/materials') && (
-                <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
-              )}
-            </Link>
-
-            {/* Tests (category section on landing) */}
-            <Link
-              href="/#categories"
-              className={`text-sm font-semibold transition-all duration-200 relative group/link text-foreground/80 hover:text-foreground`}
-            >
-              Tests
-            </Link>
-
-            {/* Pricing section on landing */}
-            <Link
-              href="/#pricing"
-              className={`text-sm font-semibold transition-all duration-200 relative group/link text-foreground/80 hover:text-foreground`}
-            >
-              Pricing
-            </Link>
+            {/* Tests (category index page) */}
+            {renderDesktopLink('/category', t('nav.tests'), pathname.startsWith('/category'))}
 
             {/* Decision Trainer (logged-in users) */}
-            {user && (
-              <Link
-                href="/decision-trainer"
-                className={`text-sm font-semibold transition-all duration-200 relative group/link ${
-                  pathname.startsWith('/decision-trainer') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
-                }`}
-              >
-                 Decision Trainer
-                {pathname.startsWith('/decision-trainer') && (
-                  <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
-                )}
-              </Link>
-            )}
+            {user &&
+              renderDesktopLink(
+                '/decision-trainer',
+                t('nav.decisionTrainer'),
+                pathname.startsWith('/decision-trainer'),
+              )}
+
+            {/* Materials */}
+            {renderDesktopLink('/materials', t('nav.materials'), isActive('/materials'))}
+
+            {/* Pricing page */}
+            {renderDesktopLink('/pricing', t('nav.pricing'), isActive('/pricing'))}
 
             {/* Dashboard */}
-            <Link
-              href="/dashboard"
-              className={`text-sm font-semibold transition-all duration-200 relative group/link ${
-                isActive('/dashboard') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
-              }`}
-            >
-              {t('nav.dashboard')}
-              {isActive('/dashboard') && (
-                <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
-              )}
-            </Link>
+            {renderDesktopLink('/dashboard', t('nav.dashboard'), isActive('/dashboard'))}
 
             {/* Account (logged-in users) */}
-            {user && (
-              <Link
-                href="/profile"
-                className={`text-sm font-semibold transition-all duration-200 relative group/link ${
-                  isActive('/profile') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
-                }`}
-              >
-                Account
-                {isActive('/profile') && (
-                  <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
-                )}
-              </Link>
-            )}
+            {user && renderDesktopLink('/profile', t('nav.account'), isActive('/profile'))}
 
             {/* Admin (admins only) */}
-            {user && isAdmin && (
-              <Link
-                href="/admin"
-                className={`text-sm font-semibold transition-all duration-200 relative group/link ${
-                  isActive('/admin') || pathname.startsWith('/admin') ? 'text-primary' : 'text-foreground/80 hover:text-foreground'
-                }`}
-              >
-                Admin
-                {(isActive('/admin') || pathname.startsWith('/admin')) && (
-                  <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full"></span>
-                )}
-              </Link>
-            )}
+            {user &&
+              isAdmin &&
+              renderDesktopLink(
+                '/admin',
+                t('nav.admin'),
+                isActive('/admin') || pathname.startsWith('/admin'),
+              )}
           </div>
 
           {/* Desktop Auth Buttons */}
@@ -283,6 +237,34 @@ export function Navbar() {
                 {t('nav.home')}
               </Link>
 
+              {/* Tests (category index page) */}
+              <Link
+                href="/category"
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  pathname.startsWith('/category')
+                    ? 'bg-primary/10 text-primary border border-primary/20'
+                    : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('nav.tests')}
+              </Link>
+
+              {/* Decision Trainer (logged-in users) */}
+              {user && (
+                <Link
+                  href="/decision-trainer"
+                  className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                    pathname.startsWith('/decision-trainer')
+                      ? 'bg-primary/10 text-primary border border-primary/20'
+                      : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('nav.decisionTrainer')}
+                </Link>
+              )}
+
               {/* Materials */}
               <Link
                 href="/materials"
@@ -294,36 +276,18 @@ export function Navbar() {
                 {t('nav.materials')}
               </Link>
 
-              {/* Tests */}
-              <Link
-                href="/#categories"
-                className="px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-foreground/80 hover:bg-primary/5 hover:text-foreground"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Tests
-              </Link>
-
               {/* Pricing */}
               <Link
-                href="/#pricing"
-                className="px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-foreground/80 hover:bg-primary/5 hover:text-foreground"
+                href="/pricing"
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  isActive('/pricing')
+                    ? 'bg-primary/10 text-primary border border-primary/20'
+                    : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Pricing
+                {t('nav.pricing')}
               </Link>
-
-              {/* Decision Trainer (logged-in users) */}
-              {user && (
-                <Link
-                  href="/decision-trainer"
-                  className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                    pathname.startsWith('/decision-trainer') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                   Decision Trainer
-                </Link>
-              )}
 
               {/* Dashboard */}
               <Link
@@ -341,26 +305,31 @@ export function Navbar() {
                 <Link
                   href="/profile"
                   className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                    isActive('/profile') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                    isActive('/profile')
+                      ? 'bg-primary/10 text-primary border border-primary/20'
+                      : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Account
+                  {t('nav.account')}
                 </Link>
               )}
 
               {/* Admin (admins only) */}
-              {user && isAdmin && (
-                <Link
-                  href="/admin"
-                  className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                    isActive('/admin') || pathname.startsWith('/admin') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Admin
-                </Link>
-              )}
+              {user &&
+                isAdmin && (
+                  <Link
+                    href="/admin"
+                    className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                      isActive('/admin') || pathname.startsWith('/admin')
+                        ? 'bg-primary/10 text-primary border border-primary/20'
+                        : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t('nav.admin')}
+                  </Link>
+                )}
               
               {/* Mobile Language Switcher */}
               <div className="space-y-2">

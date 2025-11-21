@@ -1,59 +1,107 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import Link from "next/link";
-import { useLanguage } from "@/contexts/language-context";
-import { useAuth } from "@/contexts/auth-context";
-import { toast } from "sonner";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import Link from 'next/link';
+import { useLanguage } from '@/contexts/language-context';
+import { useAuth } from '@/contexts/auth-context';
+import { toast } from 'sonner';
+import { createClient } from '@/utils/supabase/client';
 
 export default function LoginPage() {
   const { t } = useLanguage();
   const { signIn, user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  // Redirect if already logged in
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const isBusy = submitting || authLoading;
+
+  // If already logged in, redirect away from login page
   useEffect(() => {
-    if (!authLoading && user) {
-      router.push("/dashboard");
+    if (authLoading) return;
+
+    let fromEmailConfirm = false;
+
+    if (typeof window !== 'undefined') {
+      const search = window.location.search;
+      const hash = window.location.hash || '';
+      const params = new URLSearchParams(search);
+      const type = params.get('type');
+      const hasCode = params.has('code');
+
+      // Supabase email confirmation / magic link usually includes type=signup
+      // and/or access_token in the hash fragment.
+      if (type === 'signup' || hash.includes('access_token=') || hasCode) {
+        fromEmailConfirm = true;
+      }
     }
-  }, [user, authLoading, router]);
+
+    if (fromEmailConfirm) {
+      // User arrived from email confirmation link: ensure any auto-created
+      // session is cleared so they can log in manually.
+      const supabase = createClient();
+      supabase.auth.signOut({ scope: 'local' }).catch((err) => {
+        console.error('Error clearing session after email confirm:', err);
+      });
+
+      // Clean the URL to plain /login so this effect doesn't re-trigger
+      // with the same code/hash parameters.
+      router.replace('/login');
+      return;
+    }
+
+    // Normal case: if user is already logged in and this is not an email-confirm
+    // callback, redirect them to the dashboard.
+    if (user) {
+      router.replace('/dashboard');
+    }
+  }, [authLoading, user, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
+    if (isBusy) return;
 
-    const { error: signInError } = await signIn(email, password);
+    setSubmitting(true);
+    setError('');
 
-    if (signInError) {
-      const errorMessage = signInError.message || "Failed to login";
-      setError(errorMessage);
+    try {
+      const { error: signInError } = await signIn(email, password);
 
-      // Only show toast for non-blocked errors (blocked errors are handled in auth context)
-      if (!errorMessage.includes("blocked")) {
-        toast.error("Login Failed", {
-          description: errorMessage,
-        });
+      if (signInError) {
+        const errorMessage = signInError.message || 'Failed to login';
+        setError(errorMessage);
+
+        if (!errorMessage.toLowerCase().includes('blocked')) {
+          toast.error('Login Failed', {
+            description: errorMessage,
+          });
+        }
+
+        setSubmitting(false);
+        return;
       }
-      setLoading(false);
-    } else {
-      // Success - wait a moment for auth state to update, then redirect
-      toast.success("Login successful!");
-      // Give more time for auth state to propagate
-      setTimeout(() => {
-        setLoading(false);
-        router.push("/dashboard");
-      }, 200);
+
+      toast.success('Login successful!');
+      setSubmitting(false);
+      router.push('/dashboard');
+    } catch (err) {
+      console.error('Unexpected error during login:', err);
+      const message =
+        err instanceof Error ? err.message : 'Unexpected error. Please try again.';
+      setError(message);
+      toast.error('Login Failed', {
+        description: message,
+      });
+      setSubmitting(false);
     }
   };
 
@@ -77,7 +125,8 @@ export default function LoginPage() {
               Log in and pick up exactly where you left off.
             </h1>
             <p className="text-sm text-muted-foreground max-w-md">
-              See your latest scores, weak topics, and streak in one clean view inspired by exam dashboards and modern analytics tools.
+              See your latest scores, weak topics, and streak in one clean view inspired by exam
+              dashboards and modern analytics tools.
             </p>
           </div>
 
@@ -126,23 +175,26 @@ export default function LoginPage() {
             </div>
             <div>
               <CardTitle className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                {t("auth.welcomeBack")}
+                {t('auth.welcomeBack')}
               </CardTitle>
               <CardDescription className="text-base mt-2">
-                {t("auth.signInDescription")}
+                {t('auth.signInDescription')}
               </CardDescription>
             </div>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4" autoComplete="on">
               {error && (
-                <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                <div
+                  className="p-3 rounded-md bg-destructive/10 text-destructive text-sm"
+                  aria-live="polite"
+                >
                   {error}
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">{t("auth.email")}</Label>
+                <Label htmlFor="email">{t('auth.email')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -150,14 +202,14 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  disabled={loading}
+                  disabled={isBusy}
                   autoComplete="email"
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">{t("auth.password")}</Label>
+                  <Label htmlFor="password">{t('auth.password')}</Label>
                   <Link
                     href="/forgot-password"
                     className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
@@ -172,7 +224,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  disabled={loading}
+                  disabled={isBusy}
                   autoComplete="current-password"
                 />
               </div>
@@ -180,18 +232,19 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 className="w-full shadow-lg shadow-primary/20 h-12 text-base font-semibold"
-                disabled={loading}
+                disabled={isBusy}
+                aria-busy={isBusy}
               >
-                {loading ? t("auth.signingIn") : t("auth.signIn")}
+                {isBusy ? t('auth.signingIn') : t('auth.signIn')}
               </Button>
 
               <div className="text-center text-sm pt-4">
-                <span className="text-muted-foreground">{t("auth.dontHaveAccount")} </span>
+                <span className="text-muted-foreground">{t('auth.dontHaveAccount')} </span>
                 <Link
                   href="/register"
                   className="text-primary hover:text-primary/80 font-semibold transition-colors"
                 >
-                  {t("auth.signUp")}
+                  {t('auth.signUp')}
                 </Link>
               </div>
 
@@ -200,7 +253,7 @@ export default function LoginPage() {
                   href="/"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  ← {t("auth.backToHome")}
+                  ← {t('auth.backToHome')}
                 </Link>
               </div>
             </form>
@@ -210,4 +263,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

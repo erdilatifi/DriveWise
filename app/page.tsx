@@ -29,6 +29,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { FaApple, FaGooglePlay } from "react-icons/fa";
 
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
@@ -225,6 +226,76 @@ export default function HomePage() {
                 </Button>
               </div>
 
+              {/* Beginner start strip */}
+              <div className="mt-3 space-y-2">
+                <p className="text-xs md:text-sm text-muted-foreground">
+                  {t("home.hero.newHereTitle")}
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="h-9 px-4 rounded-xl border-border/70 bg-black/50 hover:bg-black/70 text-xs font-medium"
+                  >
+                    <Link href="/category/b">
+                      {t("home.hero.newHereCtaCategory")}
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="h-9 px-4 rounded-xl border-border/70 bg-black/50 hover:bg-black/70 text-xs font-medium"
+                  >
+                    <Link href="/materials">
+                      {t("home.hero.newHereCtaMaterials")}
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Mobile apps coming soon */}
+              <div className="mt-3 space-y-2">
+                <p className="text-xs md:text-sm text-muted-foreground">
+                  {t("home.hero.mobileComingSoon")}
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-10 px-4 rounded-xl border-border/70 bg-black/50 hover:bg-black/70 flex items-center gap-2"
+                    type="button"
+                  >
+                    <FaApple className="w-4 h-4 text-foreground" />
+                    <div className="flex flex-col items-start leading-tight">
+                      <span className="text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
+                        {t("home.hero.mobileBadge")}
+                      </span>
+                      <span className="text-xs font-semibold">
+                        {t("home.hero.appStoreCta")}
+                      </span>
+                    </div>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-10 px-4 rounded-xl border-border/70 bg-black/50 hover:bg-black/70 flex items-center gap-2"
+                    type="button"
+                  >
+                    <FaGooglePlay className="w-4 h-4 text-foreground" />
+                    <div className="flex flex-col items-start leading-tight">
+                      <span className="text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
+                        {t("home.hero.mobileBadge")}
+                      </span>
+                      <span className="text-xs font-semibold">
+                        {t("home.hero.playStoreCta")}
+                      </span>
+                    </div>
+                  </Button>
+                </div>
+              </div>
+
               {/* Hero quick stats */}
               <div className="pt-6 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-xl text-sm relative">
                 <StatPill
@@ -411,14 +482,13 @@ export default function HomePage() {
           <div className="max-w-5xl mx-auto mb-10 text-center space-y-3 relative">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-black/60 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               <span className="h-1.5 w-7 rounded-full bg-gradient-to-r from-orange-500 to-orange-300" />
-              Exam flow, not just flashcards
+              {t("home.benefit.badge")}
             </div>
             <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-              Your entire theory journey, framed in one place.
+              {t("home.benefit.title")}
             </h2>
             <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
-              From the first mock test to your last review session, DriveWise keeps
-              your practice structured, measured, and focused on the real Kosovo exam.
+              {t("home.benefit.body")}
             </p>
           </div>
 
@@ -557,33 +627,30 @@ export default function HomePage() {
               <div className="pointer-events-none hidden md:block absolute -left-8 top-4 h-10 w-px bg-gradient-to-b from-orange-500/50 via-orange-400/10 to-transparent" />
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground flex items-center gap-2">
                 <span className="h-1 w-6 bg-gradient-to-r from-orange-500 to-orange-300 rounded-full" />
-                Built to protect your progress
+                {t("home.trust.badge")}
               </p>
               <h2 className="text-2xl md:text-3xl font-semibold">
-                Private, reliable, exam-grade learning.
+                {t("home.trust.title")}
               </h2>
               <p className="text-sm md:text-base text-muted-foreground max-w-xl">
-                Your answers, history, and progress are stored securely with
-                role-based access so only you (and your school when you choose)
-                can see your data. Sessions are protected and designed for
-                long-term learning, not quick demos.
+                {t("home.trust.body")}
               </p>
 
               <div className="grid sm:grid-cols-3 gap-3 pt-3 text-xs">
                 <TechStat
                   icon={<Database className="w-4 h-4" />}
-                  label="Data protection"
-                  value="Isolated learner profiles and safe storage"
+                  label="Mock tests"
+                  value="Access to A, B, C and D categories you purchase"
                 />
                 <TechStat
                   icon={<Lock className="w-4 h-4" />}
-                  label="Account safety"
-                  value="Secure sign-in and role-aware access"
+                  label="Decision Trainer"
+                  value="Scenario training unlocked with paid plans"
                 />
                 <TechStat
                   icon={<Cpu className="w-4 h-4" />}
-                  label="Experience"
-                  value="Optimized for small phones and slow networks"
+                  label="Study & review"
+                  value="Study Material and detailed answer review"
                 />
               </div>
             </div>
@@ -593,29 +660,28 @@ export default function HomePage() {
               <div className="relative space-y-4 text-xs">
                 <div className="grid gap-2 text-[11px]">
                   <InlineListItem
-                    label="Where data lives"
-                    value="In a secure, cloud-hosted database"
+                    label="Progress saved"
+                    value="Your history and scores stay linked to your account"
                   />
                   <InlineListItem
-                    label="How it is protected"
-                    value="Encrypted in transit with role-based access"
+                    label="Mock tests"
+                    value="Repeat tests as many times as you need during access"
                   />
                   <InlineListItem
-                    label="Who can see it"
-                    value="You, and your instructor only if you connect"
+                    label="Study Material"
+                    value="Read the matching theory chapters after each test"
                   />
                   <InlineListItem
-                    label="Reliability"
-                    value="Monitored uptime and safe deployments"
+                    label="Decision Trainer"
+                    value="Short scenarios to fix the mistakes you make in tests"
                   />
                   <InlineListItem
-                    label="Experience"
-                    value="Responsive, mobile-first design with clear feedback"
+                    label="Your data"
+                    value="Stored securely in your DriveWise account when you log in"
                   />
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Engineered for predictable performance, smooth onboarding, and
-                  safe use in both personal accounts and driving schools.
+                  Everything is designed so you can focus on learning for the Kosovo theory exam without losing your progress.
                 </p>
               </div>
             </GlassCard>
@@ -632,15 +698,13 @@ export default function HomePage() {
               <div className="pointer-events-none hidden md:block absolute -left-4 top-2 h-10 w-px bg-gradient-to-b from-orange-500/40 via-orange-400/10 to-transparent" />
               <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-black/60 px-3 py-1 text-[11px] text-muted-foreground">
                 <span className="h-1 w-6 rounded-full bg-gradient-to-r from-orange-500 to-orange-300" />
-                Built around how Kosovo learners actually study
+                {t("home.pillars.badge")}
               </div>
               <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-                Everything you need, in three focused pillars.
+                {t("home.pillars.title")}
               </h2>
               <p className="text-sm md:text-base text-muted-foreground max-w-2xl">
-                Exam-style practice, decision-making scenarios, and clear
-                analytics work together so you always know what to study next —
-                instead of guessing.
+                {t("home.pillars.body")}
               </p>
             </div>
 

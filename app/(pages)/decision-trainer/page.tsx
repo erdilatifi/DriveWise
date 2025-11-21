@@ -540,7 +540,7 @@ export default function DecisionTrainerPage() {
                 {t('trainer.title')}
               </h1>
               <p className="text-sm md:text-base text-muted-foreground">
-                {t('dashboard.keepGoing')}
+                {t('trainer.heroExplainer')}
               </p>
             </div>
             <div className="relative">
@@ -808,60 +808,81 @@ export default function DecisionTrainerPage() {
             </div>
           </GlassCard>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Object.entries(CATEGORY_INFO).map(([key, info]) => {
-              const categoryCount = scenarios.filter((scenario) => scenario.category === key).length;
-              const progressForCategory = (categoryProgressData || []).find((p) => p.category === key);
-              const totalAttempts = progressForCategory?.total_attempts ?? 0;
-              const correctAnswers = progressForCategory?.correct_answers ?? 0;
-              const accuracy = totalAttempts > 0 ? Math.round((correctAnswers / totalAttempts) * 100) : null;
-              let statusLabel = t('trainer.statusNew');
-              let statusClass = 'bg-muted text-muted-foreground';
-              if (totalAttempts > 0 && accuracy !== null) {
-                if (accuracy >= 80) {
-                  statusLabel = t('trainer.statusStrong');
-                  statusClass = 'bg-green-500/10 text-green-600 border border-green-500/30';
-                } else if (accuracy >= 50) {
-                  statusLabel = t('trainer.statusImproving');
-                  statusClass = 'bg-blue-500/10 text-blue-600 border border-blue-500/30';
-                } else {
-                  statusLabel = t('trainer.statusNeedsAttention');
-                  statusClass = 'bg-yellow-500/10 text-yellow-600 border border-yellow-500/30';
-                }
-              }
-              return (
+          {scenariosLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
                 <GlassCard
-                  key={key}
-                  className="p-6 md:p-7 border border-border/80 bg-black/80 hover:border-primary/60 hover:shadow-[0_22px_60px_rgba(0,0,0,0.9)] transition-all cursor-pointer"
-                  onClick={() => startCategory(key as Category)}
+                  key={i}
+                  className="p-6 md:p-7 border border-border/80 bg-black/80"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-                      {CATEGORY_ICONS[key as Category]}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg md:text-xl font-semibold mb-1">{info.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-2">{info.description}</p>
-                      <div className="flex flex-wrap items-center gap-2 mb-2 text-xs">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${statusClass}`}
-                        >
-                          {statusLabel}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {categoryCount} {t('trainer.scenariosShort')}
-                          {accuracy !== null && ` · ${accuracy}% ${t('trainer.accuracyShort')}`}
-                        </span>
-                      </div>
-                      <Button size="sm" className="w-full sm:w-auto">
-                        {t('categories.startPractice')} →
-                      </Button>
+                    <Skeleton className="w-12 h-12 md:w-14 md:h-14 rounded-2xl" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-5 w-32" />
+                      <Skeleton className="h-3 w-40" />
+                      <Skeleton className="h-3 w-28" />
+                      <Skeleton className="h-8 w-32" />
                     </div>
                   </div>
                 </GlassCard>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Object.entries(CATEGORY_INFO).map(([key, info]) => {
+                const categoryCount = scenarios.filter((scenario) => scenario.category === key).length;
+                const progressForCategory = (categoryProgressData || []).find((p) => p.category === key);
+                const totalAttempts = progressForCategory?.total_attempts ?? 0;
+                const correctAnswers = progressForCategory?.correct_answers ?? 0;
+                const accuracy = totalAttempts > 0 ? Math.round((correctAnswers / totalAttempts) * 100) : null;
+                let statusLabel = t('trainer.statusNew');
+                let statusClass = 'bg-muted text-muted-foreground';
+                if (totalAttempts > 0 && accuracy !== null) {
+                  if (accuracy >= 80) {
+                    statusLabel = t('trainer.statusStrong');
+                    statusClass = 'bg-green-500/10 text-green-600 border border-green-500/30';
+                  } else if (accuracy >= 50) {
+                    statusLabel = t('trainer.statusImproving');
+                    statusClass = 'bg-blue-500/10 text-blue-600 border border-blue-500/30';
+                  } else {
+                    statusLabel = t('trainer.statusNeedsAttention');
+                    statusClass = 'bg-yellow-500/10 text-yellow-600 border border-yellow-500/30';
+                  }
+                }
+                return (
+                  <GlassCard
+                    key={key}
+                    className="p-6 md:p-7 border border-border/80 bg-black/80 hover:border-primary/60 hover:shadow-[0_22px_60px_rgba(0,0,0,0.9)] transition-all cursor-pointer"
+                    onClick={() => startCategory(key as Category)}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                        {CATEGORY_ICONS[key as Category]}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg md:text-xl font-semibold mb-1">{info.name}</h3>
+                        <p className="text-sm text-muted-foreground mb-2">{info.description}</p>
+                        <div className="flex flex-wrap items-center gap-2 mb-2 text-xs">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${statusClass}`}
+                          >
+                            {statusLabel}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {categoryCount} {t('trainer.scenariosShort')}
+                            {accuracy !== null && ` · ${accuracy}% ${t('trainer.accuracyShort')}`}
+                          </span>
+                        </div>
+                        <Button size="sm" className="w-full sm:w-auto">
+                          {t('categories.startPractice')} →
+                        </Button>
+                      </div>
+                    </div>
+                  </GlassCard>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     );

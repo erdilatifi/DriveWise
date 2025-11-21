@@ -5,20 +5,9 @@ export async function proxy(request: NextRequest) {
   return await updateSession(request);
 }
 
+// Follow Supabase + Next.js 13 App Router recommendation:
+// run updateSession on all application routes so PKCE code exchanges
+// and auth cookies stay in sync for every request (including /login?code=...).
 export const config = {
-  matcher: [
-    // Match only pages that need auth protection, excluding:
-    // - API routes
-    // - Static files (_next/static, _next/image)
-    // - Public assets (favicon, images)
-    // - Public pages (/, /login, /register)
-    '/dashboard/:path*',
-    '/profile/:path*',
-    '/admin/:path*',
-    '/category/:path*',
-    '/test/:path*',
-    '/history/:path*',
-    '/decision-trainer/:path*',
-    '/materials/:path*',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

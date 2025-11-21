@@ -28,7 +28,7 @@ export default function LeaderboardPage() {
     }
   }, [user, authLoading, router]);
 
-  if (authLoading) {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -82,8 +82,6 @@ export default function LeaderboardPage() {
       </div>
     );
   }
-
-  if (!user) return null;
 
   const formatTime = (seconds: number) => {
     if (!seconds) return '--';

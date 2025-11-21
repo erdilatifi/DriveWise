@@ -74,6 +74,24 @@
 @layer base {
   * {
     border-color: hsl(var(--border));
+    /* Global scrollbar styling (respects theme colors) */
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary)) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-image: linear-gradient(to bottom, hsl(var(--primary)), hsl(var(--accent)));
+    border-radius: 999px;
+    border: 2px solid rgba(5, 5, 16, 0.95);
   }
 
   body {

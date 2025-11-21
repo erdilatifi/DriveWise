@@ -14,35 +14,33 @@ import { useAuth } from '@/contexts/auth-context';
 
 export default function RegisterPage() {
   const { t } = useLanguage();
-  const { signUp, user, loading: authLoading } = useAuth();
+  const { signUp } = useAuth();
   const router = useRouter();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (!authLoading && user) {
-      router.push('/dashboard');
-    }
-  }, [user, authLoading, router]);
+  type Status = 'idle' | 'loading' | 'success' | 'error';
+  const [status, setStatus] = useState<Status>('idle');
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setStatus('loading');
+    setStatusMessage(null);
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setStatus('error');
+      setStatusMessage('Passwords do not match');
       setLoading(false);
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setStatus('error');
+      setStatusMessage('Password must be at least 6 characters');
       setLoading(false);
       return;
     }
@@ -50,16 +48,19 @@ export default function RegisterPage() {
     const { error: signUpError } = await signUp(email, password, fullName);
 
     if (signUpError) {
-      setError(signUpError.message || 'Failed to create account');
+      setStatus('error');
+      setStatusMessage(signUpError.message || 'Failed to create account');
       toast.error('Registration failed', {
         description: signUpError.message || 'Failed to create account',
       });
     } else {
+      setStatus('success');
+      setStatusMessage(
+        `Your account has been created. We've sent a confirmation link to ${email}. Please open that email and click the link to activate your account, then come back here and sign in. If you don't see it, check your spam or junk folder.`,
+      );
       toast.success('Account created!', {
-        description: 'Please check your email to confirm your account before logging in.',
-        duration: 6000,
+        description: 'Please check your email and confirm your account before logging in.',
       });
-      router.push('/login');
     }
 
     setLoading(false);
@@ -130,10 +131,17 @@ export default function RegisterPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleRegister} className="space-y-4">
-              {error && (
-                <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-                  {error}
+            <form onSubmit={handleRegister} className="space-y-4" autoComplete="on">
+              {status !== 'idle' && statusMessage && (
+                <div
+                  className={`p-3 rounded-md border text-sm ${{
+                    success: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/40',
+                    error: 'bg-destructive/10 text-destructive border-destructive/40',
+                    loading: 'bg-muted/10 text-muted-foreground border-border/60',
+                    idle: '',
+                  }[status]}`}
+                >
+                  {statusMessage}
                 </div>
               )}
 
@@ -146,7 +154,8 @@ export default function RegisterPage() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
-                  disabled={loading}
+                  disabled={loading || status === 'success'}
+                  autoComplete="name"
                 />
               </div>
 
@@ -159,7 +168,8 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  disabled={loading}
+                  disabled={loading || status === 'success'}
+                  autoComplete="email"
                 />
               </div>
 
@@ -172,7 +182,8 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  disabled={loading}
+                  disabled={loading || status === 'success'}
+                  autoComplete="new-password"
                 />
               </div>
 
@@ -185,16 +196,21 @@ export default function RegisterPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  disabled={loading}
+                  disabled={loading || status === 'success'}
+                  autoComplete="new-password"
                 />
               </div>
 
               <Button
                 type="submit"
                 className="w-full shadow-lg shadow-primary/20 h-12 text-base font-semibold"
-                disabled={loading}
+                disabled={loading || status === 'success'}
               >
-                {loading ? t('auth.creatingAccount') : t('auth.signUp')}
+                {status === 'success'
+                  ? 'Check your email'
+                  : loading
+                  ? t('auth.creatingAccount')
+                  : t('auth.signUp')}
               </Button>
 
               <div className="text-center text-sm pt-4">

@@ -444,7 +444,7 @@ export function useTestCount(category: string, enabled: boolean = true) {
       
       // Get unique test numbers
       const uniqueTests = [...new Set((data || []).map(q => q.test_number))];
-      return uniqueTests.length || 10;
+      return uniqueTests.length;
     },
     staleTime: 10 * 60 * 1000, // 10 minutes - test count doesn't change often
     enabled: enabled && !!category,

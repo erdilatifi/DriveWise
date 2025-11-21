@@ -4,6 +4,7 @@ import { use, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import Link from 'next/link';
 import { Play, Clock, CheckCircle, Target, Shuffle, Brain } from 'lucide-react';
@@ -32,7 +33,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
   }
 
   // Use TanStack Query for data fetching (must be called unconditionally before any early returns)
-  const { data: testCount = 10, isLoading: loading } = useTestCount(category);
+  const { data: testCount = 0, isLoading: loading } = useTestCount(category);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -124,44 +125,71 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                   <p className="text-sm text-muted-foreground">
                     {loading
                       ? 'Loading tests...'
-                      : `Choose from ${testCount} exam-style mock tests for this category.`}
+                      : testCount > 0
+                        ? `Choose from ${testCount} exam-style mock tests for this category.`
+                        : t('category.noTestsDescription')}
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {mockTests.map((testNumber) => (
-                  <Link
-                    key={testNumber}
-                    href={`/test/${category.toLowerCase()}/${testNumber}`}
-                    className="group"
-                  >
-                    <Card className="relative h-full border border-border/80 bg-black/75 hover:border-primary/60 transition-colors duration-300 overflow-hidden">
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Card
+                      key={i}
+                      className="relative h-full border border-border/80 bg-black/75 overflow-hidden"
+                    >
                       <CardContent className="relative flex flex-col items-center justify-center px-6 py-7 space-y-4">
-                        <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/40 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                          <span className="text-2xl font-semibold text-primary">
-                            {testNumber}
-                          </span>
+                        <Skeleton className="w-16 h-16 rounded-full" />
+                        <div className="w-full space-y-2">
+                          <Skeleton className="h-4 w-20 mx-auto" />
+                          <Skeleton className="h-3 w-24 mx-auto" />
                         </div>
-                        <div className="text-center space-y-1">
-                          <p className="text-sm font-medium">Test {testNumber}</p>
-                          <p className="text-xs text-muted-foreground">
-                            10 {t('category.questions')}
-                          </p>
-                        </div>
-                        <Button
-                          size="sm"
-                          className="w-full text-xs shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-shadow"
-                        >
-                          <Play className="w-3 h-3 mr-1" />
-                          {t('category.start')}
-                        </Button>
+                        <Skeleton className="h-8 w-full rounded-md" />
                       </CardContent>
                     </Card>
-                  </Link>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : testCount === 0 ? (
+                <GlassCard className="p-6 border border-border/80 bg-black/80 mt-4">
+                  <h3 className="text-lg font-semibold mb-1">{t('category.noTestsTitle')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('category.noTestsDescription')}</p>
+                </GlassCard>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                  {mockTests.map((testNumber) => (
+                    <Link
+                      key={testNumber}
+                      href={`/test/${category.toLowerCase()}/${testNumber}`}
+                      className="group"
+                    >
+                      <Card className="relative h-full border border-border/80 bg-black/75 hover:border-primary/60 transition-colors duration-300 overflow-hidden">
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        <CardContent className="relative flex flex-col items-center justify-center px-6 py-7 space-y-4">
+                          <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/40 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                            <span className="text-2xl font-semibold text-primary">
+                              {testNumber}
+                            </span>
+                          </div>
+                          <div className="text-center space-y-1">
+                            <p className="text-sm font-medium">Test {testNumber}</p>
+                            <p className="text-xs text-muted-foreground">
+                              10 {t('category.questions')}
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            className="w-full text-xs shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-shadow"
+                          >
+                            <Play className="w-3 h-3 mr-1" />
+                            {t('category.start')}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Mixed & Personalized modes */}

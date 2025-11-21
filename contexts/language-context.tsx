@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback, useMemo, useEffect } from 'react';
 
 type Language = 'sq' | 'en';
 
@@ -19,6 +19,11 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.home': 'Home',
     'nav.dashboard': 'Dashboard',
     'nav.materials': 'Materials',
+    'nav.tests': 'Tests',
+    'nav.decisionTrainer': 'Decision Trainer',
+    'nav.pricing': 'Pricing',
+    'nav.account': 'Account',
+    'nav.admin': 'Admin',
     'nav.login': 'Login',
     'nav.logout': 'Logout',
     'nav.getStarted': 'Get Started',
@@ -31,6 +36,25 @@ const translations: Record<Language, Record<string, string>> = {
     'home.hero.description': 'Practice with comprehensive mock tests, track your progress, and pass your exam with confidence. Available in Albanian and English.',
     'home.hero.startLearning': 'Start Learning Free',
     'home.hero.browseCategories': 'Browse Categories',
+    'home.hero.mobileComingSoon': 'Mobile version coming soon on Android and iOS.',
+    'home.hero.mobileBadge': 'Coming soon',
+    'home.hero.appStoreCta': 'Download on the App Store',
+    'home.hero.playStoreCta': 'Get it on Google Play',
+    'home.hero.newHereTitle': 'New here? Start with a free test and one Study Material chapter.',
+    'home.hero.newHereCtaCategory': 'Start Category B test',
+    'home.hero.newHereCtaMaterials': 'Open Study Material',
+    'home.benefit.badge': 'Practice for the real Kosovo exam',
+    'home.benefit.title': 'Clear steps from first test to exam day.',
+    'home.benefit.body': 'Mock tests, review tools and Study Material work together so you always know what to do next.',
+    'home.trust.badge': 'What you get with DriveWise',
+    'home.trust.title': 'Everything you unlock when you join.',
+    'home.trust.body': 'You get realistic mock tests, Decision Trainer scenarios, Study Material and a personal dashboard that saves your progress securely to your account.',
+    'home.pillars.badge': 'Three tools that work together',
+    'home.pillars.title': 'Practice, learn from mistakes, then fix them.',
+    'home.pillars.body': 'Mock tests show your level, Decision Trainer trains your decisions, and analytics point you to the right chapters to study.',
+    'trainer.heroExplainer': 'Short scenario questions that train your decisions. Sometimes more than one answer can be correct.',
+    'pricing.currentPlanFor': 'Current plan for',
+    'pricing.until': '· until',
     'plans.hero.badge': 'Smart plans for serious learners',
     'plans.hero.title': 'Choose your plan',
     'plans.hero.subtitle':
@@ -67,6 +91,8 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.backToHome': 'Back to home',
     'auth.signingIn': 'Signing in...',
     'auth.creatingAccount': 'Creating account...',
+    'auth.logoutSuccess': 'You have been logged out successfully.',
+    'auth.logoutError': 'Error while logging out.',
     
     // Dashboard
     'dashboard.welcome': 'Welcome back',
@@ -182,6 +208,8 @@ const translations: Record<Language, Record<string, string>> = {
     'category.selectTestDesc': 'Choose from 10 comprehensive mock tests',
     'category.questions': 'Questions',
     'category.start': 'Start',
+    'category.noTestsTitle': 'No tests available yet',
+    'category.noTestsDescription': 'Your instructor or admin has not added mock tests for this category yet.',
     
     // Test Page
     'test.exitTest': 'Exit Test',
@@ -314,6 +342,12 @@ const translations: Record<Language, Record<string, string>> = {
     'trainer.yourSelectionLabel': 'Your selection:',
     'trainer.noSelectionLabel': 'No options selected',
     'trainer.reviewChapterCta': 'Review chapter',
+    'trainer.premiumRequiredTitle': 'Unlock Decision Trainer',
+    'trainer.premiumRequiredDescription': 'Decision Trainer is part of the paid plan. With any active plan you get full access to all scenarios, smarter practice modes, and detailed reviews.',
+    'trainer.premiumBenefitUnlimited': 'Unlimited Decision Trainer practice across all categories.',
+    'trainer.premiumBenefitStudy': 'Connect scenarios with matching study chapters and test reviews.',
+    'trainer.premiumBenefitFocus': 'Smart modes that focus on your weak points and timing.',
+    'trainer.premiumUpgradeCta': 'See plans',
     
     // Leaderboard (English)
     'leaderboard.backToTrainer': 'Back to Trainer',
@@ -333,6 +367,11 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.home': 'Ballina',
     'nav.dashboard': 'Paneli',
     'nav.materials': 'Materiale',
+    'nav.tests': 'Testet',
+    'nav.decisionTrainer': 'Decision Trainer',
+    'nav.pricing': 'Çmimet',
+    'nav.account': 'Llogaria',
+    'nav.admin': 'Admin',
     'nav.login': 'Hyrje',
     'nav.logout': 'Dalje',
     'nav.getStarted': 'Fillo Tani',
@@ -345,6 +384,25 @@ const translations: Record<Language, Record<string, string>> = {
     'home.hero.description': 'Praktiko me teste provuese të plota, gjurmo përparimin tënd dhe kalo provimin me vetëbesim. Në gjuhën shqipe dhe angleze.',
     'home.hero.startLearning': 'Fillo Mësimin Falas',
     'home.hero.browseCategories': 'Shfleto Kategoritë',
+    'home.hero.mobileComingSoon': 'Versioni mobil së shpejti në Android dhe iOS.',
+    'home.hero.mobileBadge': 'Së shpejti',
+    'home.hero.appStoreCta': 'Shkarko në App Store',
+    'home.hero.playStoreCta': 'Merr në Google Play',
+    'home.hero.newHereTitle': 'I ri këtu? Fillo me një test falas dhe një kapitull Materiale Mësimore.',
+    'home.hero.newHereCtaCategory': 'Fillo testin e Kategorisë B',
+    'home.hero.newHereCtaMaterials': 'Hap Materialet Mësimore',
+    'home.benefit.badge': 'Praktikë për provimin real në Kosovë',
+    'home.benefit.title': 'Hapa të qartë nga testi i parë deri në ditën e provimit.',
+    'home.benefit.body': 'Testet provuese, rishikimi dhe Materialet Mësimore punojnë bashkë që të dish gjithmonë çfarë të bësh më pas.',
+    'home.trust.badge': 'Çfarë merr me DriveWise',
+    'home.trust.title': 'Çfarë zhbllokon sapo të bashkohesh.',
+    'home.trust.body': 'Merr teste provuese reale, Decision Trainer, Materiale Mësimore dhe një panel personal ku ruhet sigurt i gjithë progresi yt.',
+    'home.pillars.badge': 'Tre mjete që punojnë bashkë',
+    'home.pillars.title': 'Praktiko, mëso nga gabimet dhe rregullo ato.',
+    'home.pillars.body': 'Testet provuese tregojnë nivelin, Decision Trainer stërvit vendimet dhe analitika të dërgon te kapitujt e duhur për të mësuar.',
+    'trainer.heroExplainer': 'Pyetje të shkurtra skenari që stërvisin vendimet e tua. Ndonjëherë më shumë se një përgjigje mund të jetë e saktë.',
+    'pricing.currentPlanFor': 'Plani aktual për',
+    'pricing.until': '· deri më',
     'plans.hero.badge': 'Plane të zgjuara për nxënës seriozë',
     'plans.hero.title': 'Zgjidh planin tënd',
     'plans.hero.subtitle':
@@ -412,6 +470,8 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.backToHome': 'Kthehu në ballina',
     'auth.signingIn': 'Duke hyrë...',
     'auth.creatingAccount': 'Duke krijuar llogari...',
+    'auth.logoutSuccess': 'U çkyçët me sukses.',
+    'auth.logoutError': 'Gabim gjatë çkyçjes.',
     
     // Dashboard
     'dashboard.welcome': 'Mirë se erdhe përsëri',
@@ -518,6 +578,12 @@ const translations: Record<Language, Record<string, string>> = {
     'trainer.modeWeak': 'Pikat e dobëta (5 pyetje)',
     'trainer.scenariosShort': 'skenarë',
     'trainer.accuracyShort': 'saktësi',
+    'trainer.premiumRequiredTitle': 'Shkyç Decision Trainer',
+    'trainer.premiumRequiredDescription': 'Decision Trainer është pjesë e planit të paguar. Me çdo plan aktiv ke qasje të plotë në të gjitha skenarët, mënyrat e zgjuara të praktikës dhe rishikimet e detajuara.',
+    'trainer.premiumBenefitUnlimited': 'Praktikë e pakufizuar në Decision Trainer për të gjitha kategoritë.',
+    'trainer.premiumBenefitStudy': 'Lidh skenarët me kapitujt përkatës dhe rishikimin e testeve.',
+    'trainer.premiumBenefitFocus': 'Mënyra të zgjuara që fokusohen te pikat e dobëta dhe koha.',
+    'trainer.premiumUpgradeCta': 'Shiko planet',
 
     // Category Page
     'category.licenseCategory': 'Kategoria e Patentës',
@@ -527,6 +593,8 @@ const translations: Record<Language, Record<string, string>> = {
     'category.selectTestDesc': 'Zgjidh nga 10 teste gjithëpërfshirëse',
     'category.questions': 'Pyetje',
     'category.start': 'Fillo',
+    'category.noTestsTitle': 'Ende nuk ka teste',
+    'category.noTestsDescription': 'Instruktori ose administratori yt nuk ka shtuar ende teste provuese për këtë kategori.',
     
     // Test Page
     'test.exitTest': 'Dil nga Testi',
@@ -644,18 +712,23 @@ const translations: Record<Language, Record<string, string>> = {
 };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(() => {
-    if (typeof window === 'undefined') return 'en';
+  // Start with a stable default for SSR and first client render to avoid hydration mismatches
+  const [language, setLanguageState] = useState<Language>('en');
+
+  // After mount, read the persisted language from localStorage (client-only)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
     const savedLanguage = localStorage.getItem('language') as Language | null;
     if (savedLanguage === 'sq' || savedLanguage === 'en') {
-      return savedLanguage;
+      setLanguageState(savedLanguage);
     }
-    return 'en';
-  });
+  }, []);
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('language', lang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('language', lang);
+    }
   }, []);
 
   const t = useCallback((key: string): string => {

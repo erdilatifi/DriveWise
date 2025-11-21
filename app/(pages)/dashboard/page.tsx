@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -20,6 +20,7 @@ export default function DashboardPage() {
   const { t } = useLanguage();
   const { user, userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   
   // Use TanStack Query for data fetching
   const { data: dashboardData, isLoading: loading, error } = useDashboardStats(user?.id);
@@ -355,47 +356,49 @@ export default function DashboardPage() {
                           <p className="text-sm text-muted-foreground">{t('dashboard.weeklyProgressDesc')}</p>
                         </div>
                       </div>
-                      <ResponsiveContainer width="100%" height={240}>
-                        <LineChart data={progressData} margin={{ top: 8, left: -20, right: 10 }}>
-                          <CartesianGrid
-                            stroke="#27272a"
-                            strokeDasharray="3 3"
-                            vertical={false}
-                          />
-                          <XAxis
-                            dataKey="date"
-                            tickLine={false}
-                            axisLine={false}
-                            tick={{ fill: "#a1a1aa", fontSize: 10 }}
-                          />
-                          <YAxis
-                            tickLine={false}
-                            axisLine={false}
-                            tick={{ fill: "#71717a", fontSize: 10 }}
-                            tickFormatter={(v) => `${v}%`}
-                          />
-                          <Tooltip
-                            cursor={{ stroke: "#3f3f46", strokeWidth: 1 }}
-                            contentStyle={{
-                              backgroundColor: "#020617",
-                              border: "1px solid #27272a",
-                              borderRadius: "0.5rem",
-                              padding: "0.35rem 0.5rem",
-                            }}
-                            labelStyle={{ color: "#e5e5e5", fontSize: 11 }}
-                            itemStyle={{ color: "#fed7aa", fontSize: 11 }}
-                            formatter={(value: number) => [`${value}%`, "Score"]}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="score"
-                            stroke="#fb923c"
-                            strokeWidth={2}
-                            dot={{ r: 3, strokeWidth: 1, stroke: "#fde68a", fill: "#fb923c" }}
-                            activeDot={{ r: 4 }}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
+                      <div className="relative w-full h-60">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={progressData} margin={{ top: 8, left: -20, right: 10 }}>
+                            <CartesianGrid
+                              stroke="#27272a"
+                              strokeDasharray="3 3"
+                              vertical={false}
+                            />
+                            <XAxis
+                              dataKey="date"
+                              tickLine={false}
+                              axisLine={false}
+                              tick={{ fill: "#a1a1aa", fontSize: 10 }}
+                            />
+                            <YAxis
+                              tickLine={false}
+                              axisLine={false}
+                              tick={{ fill: "#71717a", fontSize: 10 }}
+                              tickFormatter={(v) => `${v}%`}
+                            />
+                            <Tooltip
+                              cursor={{ stroke: "#3f3f46", strokeWidth: 1 }}
+                              contentStyle={{
+                                backgroundColor: "#020617",
+                                border: "1px solid #27272a",
+                                borderRadius: "0.5rem",
+                                padding: "0.35rem 0.5rem",
+                              }}
+                              labelStyle={{ color: "#e5e5e5", fontSize: 11 }}
+                              itemStyle={{ color: "#fed7aa", fontSize: 11 }}
+                              formatter={(value: number) => [`${value}%`, "Score"]}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="score"
+                              stroke="#fb923c"
+                              strokeWidth={2}
+                              dot={{ r: 3, strokeWidth: 1, stroke: "#fde68a", fill: "#fb923c" }}
+                              activeDot={{ r: 4 }}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
                     </GlassCard>
                   </motion.div>
                 </div>
@@ -499,36 +502,38 @@ export default function DashboardPage() {
                         <p className="text-sm text-muted-foreground">{t('dashboard.passRateDesc')}</p>
                       </div>
                     </div>
-                    <ResponsiveContainer width="100%" height={240}>
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: t('dashboard.passed'), value: stats.passedTests, color: 'hsl(var(--primary))' },
-                            { name: t('dashboard.failed'), value: stats.failedTests, color: 'hsl(var(--destructive))' }
-                          ]}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={90}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          <Cell fill="hsl(var(--primary))" />
-                          <Cell fill="hsl(var(--destructive))" />
-                        </Pie>
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'hsl(var(--card))', 
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '12px',
-                            padding: '8px 12px'
-                          }}
-                          labelStyle={{ color: '#fff' }}
-                          itemStyle={{ color: '#fff' }}
-                          formatter={(value: number) => [`${value}`, 'Count']}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
+                    <div className="relative w-full h-60">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: t('dashboard.passed'), value: stats.passedTests, color: 'hsl(var(--primary))' },
+                              { name: t('dashboard.failed'), value: stats.failedTests, color: 'hsl(var(--destructive))' }
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={90}
+                            paddingAngle={5}
+                            dataKey="value"
+                          >
+                            <Cell fill="hsl(var(--primary))" />
+                            <Cell fill="hsl(var(--destructive))" />
+                          </Pie>
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'hsl(var(--card))', 
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '12px',
+                              padding: '8px 12px'
+                            }}
+                            labelStyle={{ color: '#fff' }}
+                            itemStyle={{ color: '#fff' }}
+                            formatter={(value: number) => [`${value}`, 'Count']}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
                     <div className="flex justify-center gap-6 mt-4">
                       <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full bg-primary" />
@@ -549,27 +554,31 @@ export default function DashboardPage() {
                   transition={{ delay: 0.68 }}
                 >
                   <GlassCard className="p-6 border border-border/80 bg-black/80 h-full flex flex-col justify-between">
-                    <div className="space-y-2">
-                      <div className="h-1 w-16 rounded-full bg-gradient-to-r from-orange-500 to-amber-300" />
-                      <div>
-                        <h2 className="text-lg font-semibold mb-1">{t('dashboard.onboardingTitle')}</h2>
-                        <p className="text-sm text-muted-foreground">{t('dashboard.onboardingSubtitle')}</p>
+                    <div className="space-y-3">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-black/60 px-2.5 py-0.5 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                        <span className="h-1 w-6 rounded-full bg-gradient-to-r from-orange-500 to-amber-300" />
+                        <span>{t('dashboard.onboardingTitle')}</span>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {t('dashboard.onboardingSubtitle')}
+                        </p>
                       </div>
                     </div>
-                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Button asChild className="shadow-sm">
+                    <div className="mt-5 flex flex-col gap-3 text-sm">
+                      <Button asChild className="flex shadow-sm justify-between">
                         <Link href="/materials">
-                          {t('materials.title')}
+                          <span>{t('materials.title')}</span>
                         </Link>
                       </Button>
-                      <Button asChild variant="outline" className="shadow-sm">
+                      <Button asChild variant="outline" className="flex shadow-sm justify-between">
                         <Link href="/decision-trainer">
-                          {t('trainer.title')}
+                          <span>{t('trainer.title')}</span>
                         </Link>
                       </Button>
-                      <Button asChild variant="outline" className="shadow-sm sm:col-span-2">
-                        <Link href="/">
-                          {t('categories.title')}
+                      <Button asChild variant="outline" className="flex shadow-sm justify-between">
+                        <Link href="/category">
+                          <span>{t('categories.title')}</span>
                         </Link>
                       </Button>
                     </div>
@@ -583,38 +592,53 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-12">
                 <div className="xl:col-span-2 space-y-8">
                   {/* Empty State / Onboarding for new users */}
-                  <GlassCard className="p-10">
-                    <div className="flex flex-col lg:flex-row gap-8 items-start lg:items-center">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-3">
-                          <Trophy className="w-10 h-10 text-primary" />
-                          <h2 className="text-2xl font-bold">
-                            {t('dashboard.onboardingTitle')}
-                          </h2>
+                  <GlassCard className="p-7 md:p-8 border border-border/80 bg-black/80 relative overflow-hidden">
+                    <div className="pointer-events-none absolute -right-24 -top-24 h-40 w-40 rounded-full bg-primary/20 blur-3xl opacity-60" />
+                    <div className="relative flex flex-col lg:flex-row gap-6 lg:gap-8 items-start lg:items-center">
+                      <div className="flex-1 space-y-4">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-black/60 px-2.5 py-0.5 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                          <span className="h-1 w-6 rounded-full bg-gradient-to-r from-orange-500 to-amber-300" />
+                          <span>{t('dashboard.onboardingTitle')}</span>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          {t('dashboard.onboardingSubtitle')}
-                        </p>
-                        <div className="space-y-1 text-sm text-muted-foreground">
-                          <p>{t('dashboard.onboardingStep1')}</p>
-                          <p>{t('dashboard.onboardingStep2')}</p>
-                          <p>{t('dashboard.onboardingStep3')}</p>
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 hidden sm:block">
+                            <Trophy className="w-8 h-8 text-primary" />
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              {t('dashboard.onboardingSubtitle')}
+                            </p>
+                            <ul className="space-y-1.5 text-sm text-muted-foreground">
+                              <li className="flex items-start gap-2">
+                                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                                <span>{t('dashboard.onboardingStep1')}</span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-orange-400" />
+                                <span>{t('dashboard.onboardingStep2')}</span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-sky-400" />
+                                <span>{t('dashboard.onboardingStep3')}</span>
+                              </li>
+                            </ul>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                        <Button asChild className="flex-1 shadow-sm">
+                      <div className="flex flex-col gap-3 w-full lg:w-auto text-sm">
+                        <Button asChild className="flex shadow-sm justify-between">
                           <Link href="/materials">
-                            {t('materials.title')}
+                            <span>{t('materials.title')}</span>
                           </Link>
                         </Button>
-                        <Button asChild variant="outline" className="flex-1 shadow-sm">
+                        <Button asChild variant="outline" className="flex shadow-sm justify-between">
                           <Link href="/decision-trainer">
-                            {t('trainer.title')}
+                            <span>{t('trainer.title')}</span>
                           </Link>
                         </Button>
-                        <Button asChild variant="outline" className="flex-1 shadow-sm">
-                          <Link href="/">
-                            {t('categories.title')}
+                        <Button asChild variant="outline" className="flex shadow-sm justify-between">
+                          <Link href="/category">
+                            <span>{t('categories.title')}</span>
                           </Link>
                         </Button>
                       </div>
