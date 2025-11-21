@@ -1,5 +1,3 @@
-'use server';
-
 import crypto from 'crypto';
 
 export interface PayseraConfig {
