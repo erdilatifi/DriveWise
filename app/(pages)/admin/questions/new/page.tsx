@@ -22,6 +22,7 @@ import { useCreateQuestion, QuestionInput } from '@/hooks/use-questions';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, FileJson, Upload, X, CheckSquare } from 'lucide-react';
 import Link from 'next/link';
+import { questionSchema } from '@/lib/validations/question';
 import {
   Dialog,
   DialogContent,
@@ -88,57 +89,42 @@ export default function NewQuestionPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Comprehensive validation
-    const errors: string[] = [];
-    
+    // Zod Validation
+    const validationResult = questionSchema.safeParse({
+      ...formData,
+      question_text: formData.question_text || formData.question_text_sq || formData.question_text_en, // Fallback
+      option_a: formData.option_a || formData.option_a_sq || formData.option_a_en,
+      option_b: formData.option_b || formData.option_b_sq || formData.option_b_en,
+      option_c: formData.option_c || formData.option_c_sq || formData.option_c_en,
+      correct_answers: multipleAnswers ? Array.from(selectedAnswers) : undefined,
+      correct_answer: multipleAnswers ? Array.from(selectedAnswers)[0] : formData.correct_answer,
+    });
+
+    if (!validationResult.success) {
+      // Use .issues as fallback if .errors is not typed correctly in this version
+      const issues = validationResult.error.issues;
+      const firstError = issues[0]?.message || "Validation error";
+      toast.error(firstError);
+      console.error('Validation errors:', issues);
+      return;
+    }
+
+    // Prepare data for submission
     const qEn = formData.question_text_en?.trim() || '';
     const qSq = formData.question_text_sq?.trim() || '';
     const baseQuestion = qSq || qEn;
-    if (!baseQuestion) {
-      errors.push('Question text (at least one language) is required');
-    }
+
     const optAEn = formData.option_a_en?.trim() || '';
     const optASq = formData.option_a_sq?.trim() || '';
     const baseOptionA = optASq || optAEn;
-    if (!baseOptionA) {
-      errors.push('Option A (at least one language) is required');
-    }
+
     const optBEn = formData.option_b_en?.trim() || '';
     const optBSq = formData.option_b_sq?.trim() || '';
     const baseOptionB = optBSq || optBEn;
-    if (!baseOptionB) {
-      errors.push('Option B (at least one language) is required');
-    }
+
     const optCEn = formData.option_c_en?.trim() || '';
     const optCSq = formData.option_c_sq?.trim() || '';
     const baseOptionC = optCSq || optCEn;
-    if (!baseOptionC) {
-      errors.push('Option C (at least one language) is required');
-    }
-    if (multipleAnswers) {
-      if (selectedAnswers.size === 0) {
-        errors.push('Please select at least one correct answer');
-      }
-    } else {
-      if (!formData.correct_answer) {
-        errors.push('Please select the correct answer');
-      }
-      if (!['A', 'B', 'C'].includes(formData.correct_answer)) {
-        errors.push('Correct answer must be A, B, or C');
-      }
-    }
-    if (!formData.category) {
-      errors.push('Category is required');
-    }
-    if (!formData.test_number || formData.test_number < 1 || formData.test_number > 10) {
-      errors.push('Test number must be between 1 and 10');
-    }
-
-    if (errors.length > 0) {
-      toast.error(errors[0]);
-      console.error('Validation errors:', errors);
-      return;
-    }
 
     // Upload image if selected
     let imageUrl = formData.image_url;

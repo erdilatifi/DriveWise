@@ -92,6 +92,28 @@ export default function TestPage() {
         setUserId(user.id);
         setStartTime(Date.now());
 
+        const storageKey = `test_progress_${user.id}_${category}_${testNumber}`;
+        const saved = localStorage.getItem(storageKey);
+        
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            // Check if data is less than 24 hours old
+            if (Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
+              console.log('Restoring test progress from local storage');
+              setQuestions(parsed.questions);
+              setAnswers(parsed.answers);
+              setCurrentQuestion(parsed.currentQuestion);
+              setStartTime(parsed.startTime || Date.now());
+              setLoading(false);
+              return;
+            }
+          } catch (e) {
+            console.error('Failed to parse saved test progress', e);
+            localStorage.removeItem(storageKey);
+          }
+        }
+
         const loadedQuestions = await loadQuestionsForTest({
           supabase,
           userId: user.id,
@@ -110,6 +132,21 @@ export default function TestPage() {
 
     fetchQuestions();
   }, [authLoading, user, category, testNumber, router]);
+
+  // Save progress to local storage
+  useEffect(() => {
+    if (!userId || questions.length === 0 || showResults) return;
+
+    const storageKey = `test_progress_${userId}_${category}_${testNumber}`;
+    const data = {
+      questions,
+      answers,
+      currentQuestion,
+      startTime,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(storageKey, JSON.stringify(data));
+  }, [userId, category, testNumber, questions, answers, currentQuestion, startTime, showResults]);
 
   const categoryInfo = CATEGORY_INFO[category];
   const totalQuestions = questions.length;
@@ -280,6 +317,10 @@ export default function TestPage() {
           toast.error('Test saved, but details could not be stored.');
         }
       }
+
+      // Clear local storage
+      const storageKey = `test_progress_${userId}_${category}_${testNumber}`;
+      localStorage.removeItem(storageKey);
 
       setShowResults(true);
 
