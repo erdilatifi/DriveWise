@@ -100,7 +100,8 @@ export default function LoginPage() {
       }
 
       toast.success('Login successful!');
-      setSubmitting(false);
+      // Do NOT setSubmitting(false) here. Keep it true while we redirect.
+      // This prevents the user from clicking again during the navigation.
       router.push('/dashboard');
     } catch (err) {
       console.error('Unexpected error during login:', err);

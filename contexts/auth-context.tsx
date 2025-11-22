@@ -248,8 +248,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Force all queries to refetch now that auth changed
           queryClient.invalidateQueries();
 
-          // Make sure server components see the new session
-          router.refresh();
+          // Remove router.refresh() here. Let the consuming component handle navigation/refresh.
+          // This prevents double-firing requests when the login page does router.push().
         }
 
         return { error: null };
