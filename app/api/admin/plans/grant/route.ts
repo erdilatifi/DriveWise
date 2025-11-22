@@ -3,7 +3,6 @@ import { createClient as createServerClient } from '@/utils/supabase/sever';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { BILLING_CONFIG, type PaidPlanTier } from '@/lib/subscriptions';
 import type { LicenseCategory } from '@/types/database';
-import { isAdmin } from '@/lib/admin';
 
 interface GrantBody {
   userId: string;
@@ -22,7 +21,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    if (!isAdmin(user.id)) {
+    // Check if user is admin in DB
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.is_admin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 

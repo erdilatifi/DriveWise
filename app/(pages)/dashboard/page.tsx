@@ -229,7 +229,7 @@ export default function DashboardPage() {
                 {/* Left column: weak topics + weekly progress */}
                 <div className="xl:col-span-2 space-y-8">
                   {/* Overall weak topics across all tests */}
-                  {weakTopicsData && weakTopicsData.topics.length > 0 && (
+                  {weakTopicsData && (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -262,36 +262,42 @@ export default function DashboardPage() {
                             )}
                           </div>
 
-                          <div className="space-y-2">
-                            {weakTopicsData.topics.slice(0, 5).map((tTopic) => {
-                              const percentage = Math.round(tTopic.accuracy * 100);
-                              const isWeak = weakTopicsData.weakTopics.some(w => w.topic === tTopic.topic);
-                              return (
-                                <div key={tTopic.topic} className="text-xs">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="font-medium truncate mr-2">{tTopic.topic}</span>
-                                    <span className={`font-semibold ${
-                                      isWeak ? 'text-red-500' : percentage >= 90 ? 'text-green-500' : 'text-amber-500'
-                                    }`}>
-                                      {tTopic.correct}/{tTopic.totalQuestions} ({percentage}%)
-                                    </span>
+                          {weakTopicsData.topics.length > 0 ? (
+                            <div className="space-y-2">
+                              {weakTopicsData.topics.slice(0, 5).map((tTopic) => {
+                                const percentage = Math.round(tTopic.accuracy * 100);
+                                const isWeak = weakTopicsData.weakTopics.some(w => w.topic === tTopic.topic);
+                                return (
+                                  <div key={tTopic.topic} className="text-xs">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <span className="font-medium truncate mr-2">{tTopic.topic}</span>
+                                      <span className={`font-semibold ${
+                                        isWeak ? 'text-red-500' : percentage >= 90 ? 'text-green-500' : 'text-amber-500'
+                                      }`}>
+                                        {tTopic.correct}/{tTopic.totalQuestions} ({percentage}%)
+                                      </span>
+                                    </div>
+                                    <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                                      <div
+                                        className={`h-2 rounded-full transition-all ${
+                                          isWeak
+                                            ? 'bg-red-500/80'
+                                            : percentage >= 90
+                                            ? 'bg-green-500/80'
+                                            : 'bg-amber-500/80'
+                                        }`}
+                                        style={{ width: `${Math.max(8, percentage)}%` }}
+                                      />
+                                    </div>
                                   </div>
-                                  <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-                                    <div
-                                      className={`h-2 rounded-full transition-all ${
-                                        isWeak
-                                          ? 'bg-red-500/80'
-                                          : percentage >= 90
-                                          ? 'bg-green-500/80'
-                                          : 'bg-amber-500/80'
-                                      }`}
-                                      style={{ width: `${Math.max(8, percentage)}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="py-8 text-center text-sm text-muted-foreground">
+                              <p>No topic data available yet. Take some tests to identify your weak areas!</p>
+                            </div>
+                          )}
 
                           {weakTopicsData.topics.length > 0 && (() => {
                             const strongTopics = weakTopicsData.topics
@@ -357,47 +363,53 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <div className="relative w-full h-60">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={progressData} margin={{ top: 8, left: -20, right: 10 }}>
-                            <CartesianGrid
-                              stroke="#27272a"
-                              strokeDasharray="3 3"
-                              vertical={false}
-                            />
-                            <XAxis
-                              dataKey="date"
-                              tickLine={false}
-                              axisLine={false}
-                              tick={{ fill: "#a1a1aa", fontSize: 10 }}
-                            />
-                            <YAxis
-                              tickLine={false}
-                              axisLine={false}
-                              tick={{ fill: "#71717a", fontSize: 10 }}
-                              tickFormatter={(v) => `${v}%`}
-                            />
-                            <Tooltip
-                              cursor={{ stroke: "#3f3f46", strokeWidth: 1 }}
-                              contentStyle={{
-                                backgroundColor: "#020617",
-                                border: "1px solid #27272a",
-                                borderRadius: "0.5rem",
-                                padding: "0.35rem 0.5rem",
-                              }}
-                              labelStyle={{ color: "#e5e5e5", fontSize: 11 }}
-                              itemStyle={{ color: "#fed7aa", fontSize: 11 }}
-                              formatter={(value: number) => [`${value}%`, "Score"]}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="score"
-                              stroke="#fb923c"
-                              strokeWidth={2}
-                              dot={{ r: 3, strokeWidth: 1, stroke: "#fde68a", fill: "#fb923c" }}
-                              activeDot={{ r: 4 }}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
+                        {progressData.length > 0 ? (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={progressData} margin={{ top: 8, left: -20, right: 10 }}>
+                              <CartesianGrid
+                                stroke="#27272a"
+                                strokeDasharray="3 3"
+                                vertical={false}
+                              />
+                              <XAxis
+                                dataKey="date"
+                                tickLine={false}
+                                axisLine={false}
+                                tick={{ fill: "#a1a1aa", fontSize: 10 }}
+                              />
+                              <YAxis
+                                tickLine={false}
+                                axisLine={false}
+                                tick={{ fill: "#71717a", fontSize: 10 }}
+                                tickFormatter={(v) => `${v}%`}
+                              />
+                              <Tooltip
+                                cursor={{ stroke: "#3f3f46", strokeWidth: 1 }}
+                                contentStyle={{
+                                  backgroundColor: "#020617",
+                                  border: "1px solid #27272a",
+                                  borderRadius: "0.5rem",
+                                  padding: "0.35rem 0.5rem",
+                                }}
+                                labelStyle={{ color: "#e5e5e5", fontSize: 11 }}
+                                itemStyle={{ color: "#fed7aa", fontSize: 11 }}
+                                formatter={(value: number) => [`${value}%`, "Score"]}
+                              />
+                              <Line
+                                type="monotone"
+                                dataKey="score"
+                                stroke="#fb923c"
+                                strokeWidth={2}
+                                dot={{ r: 3, strokeWidth: 1, stroke: "#fde68a", fill: "#fb923c" }}
+                                activeDot={{ r: 4 }}
+                              />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                            No progress data available for this week.
+                          </div>
+                        )}
                       </div>
                     </GlassCard>
                   </motion.div>

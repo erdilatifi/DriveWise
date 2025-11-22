@@ -153,8 +153,6 @@ export default function TestPage() {
       const timeElapsed = Math.floor((Date.now() - startTime) / 1000);
 
       // Ensure user profile exists before saving test
-      console.log('🔍 Checking if user profile exists for:', userId);
-
       const {
         data: existingProfile,
         error: profileCheckError,
@@ -165,15 +163,13 @@ export default function TestPage() {
         .maybeSingle();
 
       if (profileCheckError) {
+        // Silent log for monitoring, but proceed to try insert
         console.error('Error checking profile:', profileCheckError);
       }
 
       if (!existingProfile) {
-        console.log('👤 User profile not found, creating...');
-
         if (user) {
           const {
-            data: newProfile,
             error: profileError,
           } = await supabase
             .from('user_profiles')
@@ -189,21 +185,15 @@ export default function TestPage() {
             .single();
 
           if (profileError) {
-            console.error('❌ Failed to create user profile:', profileError);
             toast.error('Failed to create user profile. Please try again.');
             setShowResults(true);
             return;
           }
-
-          console.log('✅ User profile created:', newProfile);
         } else {
-          console.error('❌ No authenticated user found');
           toast.error('Please log in again');
           router.push('/login');
           return;
         }
-      } else {
-        console.log('✅ User profile exists');
       }
 
       const {
@@ -225,13 +215,11 @@ export default function TestPage() {
         .single();
 
       if (attemptError) {
-        console.error('❌ ERROR SAVING TEST ATTEMPT!', attemptError);
         toast.error('Failed to save test results: ' + attemptError.message);
         setShowResults(true);
         return;
       }
 
-      console.log('✅ Test attempt saved successfully:', testAttempt);
       setLastTestAttemptId(testAttempt.id);
 
       // Invalidate cache to show updated results
@@ -259,8 +247,6 @@ export default function TestPage() {
 
       // Save individual answers
       if (testAttempt) {
-        console.log('Number of questions to save:', questions.length);
-
         const answersToSave = questions.map((q) => {
           const userAnswer = answers[q.id] || [];
           const correctAnswers =
@@ -284,7 +270,6 @@ export default function TestPage() {
         });
 
         const {
-          data: savedAnswers,
           error: answersError,
         } = await supabase
           .from('test_attempt_answers')
@@ -292,15 +277,7 @@ export default function TestPage() {
           .select();
 
         if (answersError) {
-          console.error('❌ ERROR SAVING ANSWERS!', answersError);
-          console.error(
-            'Test score was saved, but answers could not be saved for review.',
-          );
-        } else {
-          console.log(
-            '✅ Answers saved successfully:',
-            savedAnswers?.length || 0,
-          );
+          toast.error('Test saved, but details could not be stored.');
         }
       }
 
@@ -313,6 +290,7 @@ export default function TestPage() {
       }
     } catch (error) {
       console.error('Error submitting test:', error);
+      toast.error('An unexpected error occurred. Results shown locally.');
       setShowResults(true);
     }
   };
@@ -998,11 +976,7 @@ async function getPersonalizedQuestions({
     .eq('category', category);
 
   if (attemptsError) {
-    console.error(
-      'Error fetching test attempts for personalized test:',
-      attemptsError,
-    );
-    return [];
+    throw new Error(`Error fetching test attempts: ${attemptsError.message}`);
   }
 
   const testAttemptIds = testAttempts?.map((t) => t.id) || [];
@@ -1015,11 +989,7 @@ async function getPersonalizedQuestions({
     .in('test_attempt_id', testAttemptIds);
 
   if (answersError) {
-    console.error(
-      'Error fetching wrong answers for personalized test:',
-      answersError,
-    );
-    return [];
+    throw new Error(`Error fetching wrong answers: ${answersError.message}`);
   }
 
   const wrongQuestionIds = [
@@ -1034,24 +1004,18 @@ async function getPersonalizedQuestions({
     .eq('category', category);
 
   if (questionsError) {
-    console.error('Error fetching personalized questions:', questionsError);
-    return [];
+    throw new Error(`Error fetching questions: ${questionsError.message}`);
   }
 
   let personalizedQuestions: Question[] = (wrongQuestions || []) as Question[];
 
   if (personalizedQuestions.length < 10) {
-    const { data: allQuestions, error: allError } = await supabase
+    const { data: allQuestions } = await supabase
       .from('admin_questions')
       .select('*')
       .eq('category', category);
 
-    if (allError) {
-      console.error(
-        'Error fetching fallback questions for personalized test:',
-        allError,
-      );
-    } else if (allQuestions && allQuestions.length > 0) {
+    if (allQuestions && allQuestions.length > 0) {
       const existingIds = new Set(personalizedQuestions.map((q) => q.id));
       const availableQuestions = (allQuestions as Question[]).filter(
         (q) => !existingIds.has(q.id),
@@ -1081,12 +1045,10 @@ async function getMixedQuestions({
     .eq('category', category);
 
   if (error) {
-    console.error('Error fetching mixed questions:', error);
-    return [];
+    throw new Error(`Error fetching mixed questions: ${error.message}`);
   }
 
   if (!data || data.length === 0) {
-    console.warn('No questions found for mixed test in category', category);
     return [];
   }
 
@@ -1105,8 +1067,7 @@ async function getFixedTestQuestions({
 }): Promise<Question[]> {
   const parsedNumber = parseInt(testNumber, 10);
   if (Number.isNaN(parsedNumber)) {
-    console.error('Invalid test number for fixed test:', testNumber);
-    return [];
+    throw new Error('Invalid test number');
   }
 
   const { data, error } = await supabase
@@ -1116,12 +1077,10 @@ async function getFixedTestQuestions({
     .eq('test_number', parsedNumber);
 
   if (error) {
-    console.error('Error fetching fixed test questions:', error);
-    return [];
+    throw new Error(`Error fetching fixed test questions: ${error.message}`);
   }
 
   if (!data || data.length === 0) {
-    console.warn('No questions found for fixed test', { category, testNumber });
     return [];
   }
 

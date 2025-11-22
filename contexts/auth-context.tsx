@@ -13,7 +13,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
-import { isAdmin } from '@/lib/admin';
 import { toast } from 'sonner';
 
 interface UserProfile {
@@ -25,6 +24,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
+  isInstructor: boolean;
   isBlocked: boolean;
   userProfile: UserProfile | null;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -39,6 +39,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isInstructor, setIsInstructor] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [initialized, setInitialized] = useState(false);
 
@@ -46,31 +48,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const checkIfBlocked = useCallback(
-    async (userId: string, skipProfileUpdate = false): Promise<boolean> => {
+  const fetchUserProfile = useCallback(
+    async (userId: string, skipProfileUpdate = false): Promise<{ blocked: boolean }> => {
       try {
         const { data, error } = await supabase
           .from('user_profiles')
-          .select('is_blocked, full_name, email')
+          .select('is_blocked, is_admin, is_instructor, full_name, email')
           .eq('id', userId)
           .single();
 
         if (error) {
           console.error('Error fetching user profile:', error);
-          return false;
+          return { blocked: false };
         }
 
-        if (data && !skipProfileUpdate) {
-          setUserProfile({
-            full_name: data.full_name,
-            email: data.email,
-          });
+        if (data) {
+          setIsAdmin(data.is_admin || false);
+          setIsInstructor(data.is_instructor || false);
+          
+          if (!skipProfileUpdate) {
+            setUserProfile({
+              full_name: data.full_name,
+              email: data.email,
+            });
+          }
+          return { blocked: !!data.is_blocked };
         }
-
-        return !!data?.is_blocked;
+        
+        return { blocked: false };
       } catch (error) {
         console.error('Error checking user status:', error);
-        return false;
+        return { blocked: false };
       }
     },
     [supabase]
@@ -80,6 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsBlocked(true);
     setUser(null);
     setUserProfile(null);
+    setIsAdmin(false);
+    setIsInstructor(false);
 
     // Clear client cache as well so UI is fully reset
     queryClient.clear();
@@ -119,10 +129,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!user) {
           setUserProfile(null);
           setIsBlocked(false);
+          setIsAdmin(false);
+          setIsInstructor(false);
           return;
         }
 
-        const blocked = await checkIfBlocked(user.id);
+        const { blocked } = await fetchUserProfile(user.id);
 
         if (!mounted) return;
 
@@ -151,6 +163,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
         setUserProfile(null);
         setIsBlocked(false);
+        setIsAdmin(false);
+        setIsInstructor(false);
         setLoading(false);
         queryClient.clear();
         return;
@@ -163,6 +177,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!currentUser) {
         setUserProfile(null);
         setIsBlocked(false);
+        setIsAdmin(false);
+        setIsInstructor(false);
         queryClient.clear();
         return;
       }
@@ -171,7 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Invalidate queries so they refetch with the new authenticated session.
       queryClient.invalidateQueries();
 
-      const blocked = await checkIfBlocked(currentUser.id);
+      const { blocked } = await fetchUserProfile(currentUser.id);
 
       if (!mounted) return;
 
@@ -186,7 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [supabase, router, checkIfBlocked, handleBlockedAccount, initialized, queryClient]);
+  }, [supabase, router, fetchUserProfile, handleBlockedAccount, initialized, queryClient]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -215,8 +231,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(data.user);
           setLoading(false);
 
-          // Immediately check blocked status
-          const blocked = await checkIfBlocked(data.user.id);
+          // Immediately check blocked status and fetch roles
+          const { blocked } = await fetchUserProfile(data.user.id);
 
           setIsBlocked(blocked);
 
@@ -241,7 +257,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: err as Error };
       }
     },
-    [supabase, router, checkIfBlocked, handleBlockedAccount, queryClient]
+    [supabase, router, fetchUserProfile, handleBlockedAccount, queryClient]
   );
 
   const signUp = useCallback(
@@ -291,6 +307,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(null);
           setUserProfile(null);
           setIsBlocked(false);
+          setIsAdmin(false);
+          setIsInstructor(false);
           queryClient.clear();
         }
 
@@ -309,6 +327,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setUserProfile(null);
     setIsBlocked(false);
+    setIsAdmin(false);
+    setIsInstructor(false);
     queryClient.clear();
 
     try {
@@ -344,7 +364,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(user);
 
       if (user) {
-        const blocked = await checkIfBlocked(user.id);
+        const { blocked } = await fetchUserProfile(user.id);
         setIsBlocked(blocked);
 
         if (blocked) {
@@ -353,19 +373,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setUserProfile(null);
         setIsBlocked(false);
+        setIsAdmin(false);
+        setIsInstructor(false);
         queryClient.clear();
       }
     },
-    [supabase, checkIfBlocked, handleBlockedAccount, queryClient]
+    [supabase, fetchUserProfile, handleBlockedAccount, queryClient]
   );
-
-  const isUserAdmin = useMemo(() => (user ? isAdmin(user.id) : false), [user]);
 
   const contextValue = useMemo(
     () => ({
       user,
       loading,
-      isAdmin: isUserAdmin,
+      isAdmin,
+      isInstructor,
       isBlocked,
       userProfile,
       signIn,
@@ -373,7 +394,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut,
       refreshUser,
     }),
-    [user, loading, isUserAdmin, isBlocked, userProfile, signIn, signUp, signOut, refreshUser]
+    [user, loading, isAdmin, isInstructor, isBlocked, userProfile, signIn, signUp, signOut, refreshUser]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

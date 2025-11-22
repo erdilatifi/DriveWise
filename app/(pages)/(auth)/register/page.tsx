@@ -11,11 +11,13 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
+import { useRateLimit } from '@/hooks/use-rate-limit';
 
 export default function RegisterPage() {
   const { t } = useLanguage();
   const { signUp } = useAuth();
   const router = useRouter();
+  const { checkLimit } = useRateLimit({ maxRequests: 3, windowMs: 60000 }); // Stricter limit for registration
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,6 +29,14 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!checkLimit()) {
+      toast.error('Too many registration attempts', {
+        description: 'Please wait a minute before trying again.',
+      });
+      return;
+    }
+
     setLoading(true);
     setStatus('loading');
     setStatusMessage(null);

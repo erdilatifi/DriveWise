@@ -13,7 +13,6 @@ import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
-import { ADMIN_USER_ID } from '@/lib/admin';
 import {
   Dialog,
   DialogContent,
@@ -162,11 +161,9 @@ export default function StatsPage() {
       const to = from + usersPerPage - 1;
 
       // First, get user count for pagination (optimized with head: true)
-      // Exclude admin user from the list
       let countQuery = supabase
         .from('user_profiles')
-        .select('*', { count: 'exact', head: true })
-        .neq('id', ADMIN_USER_ID);
+        .select('*', { count: 'exact', head: true });
 
       if (debouncedSearch) {
         countQuery = countQuery.or(`email.ilike.%${debouncedSearch}%,full_name.ilike.%${debouncedSearch}%`);
@@ -175,11 +172,9 @@ export default function StatsPage() {
       const { count } = await countQuery;
 
       // Then fetch only the users we need without expensive joins
-      // Exclude admin user from the list
       let dataQuery = supabase
         .from('user_profiles')
-        .select('id, email, full_name, created_at, is_blocked, app_rating')
-        .neq('id', ADMIN_USER_ID)
+        .select('id, email, full_name, created_at, is_blocked, app_rating, is_admin')
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -209,7 +204,7 @@ export default function StatsPage() {
         const usersWithCounts: UserData[] = data.map(user => ({
           ...user,
           test_attempts_count: countsByUser[user.id] || 0,
-          is_admin: false, // Default value, update if you have this field
+          is_admin: user.is_admin || false,
         }));
 
         return { users: usersWithCounts, total: count || 0 };

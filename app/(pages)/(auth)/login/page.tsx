@@ -12,11 +12,13 @@ import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
 import { createClient } from '@/utils/supabase/client';
+import { useRateLimit } from '@/hooks/use-rate-limit';
 
 export default function LoginPage() {
   const { t } = useLanguage();
   const { signIn, user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { checkLimit } = useRateLimit({ maxRequests: 5, windowMs: 60000 });
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -69,6 +71,13 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isBusy) return;
+
+    if (!checkLimit()) {
+      toast.error('Too many login attempts', {
+        description: 'Please wait a minute before trying again.',
+      });
+      return;
+    }
 
     setSubmitting(true);
     setError('');
