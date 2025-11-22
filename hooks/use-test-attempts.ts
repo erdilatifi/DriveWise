@@ -79,7 +79,8 @@ export function useTestAttempts(userId?: string) {
       return attempts || [];
     },
     enabled: !!userId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 
@@ -154,7 +155,8 @@ export function useGlobalDailyStreak(userId?: string) {
       return { currentStreak, bestStreak };
     },
     enabled: !!userId,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 
@@ -399,7 +401,8 @@ export function useTestHistory(userId?: string, page: number = 1, pageSize: numb
       };
     },
     enabled: !!userId,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 

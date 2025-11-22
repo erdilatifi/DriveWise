@@ -167,6 +167,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Auth state changed to a non-null user (e.g. login, email confirm, token refresh).
+      // Invalidate queries so they refetch with the new authenticated session.
+      queryClient.invalidateQueries();
+
       const blocked = await checkIfBlocked(currentUser.id);
 
       if (!mounted) return;
@@ -225,6 +229,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             };
           }
 
+          // Force all queries to refetch now that auth changed
+          queryClient.invalidateQueries();
+
           // Make sure server components see the new session
           router.refresh();
         }
@@ -251,7 +258,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const emailRedirectTo =
-          typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined;
+          typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined;
 
         const { error } = await supabase.auth.signUp({
           email: email.trim(),

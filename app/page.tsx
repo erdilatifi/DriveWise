@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -30,6 +30,8 @@ import {
   CartesianGrid,
 } from "recharts";
 import { FaApple, FaGooglePlay } from "react-icons/fa";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
@@ -54,11 +56,37 @@ const subtleRise = {
 
 export default function HomePage() {
   const { t } = useLanguage();
+  const router = useRouter();
 
   const categories = useMemo(
     () => Object.keys(CATEGORY_INFO) as LicenseCategory[],
     []
   );
+
+  // If the user lands here from a Supabase email confirmation or magic link,
+  // clear any auto-created session and send them to the login page so they
+  // must sign in manually.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const search = window.location.search;
+    const hash = window.location.hash || "";
+    const params = new URLSearchParams(search);
+    const type = params.get("type");
+    const hasCode = params.has("code");
+
+    const fromEmailConfirm =
+      type === "signup" || hash.includes("access_token=") || hasCode;
+
+    if (!fromEmailConfirm) return;
+
+    const supabase = createClient();
+    supabase.auth.signOut().catch((err) => {
+      console.error("Error clearing session after email confirm on home:", err);
+    });
+
+    router.replace("/login");
+  }, [router]);
 
   const featured = useMemo<LicenseCategory>(() => {
     return (

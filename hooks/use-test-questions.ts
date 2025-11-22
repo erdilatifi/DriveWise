@@ -242,6 +242,7 @@ export function useCheckRatingModal(userId?: string) {
       };
     },
     enabled: !!userId,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }

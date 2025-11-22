@@ -41,7 +41,8 @@ export function useUserProgress(userId?: string) {
       return (data || []) as UserProgress[];
     },
     enabled: !!userId,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 
@@ -63,6 +64,8 @@ export function useCategoryProgress(userId?: string, category?: string) {
       return data as UserProgress | null;
     },
     enabled: !!userId && !!category,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 
@@ -159,6 +162,7 @@ export function useUserStats(userId?: string) {
       };
     },
     enabled: !!userId,
-    staleTime: 30 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }

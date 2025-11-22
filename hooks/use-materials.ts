@@ -83,7 +83,7 @@ export function useMaterials(params: MaterialsQueryParams = {}) {
 
       let query = supabase
         .from('study_materials')
-        .select('*', { count: 'exact' })
+        .select('*', { count: 'planned' })
         .order('order_index', { ascending: true });
 
       if (chapterId) {

@@ -47,9 +47,9 @@ export default function LoginPage() {
 
     if (fromEmailConfirm) {
       // User arrived from email confirmation link: ensure any auto-created
-      // session is cleared so they can log in manually.
+      // session is fully cleared so they can log in manually.
       const supabase = createClient();
-      supabase.auth.signOut({ scope: 'local' }).catch((err) => {
+      supabase.auth.signOut().catch((err) => {
         console.error('Error clearing session after email confirm:', err);
       });
 

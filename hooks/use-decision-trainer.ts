@@ -51,7 +51,8 @@ export function useDecisionTrainerProgress(userId?: string, category?: string) {
       return data || [];
     },
     enabled: !!userId,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 

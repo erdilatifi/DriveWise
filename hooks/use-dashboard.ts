@@ -70,7 +70,8 @@ export function useDashboardStats(userId?: string) {
       } as DashboardStats;
     },
     enabled: !!userId,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 
@@ -91,7 +92,8 @@ export function useUserProfile(userId?: string) {
       return data;
     },
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // 5 minutes - profile doesn't change often
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 

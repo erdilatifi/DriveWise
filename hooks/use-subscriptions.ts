@@ -36,7 +36,8 @@ export function useUserPlans(userId?: string) {
       return data || [];
     },
     enabled: !!userId,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 
@@ -135,6 +136,7 @@ export function useCategoryEntitlements(
       };
     },
     enabled: !!userId && !!category,
-    staleTime: 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
