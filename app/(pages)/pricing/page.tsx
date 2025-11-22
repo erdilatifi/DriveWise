@@ -136,7 +136,9 @@ export default function PricingPage() {
         urlObj.searchParams.append('guest_email', user.email);
       }
       
-      // Optional: Add custom_message or passthrough if needed, but keeping it simple for now.
+      // Pass the selected category as custom_data so the webhook knows which plan to activate
+      // Format: custom_data[key]=value
+      urlObj.searchParams.append('custom_data[category]', selectedCategory);
       
       console.log('Redirecting to Paddle:', urlObj.toString());
       window.location.href = urlObj.toString();
