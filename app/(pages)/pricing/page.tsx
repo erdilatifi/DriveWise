@@ -17,8 +17,10 @@ import { toast } from 'sonner';
 
 const LICENSE_CATEGORIES: LicenseCategory[] = ['A', 'B', 'C', 'D'];
 
-// Redirect to Paddle hosted checkout (sandbox)
-const PADDLE_CHECKOUT_URL = process.env.NEXT_PUBLIC_PADDLE_CHECKOUT_URL || "https://sandbox-pay.paddle.io/hsc_01kapf97740ws4b88nn0b4qyae_q8nxebsa9skjqg0n7b43kwzt7t8j61h2";
+// Redirect to Paddle Hosted Checkout (HSC)
+const HSC_1M = process.env.NEXT_PUBLIC_PADDLE_HSC_1M!;
+const HSC_2M = process.env.NEXT_PUBLIC_PADDLE_HSC_2M!;
+const HSC_3M = process.env.NEXT_PUBLIC_PADDLE_HSC_3M!;
 
 export default function PricingPage() {
   const router = useRouter();
@@ -100,12 +102,36 @@ export default function PricingPage() {
 
     setIsProcessing(true);
     try {
-      // Redirect to Paddle hosted checkout with email pre-filled
-      const checkoutUrl = new URL(PADDLE_CHECKOUT_URL);
-      if (user?.email) {
-        checkoutUrl.searchParams.append('guest_email', user.email);
+      // Determine the correct checkout URL based on selected plan
+      let checkoutUrlStr = '';
+      if (selectedPlan === 'PLAN_A') {
+        checkoutUrlStr = HSC_1M;
+      } else if (selectedPlan === 'PLAN_B') {
+        checkoutUrlStr = HSC_2M;
+      } else if (selectedPlan === 'PLAN_C') {
+        checkoutUrlStr = HSC_3M;
       }
-      window.location.href = checkoutUrl.toString();
+
+      if (!checkoutUrlStr) {
+        console.error('Missing checkout URL for plan:', selectedPlan);
+        toast.error(isSq ? 'Konfigurimi i gabuar.' : 'Configuration error.');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Redirect to Paddle hosted checkout with email pre-filled
+      const urlObj = new URL(checkoutUrlStr);
+      if (user?.email) {
+        // Paddle HSC supports ?customer_email or ?guest_email depending on context, 
+        // but usually passing it as a query param like this works if 'pass-through' is enabled or strictly via API.
+        // However, standard HSC links are static. We can append ?guest_email=... for pre-filling.
+        urlObj.searchParams.append('guest_email', user.email);
+        
+        // Also pass the user ID in custom_message or passthrough if possible, 
+        // but for HSC links, we rely on the email matching in the webhook.
+      }
+      
+      window.location.href = urlObj.toString();
     } catch (error) {
       console.error("Paddle redirect error:", error);
       toast.error(isSq ? 'Diçka shkoi keq.' : 'Something went wrong.');

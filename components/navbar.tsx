@@ -23,11 +23,17 @@ export function Navbar() {
 
   // Handle scroll behavior
   useEffect(() => {
+    let rafId: number;
     const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
+      rafId = requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 10);
+      });
     };
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      cancelAnimationFrame(rafId);
+    };
   }, []);
 
   const handleLanguageChange = (lang: 'sq' | 'en') => {
