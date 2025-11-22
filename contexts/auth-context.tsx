@@ -283,9 +283,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signOut = useCallback(async () => {
-    setLoading(true);
-
-    // Clear local state + React Query immediately
+    // Clear local state + React Query immediately so the UI
+    // reflects a logged-out state without waiting for Supabase
+    // network calls to complete.
     setUser(null);
     setUserProfile(null);
     setIsBlocked(false);
@@ -312,8 +312,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         console.error('Error redirecting after signOut:', err);
       }
-
-      setLoading(false);
     }
   }, [supabase, router, queryClient]);
 

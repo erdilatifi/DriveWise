@@ -229,114 +229,137 @@ export function useDashboardStats(userId?: string) {
     queryKey: ['dashboard-stats', userId],
     queryFn: async () => {
       const supabase = createClient();
-      
-      const { data: attempts, error } = await supabase
-        .from('test_attempts')
-        .select('*')
-        .eq('user_id', userId!)
-        .order('completed_at', { ascending: false });
 
-      if (error) throw error;
+      // Default empty dashboard state used when there is no data
+      // or when we deliberately fall back after a timeout to avoid
+      // keeping the dashboard skeleton in an infinite loading state.
+      const emptyResult = {
+        stats: {
+          totalTests: 0,
+          averageScore: 0,
+          bestScore: 0,
+          testsThisWeek: 0,
+          streak: 0,
+          passedTests: 0,
+          failedTests: 0,
+        },
+        progressData: [] as ProgressData[],
+        recentTests: [] as RecentTest[],
+      };
 
-      const testAttempts = attempts || [];
-      
-      if (testAttempts.length === 0) {
-        return {
-          stats: {
-            totalTests: 0,
-            averageScore: 0,
-            bestScore: 0,
-            testsThisWeek: 0,
-            streak: 0,
-            passedTests: 0,
-            failedTests: 0,
-          },
-          progressData: [],
-          recentTests: [],
-        };
-      }
+      const fetchPromise = (async () => {
+        const { data: attempts, error } = await supabase
+          .from('test_attempts')
+          .select('*')
+          .eq('user_id', userId!)
+          .order('completed_at', { ascending: false });
 
-      // Calculate stats
-      const totalTests = testAttempts.length;
-      const totalScore = testAttempts.reduce((sum, test) => sum + test.percentage, 0);
-      const averageScore = Math.round(totalScore / totalTests);
-      const bestScore = Math.max(...testAttempts.map(test => test.percentage));
-      const passedTests = testAttempts.filter(test => test.percentage >= 80).length;
-      const failedTests = totalTests - passedTests;
+        if (error) throw error;
 
-      // Calculate tests this week
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      const testsThisWeek = testAttempts.filter(test => 
-        new Date(test.completed_at) >= oneWeekAgo
-      ).length;
+        const testAttempts = attempts || [];
 
-      // Calculate streak (consecutive days with tests)
-      const testDates = testAttempts.map(test => {
-        const date = new Date(test.completed_at);
-        return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-      });
-      const uniqueDateTimes = [...new Set(testDates)].sort((a, b) => b - a);
-      
-      let streak = 0;
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-      const yesterdayStart = todayStart - 86400000;
-      
-      if (uniqueDateTimes.length > 0 && (uniqueDateTimes[0] === todayStart || uniqueDateTimes[0] === yesterdayStart)) {
-        streak = 1;
-        for (let i = 1; i < uniqueDateTimes.length; i++) {
-          const expectedPrevDay = uniqueDateTimes[i - 1] - 86400000;
-          if (uniqueDateTimes[i] === expectedPrevDay) {
-            streak++;
-          } else {
-            break;
+        if (testAttempts.length === 0) {
+          return emptyResult;
+        }
+
+        // Calculate stats
+        const totalTests = testAttempts.length;
+        const totalScore = testAttempts.reduce((sum, test) => sum + test.percentage, 0);
+        const averageScore = Math.round(totalScore / totalTests);
+        const bestScore = Math.max(...testAttempts.map(test => test.percentage));
+        const passedTests = testAttempts.filter(test => test.percentage >= 80).length;
+        const failedTests = totalTests - passedTests;
+
+        // Calculate tests this week
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const testsThisWeek = testAttempts.filter(test =>
+          new Date(test.completed_at) >= oneWeekAgo
+        ).length;
+
+        // Calculate streak (consecutive days with tests)
+        const testDates = testAttempts.map(test => {
+          const date = new Date(test.completed_at);
+          return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+        });
+        const uniqueDateTimes = [...new Set(testDates)].sort((a, b) => b - a);
+
+        let streak = 0;
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const yesterdayStart = todayStart - 86400000;
+
+        if (
+          uniqueDateTimes.length > 0 &&
+          (uniqueDateTimes[0] === todayStart || uniqueDateTimes[0] === yesterdayStart)
+        ) {
+          streak = 1;
+          for (let i = 1; i < uniqueDateTimes.length; i++) {
+            const expectedPrevDay = uniqueDateTimes[i - 1] - 86400000;
+            if (uniqueDateTimes[i] === expectedPrevDay) {
+              streak++;
+            } else {
+              break;
+            }
           }
         }
-      }
 
-      // Prepare progress data (last 7 days)
-      const last7Days = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toDateString();
-        const dayTests = testAttempts.filter(test => 
-          new Date(test.completed_at).toDateString() === dateStr
-        );
-        const avgScore = dayTests.length > 0
-          ? Math.round(dayTests.reduce((sum, test) => sum + test.percentage, 0) / dayTests.length)
-          : 0;
-        
-        last7Days.push({
-          date: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
-          score: avgScore,
-        });
-      }
+        // Prepare progress data (last 7 days)
+        const last7Days: ProgressData[] = [];
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateStr = date.toDateString();
+          const dayTests = testAttempts.filter(test =>
+            new Date(test.completed_at).toDateString() === dateStr
+          );
+          const avgScore =
+            dayTests.length > 0
+              ? Math.round(
+                  dayTests.reduce((sum, test) => sum + test.percentage, 0) /
+                    dayTests.length,
+                )
+              : 0;
 
-      // Prepare recent tests (last 4)
-      const recentTests = testAttempts.slice(0, 4).map(test => ({
-        id: test.id,
-        category: test.category,
-        testNumber: test.test_number || '1',
-        score: test.percentage,
-        date: new Date(test.completed_at).toLocaleDateString(),
-        passed: test.percentage >= 80,
-      }));
+          last7Days.push({
+            date: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
+            score: avgScore,
+          });
+        }
 
-      return {
-        stats: {
-          totalTests,
-          averageScore,
-          bestScore,
-          testsThisWeek,
-          streak,
-          passedTests,
-          failedTests,
-        },
-        progressData: last7Days,
-        recentTests,
-      };
+        // Prepare recent tests (last 4)
+        const recentTests: RecentTest[] = testAttempts.slice(0, 4).map(test => ({
+          id: test.id,
+          category: test.category,
+          testNumber: test.test_number || '1',
+          score: test.percentage,
+          date: new Date(test.completed_at).toLocaleDateString(),
+          passed: test.percentage >= 80,
+        }));
+
+        return {
+          stats: {
+            totalTests,
+            averageScore,
+            bestScore,
+            testsThisWeek,
+            streak,
+            passedTests,
+            failedTests,
+          },
+          progressData: last7Days,
+          recentTests,
+        };
+      })();
+
+      // Safety net: if Supabase is slow or misconfigured and the
+      // query takes too long, fall back to an "empty" dashboard
+      // state instead of keeping the UI in an endless skeleton.
+      const timeoutPromise = new Promise<typeof emptyResult>((resolve) => {
+        setTimeout(() => resolve(emptyResult), 10000);
+      });
+
+      return Promise.race([fetchPromise, timeoutPromise]);
     },
     enabled: !!userId,
     staleTime: 2 * 60 * 1000, // 2 minutes
