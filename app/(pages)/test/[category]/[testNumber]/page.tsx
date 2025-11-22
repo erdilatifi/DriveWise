@@ -72,7 +72,7 @@ export default function TestPage() {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [lastTestAttemptId, setLastTestAttemptId] = useState<string | null>(null);
 
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const { data: entitlementResult } = useCategoryEntitlements(
     user?.id,
     category,
@@ -80,17 +80,15 @@ export default function TestPage() {
   );
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
     const fetchQuestions = async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!user) {
-          router.push('/login');
-          return;
-        }
-
         setUserId(user.id);
         setStartTime(Date.now());
 
@@ -111,7 +109,7 @@ export default function TestPage() {
     };
 
     fetchQuestions();
-  }, [category, testNumber, router]);
+  }, [authLoading, user, category, testNumber, router]);
 
   const categoryInfo = CATEGORY_INFO[category];
   const totalQuestions = questions.length;
@@ -172,10 +170,6 @@ export default function TestPage() {
 
       if (!existingProfile) {
         console.log('👤 User profile not found, creating...');
-
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
 
         if (user) {
           const {
@@ -325,6 +319,26 @@ export default function TestPage() {
 
   const score = calculateScore(questions, answers);
   const weakTopics = showResults ? computeWeakTopics(questions, answers) : [];
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <Card className="max-w-md w-full border border-border/80 bg-card/95 backdrop-blur-xl">
+          <CardHeader>
+            <CardTitle>Loading</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <p className="text-muted-foreground">
+                {authLoading ? 'Authenticating...' : 'Redirecting...'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

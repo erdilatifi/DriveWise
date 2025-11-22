@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
 
 // Lazy load Image component for better performance
@@ -23,17 +24,14 @@ export default function ForgotPasswordPage() {
   const [cooldown, setCooldown] = useState(0);
   const supabase = createClient();
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
 
   // Redirect if already logged in
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        router.push('/dashboard');
-      }
-    };
-    checkUser();
-  }, [supabase, router]);
+    if (!authLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [authLoading, user, router]);
 
   // Cooldown timer
   useEffect(() => {

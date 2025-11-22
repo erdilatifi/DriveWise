@@ -260,7 +260,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const emailRedirectTo =
           typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined;
 
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
           options: {
@@ -281,12 +281,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
 
+        if (data?.session || data?.user) {
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutError) {
+            console.error('Error clearing session after sign up:', signOutError);
+          }
+
+          setUser(null);
+          setUserProfile(null);
+          setIsBlocked(false);
+          queryClient.clear();
+        }
+
         return { error: null };
       } catch (err: unknown) {
         return { error: err as Error };
       }
     },
-    [supabase]
+    [supabase, queryClient]
   );
 
   const signOut = useCallback(async () => {
