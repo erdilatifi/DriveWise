@@ -44,6 +44,7 @@ export async function updateSession(request: NextRequest) {
     '/register',
     '/forgot-password',
     '/reset-password',
+    '/pricing',
   ]
 
   // Check if the current path is exactly a public route

@@ -97,7 +97,7 @@ export default function PaymentSuccessPage() {
             {status === 'loading' && (
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                <span className="text-xs text-muted-foreground">{t('test.loadingQuestions')}</span>
+                <span className="text-xs text-muted-foreground">{t('payment.processing') || 'Processing payment...'}</span>
               </div>
             )}
 

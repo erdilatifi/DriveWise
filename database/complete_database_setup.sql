@@ -259,7 +259,6 @@ CREATE TABLE IF NOT EXISTS orders (
   amount_cents INTEGER NOT NULL,
   currency VARCHAR(10) NOT NULL DEFAULT 'EUR',
   status VARCHAR(20) NOT NULL DEFAULT 'pending', -- pending, paid, failed, cancelled
-  paysera_order_id VARCHAR(100),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -278,7 +277,6 @@ CREATE TABLE IF NOT EXISTS payment_transactions (
 
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
-CREATE INDEX IF NOT EXISTS idx_orders_paysera_order_id ON orders(paysera_order_id);
 CREATE INDEX IF NOT EXISTS idx_payment_transactions_order_id ON payment_transactions(order_id);
 
 -- ===================================================================

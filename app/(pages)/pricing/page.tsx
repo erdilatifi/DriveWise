@@ -10,13 +10,15 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Check, ArrowLeft, Crown, Sparkles } from 'lucide-react';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import { BILLING_CONFIG, isPlanCurrentlyActive, type PaidPlanTier } from '@/lib/subscriptions';
-import { createPaymentSession, activatePlanForUser } from '@/lib/payments';
 import { useAuth } from '@/contexts/auth-context';
 import { useLanguage } from '@/contexts/language-context';
 import { useUserPlans, useGlobalPremium } from '@/hooks/use-subscriptions';
 import { toast } from 'sonner';
 
 const LICENSE_CATEGORIES: LicenseCategory[] = ['A', 'B', 'C', 'D'];
+
+// Redirect to Paddle hosted checkout (sandbox)
+const PADDLE_CHECKOUT_URL = process.env.NEXT_PUBLIC_PADDLE_CHECKOUT_URL || "https://sandbox-pay.paddle.io/hsc_01kapf97740ws4b88nn0b4qyae_q8nxebsa9skjqg0n7b43kwzt7t8j61h2";
 
 export default function PricingPage() {
   const router = useRouter();
@@ -95,84 +97,18 @@ export default function PricingPage() {
       );
       return;
     }
+
     setIsProcessing(true);
     try {
-      const paymentEnabled =
-        (process.env.NEXT_PUBLIC_PAYMENT_ENABLED ?? 'false') === 'true';
-      const paymentProvider = process.env.NEXT_PUBLIC_PAYMENT_PROVIDER ?? 'mock';
-
-      if (paymentEnabled && paymentProvider === 'paysera') {
-        const response = await fetch('/api/payments/paysera/create', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            category: selectedCategory,
-            planTier: selectedPlan,
-          }),
-        });
-
-        if (!response.ok) {
-          toast.error(isSq ? 'Pagesa nuk mund të startohej.' : 'Could not start payment.', {
-            description: t('error.message'),
-          });
-          return;
-        }
-
-        const data = await response.json();
-        if (!data.payUrl) {
-          toast.error(isSq ? 'Pagesa nuk mund të startohej.' : 'Could not start payment.', {
-            description: t('error.message'),
-          });
-          return;
-        }
-
-        window.location.href = data.payUrl as string;
-      } else {
-        const baseUrl =
-          window.location.origin + '/pricing?category=' + selectedCategory.toLowerCase();
-        const successUrl = baseUrl + '&payment=success';
-        const cancelUrl = baseUrl + '&payment=cancel';
-
-        const session = await createPaymentSession({
-          userId: user.id,
-          category: selectedCategory,
-          planTier: selectedPlan,
-          successUrl,
-          cancelUrl,
-        });
-
-        if (session.status === 'succeeded') {
-          await activatePlanForUser({
-            userId: user.id,
-            category: selectedCategory,
-            planTier: selectedPlan,
-          });
-          toast.success(
-            isSq ? 'Plani juaj tani është aktiv.' : 'Your plan is now active.',
-            {
-              description: isSq
-                ? 'Tani keni qasje të plotë për këtë kategori. Decision Trainer dhe Materialet e Studimit janë të hapura.'
-                : 'You now have full access for this category. Decision Trainer and Study Materials are unlocked.',
-            },
-          );
-          router.refresh();
-        } else if (session.redirectUrl) {
-          window.location.href = session.redirectUrl;
-        } else {
-          toast.error(
-            isSq
-              ? 'Pagesa nuk u përfundua. Ju lutemi provoni përsëri.'
-              : 'Payment did not complete. Please try again.',
-          );
-        }
+      // Redirect to Paddle hosted checkout with email pre-filled
+      const checkoutUrl = new URL(PADDLE_CHECKOUT_URL);
+      if (user?.email) {
+        checkoutUrl.searchParams.append('guest_email', user.email);
       }
-    } catch (error: unknown) {
-      toast.error(isSq ? 'Pagesa nuk mund të startohej.' : 'Could not start payment.', {
-        description: t('error.message'),
-      });
-    } finally {
+      window.location.href = checkoutUrl.toString();
+    } catch (error) {
+      console.error("Paddle redirect error:", error);
+      toast.error(isSq ? 'Diçka shkoi keq.' : 'Something went wrong.');
       setIsProcessing(false);
     }
   };

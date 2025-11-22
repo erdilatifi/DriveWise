@@ -20,9 +20,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DriveWise - Kosovo Driving Theory Exam Prep",
   description: "Practice driving theory exams for all license categories in Kosovo. Available in Albanian, Serbian, and English.",
-  other: {
-    "verify-paysera": "b84bcc699ad352cdcbaf13cde638384c",
-  },
 };
 
 export default function RootLayout({

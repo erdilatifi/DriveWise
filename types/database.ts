@@ -62,6 +62,9 @@ export interface UserProfile {
   is_instructor: boolean;
   instructor_code?: string;
   app_rating?: number; // 1-5 stars, optional
+  is_premium?: boolean;
+  subscription_id?: string | null;
+  subscription_end?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -201,7 +204,6 @@ export interface Order {
   amount_cents: number;
   currency: string;
   status: string;
-  paysera_order_id?: string;
   created_at: string;
   updated_at: string;
 }
