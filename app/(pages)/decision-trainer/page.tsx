@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Check, X, Lightbulb, Trophy, Zap, Timer, TrafficCone, Octagon, User, GitBranch, AlertTriangle, Car } from 'lucide-react';
+import { ArrowLeft, Check, X, Lightbulb, Trophy, Zap, Timer, TrafficCone, Octagon, User, GitBranch, AlertTriangle, Car, Play } from 'lucide-react';
 import Link from 'next/link';
 import { CATEGORY_INFO, type Category } from '@/data/scenarios';
 import { useScenarios, type Scenario as TrainerScenario } from '@/hooks/use-scenarios';
@@ -28,18 +28,19 @@ type SessionAttempt = {
 };
 
 const CATEGORY_ICONS: Record<Category, React.ReactNode> = {
-  'traffic-lights': <TrafficCone className="w-5 h-5 text-primary" />,
-  signs: <Octagon className="w-5 h-5 text-primary" />,
-  pedestrians: <User className="w-5 h-5 text-primary" />,
-  'right-of-way': <GitBranch className="w-5 h-5 text-primary" />,
-  hazards: <AlertTriangle className="w-5 h-5 text-primary" />,
-  parking: <Car className="w-5 h-5 text-primary" />,
+  'traffic-lights': <TrafficCone className="w-5 h-5" />,
+  signs: <Octagon className="w-5 h-5" />,
+  pedestrians: <User className="w-5 h-5" />,
+  'right-of-way': <GitBranch className="w-5 h-5" />,
+  hazards: <AlertTriangle className="w-5 h-5" />,
+  parking: <Car className="w-5 h-5" />,
 };
 
 export default function DecisionTrainerPage() {
   const { user, loading: authLoading, isAdmin } = useAuth();
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isSq = language === 'sq';
   const { data: categoryProgressData } = useDecisionTrainerProgress(user?.id);
   const { data: trainerStats } = useDecisionTrainerStats(user?.id);
   
@@ -392,7 +393,7 @@ export default function DecisionTrainerPage() {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 py-8 max-w-7xl pt-28">
+        <div className="container mx-auto px-4 py-8 max-w-7xl pt-32">
            <div className="mb-8">
              <Skeleton className="h-10 w-32 mb-4" />
              <GlassCard className="p-6 h-64 flex flex-col justify-center items-center">
@@ -418,7 +419,7 @@ export default function DecisionTrainerPage() {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 py-8 max-w-4xl pt-28">
+        <div className="container mx-auto px-4 py-8 max-w-4xl pt-32">
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <Skeleton className="h-9 w-40" />
@@ -465,7 +466,7 @@ export default function DecisionTrainerPage() {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 py-8 max-w-4xl pt-28">
+        <div className="container mx-auto px-4 py-8 max-w-4xl pt-32">
           <GlassCard className="p-6 border border-border/80 bg-black/80">
             <h1 className="text-xl font-semibold mb-2 flex items-center gap-2">
               <Trophy className="w-5 h-5 text-primary" />
@@ -485,48 +486,72 @@ export default function DecisionTrainerPage() {
 
   if (!selectedCategory) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8 max-w-7xl pt-28 relative">
-          <div className="pointer-events-none absolute inset-x-0 top-20 h-px bg-gradient-to-r from-transparent via-orange-400/35 to-transparent opacity-70" />
-          <div className="pointer-events-none absolute hidden md:block left-1/2 top-24 bottom-10 w-px bg-gradient-to-b from-orange-400/30 via-transparent to-transparent opacity-70" />
-
-          <div className="mb-8">
-          <Button variant="ghost" asChild className="mb-4">
-            <Link href="/dashboard">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              {t('auth.backToHome')}
-            </Link>
-          </Button>
-          <GlassCard className="p-5 md:p-6 border border-border/80 bg-black/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden">
-            <div className="pointer-events-none absolute -right-24 -top-24 h-40 w-40 rounded-full bg-primary/20 blur-3xl opacity-60" />
-            <div className="relative space-y-2">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/5 px-3 py-1 text-[11px] font-medium text-primary">
-                <Zap className="w-4 h-4" />
-                <span>{t('trainer.practiceModes')}</span>
-              </div>
-              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-                {t('trainer.title')}
-              </h1>
-              <p className="text-sm md:text-base text-muted-foreground">
-                {t('trainer.heroExplainer')}
-              </p>
-            </div>
-            <div className="relative">
-              <Button asChild variant="outline" className="mt-2 md:mt-0">
-                <Link href="/decision-trainer/leaderboard">
-                  <Trophy className="w-4 h-4 mr-2" />
-                  {t('trainer.leaderboard')}
-                </Link>
-              </Button>
-            </div>
-          </GlassCard>
+      <div className="relative min-h-screen bg-background text-foreground overflow-hidden">
+        {/* Background grid */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(60%_60%_at_50%_20%,#000_20%,transparent_70%)]"
+        >
+          <svg className="h-full w-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="trainer-grid" width="32" height="32" patternUnits="userSpaceOnUse">
+                <path d="M32 0H0V32" fill="none" stroke="currentColor" strokeWidth="0.4" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#trainer-grid)" />
+          </svg>
         </div>
+
+        {/* Warm glows & rails */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-orange-500/25 via-transparent to-transparent blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="hidden lg:block absolute top-24 bottom-24 left-[10%] w-px bg-gradient-to-b from-transparent via-orange-500/25 to-transparent" />
+          <div className="hidden lg:block absolute top-24 bottom-24 right-[10%] w-px bg-gradient-to-b from-transparent via-orange-500/25 to-transparent" />
+        </div>
+
+        <Navbar />
+        
+        <div className="container mx-auto px-4 py-8 max-w-7xl pt-32 relative">
+          <div className="mb-8">
+            <Button variant="ghost" asChild className="mb-6 hover:bg-orange-500/10 hover:text-orange-400 transition-colors">
+              <Link href="/dashboard">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                {t('auth.backToHome')}
+              </Link>
+            </Button>
+            
+            <GlassCard className="p-6 md:p-8 border border-border/80 bg-black/85 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+              <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-orange-500/10 blur-3xl opacity-60" />
+              
+              <div className="relative z-10 space-y-3 max-w-2xl">
+                <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/40 bg-orange-500/10 px-3 py-1 text-[11px] font-medium text-orange-300">
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>{t('trainer.practiceModes')}</span>
+                </div>
+                <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+                  {t('trainer.title')}
+                </h1>
+                <p className="text-base text-muted-foreground leading-relaxed">
+                  {t('trainer.heroExplainer')}
+                </p>
+              </div>
+              
+              <div className="relative z-10 flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <Button asChild variant="outline" className="h-11 border-border/60 bg-black/40 hover:bg-black/60 hover:border-orange-500/50">
+                  <Link href="/decision-trainer/leaderboard">
+                    <Trophy className="w-4 h-4 mr-2 text-yellow-500" />
+                    {t('trainer.leaderboard')}
+                  </Link>
+                </Button>
+              </div>
+            </GlassCard>
+          </div>
 
           {scenariosError && (
             <div className="mb-6">
-              <GlassCard className="p-4 border-destructive/40">
-                <p className="text-sm text-destructive font-medium mb-1">
+              <GlassCard className="p-6 border-red-500/30 bg-black/80">
+                <p className="text-sm text-red-400 font-medium mb-1 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
                   {t('error.title')}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -538,11 +563,12 @@ export default function DecisionTrainerPage() {
 
           {!scenariosError && !scenariosLoading && scenarios.length === 0 && (
             <div className="mb-6">
-              <GlassCard className="p-4">
-                <p className="text-sm font-medium mb-1">
+              <GlassCard className="p-6 text-center bg-black/80">
+                <Trophy className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-1">
                   {t('trainer.noScenariosTitle')}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {t('trainer.noScenariosSubtitle')}
                 </p>
               </GlassCard>
@@ -550,98 +576,116 @@ export default function DecisionTrainerPage() {
           )}
 
           {lastSessionSummary && (
-            <div className="mb-6">
-              <GlassCard className="p-6 border border-border/80 bg-black/80 relative overflow-hidden">
-                <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-70" />
-                <div className="pointer-events-none absolute -right-24 bottom-0 w-40 h-40 rounded-full bg-primary/15 blur-3xl" />
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                  <div>
-                    <h2 className="text-lg font-bold flex items-center gap-2">
-                      <Trophy className="w-5 h-5 text-primary" />
-                      {t('trainer.lastSessionTitle')}: {CATEGORY_INFO[lastSessionSummary.category]?.name || lastSessionSummary.category}
-                    </h2>
-                    <p className="text-xs text-muted-foreground">
-                      {lastSessionSummary.stats.correctCount}/{lastSessionSummary.stats.totalCount} {t('test.correctLabel').toLowerCase()} · {lastSessionSummary.stats.accuracy}% {t('test.accuracy').toLowerCase()} · {lastSessionSummary.stats.totalXpEarned} {t('dashboard.trainerXp')}
-                    </p>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {t('test.timeLeft')}: {lastSessionSummary.stats.avgTimeSeconds}s · {t('dashboard.trainerBestStreak')}: {lastSessionSummary.stats.maxStreak}
-                  </div>
-                </div>
-
-                {lastSessionSummary.mistakes.length > 0 ? (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">{t('trainer.questionsToReview')}</p>
-                    {lastSessionSummary.mistakes.map((m) => (
-                      <div key={m.scenarioId} className="text-sm flex flex-col md:flex-row md:items-center justify-between gap-2 border-t border-border/60 pt-2 mt-2">
-                        <span className="text-muted-foreground line-clamp-2">
-                          {m.question || t('test.question')}
+            <div className="mb-8">
+              <GlassCard className="p-6 md:p-8 border border-border/80 bg-black/85 relative overflow-hidden">
+                <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-orange-500/50 to-transparent opacity-70" />
+                <div className="pointer-events-none absolute -right-24 bottom-0 w-64 h-64 rounded-full bg-orange-500/10 blur-3xl" />
+                
+                <div className="relative z-10">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                      <h2 className="text-xl font-bold flex items-center gap-2 mb-1">
+                        <Trophy className="w-5 h-5 text-orange-400" />
+                        {t('trainer.lastSessionTitle')}: {CATEGORY_INFO[lastSessionSummary.category]?.name || lastSessionSummary.category}
+                      </h2>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Check className="w-3 h-3 text-green-500" />
+                          {lastSessionSummary.stats.correctCount}/{lastSessionSummary.stats.totalCount} correct
                         </span>
-                        {m.chapterId && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => router.push(`/materials?chapter=${m.chapterId}`)}
-                          >
-                            Review chapter {m.chapterId}
-                          </Button>
-                        )}
+                        <span>•</span>
+                        <span>{lastSessionSummary.stats.accuracy}% accuracy</span>
+                        <span>•</span>
+                        <span className="text-orange-300">+{lastSessionSummary.stats.totalXpEarned} XP</span>
                       </div>
-                    ))}
+                    </div>
+                    <div className="text-sm text-muted-foreground bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
+                      {t('test.timeLeft')}: {lastSessionSummary.stats.avgTimeSeconds}s · {t('dashboard.trainerBestStreak')}: {lastSessionSummary.stats.maxStreak}
+                    </div>
                   </div>
-                ) : (
-                  <p className="text-sm text-green-600 flex items-center gap-2">
-                    <Check className="w-4 h-4" />
-                    {t('trainer.perfectSession')}
-                  </p>
-                )}
 
-                {/* Smart recommended next steps based on session accuracy */}
-                <div className="mt-6 border-t pt-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold mb-1">{t('trainer.nextStepsTitle')}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {lastSessionSummary.stats.accuracy >= 80
-                        ? t('trainer.nextStepsHigh')
-                        : lastSessionSummary.stats.accuracy >= 50
-                        ? t('trainer.nextStepsMedium')
-                        : t('trainer.nextStepsLow')}
-                    </p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-2 md:justify-end">
-                    {/* Practice more in Decision Trainer */}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setMode('quick5');
-                        startCategory(lastSessionSummary.category);
-                      }}
-                    >
-                      {t('trainer.practiceMoreCta')}
-                    </Button>
+                  {lastSessionSummary.mistakes.length > 0 ? (
+                    <div className="space-y-3 bg-white/5 rounded-xl p-4 border border-white/10">
+                      <p className="text-sm font-medium flex items-center gap-2 text-orange-200">
+                        <Lightbulb className="w-4 h-4" />
+                        {t('trainer.questionsToReview')}
+                      </p>
+                      {lastSessionSummary.mistakes.map((m) => (
+                        <div key={m.scenarioId} className="text-sm flex flex-col md:flex-row md:items-center justify-between gap-3 border-t border-white/5 pt-3 mt-2 first:mt-0 first:border-0 first:pt-0">
+                          <span className="text-muted-foreground line-clamp-2 flex-1">
+                            {m.question || t('test.question')}
+                          </span>
+                          {m.chapterId && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-shrink-0 h-8 text-xs border-white/10 hover:bg-white/5"
+                              onClick={() => router.push(`/materials?chapter=${m.chapterId}`)}
+                            >
+                              Review chapter {m.chapterId}
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 flex items-center gap-3 text-green-400">
+                      <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                        <Check className="w-5 h-5" />
+                      </div>
+                      <p className="text-sm font-medium">{t('trainer.perfectSession')}</p>
+                    </div>
+                  )}
 
-                    {/* Weak points mode (if available via handleStartWeakPoints) */}
-                    {(categoryProgressData || []).some((p) => p.total_attempts > 0) && (
+                  {/* Smart recommended next steps based on session accuracy */}
+                  <div className="mt-6 pt-6 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold mb-1 text-foreground/90">{t('trainer.nextStepsTitle')}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {lastSessionSummary.stats.accuracy >= 80
+                          ? t('trainer.nextStepsHigh')
+                          : lastSessionSummary.stats.accuracy >= 50
+                          ? t('trainer.nextStepsMedium')
+                          : t('trainer.nextStepsLow')}
+                      </p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2 md:justify-end">
+                      {/* Practice more in Decision Trainer */}
                       <Button
                         size="sm"
-                        variant="outline"
-                        onClick={handleStartWeakPoints}
+                        className="bg-orange-500 hover:bg-orange-600 text-black border-none font-medium"
+                        onClick={() => {
+                          setMode('quick5');
+                          startCategory(lastSessionSummary.category);
+                        }}
                       >
-                        {t('trainer.weakPointsModeCta')}
+                        {t('trainer.practiceMoreCta')}
                       </Button>
-                    )}
 
-                    {/* Go to related tests for this category */}
-                    <Button
-                      size="sm"
-                      asChild
-                      variant="outline"
-                    >
-                      <Link href={`/category/${lastSessionSummary.category.toLowerCase()}`}>
-                        {t('trainer.goToTestsCta')}
-                      </Link>
-                    </Button>
+                      {/* Weak points mode (if available via handleStartWeakPoints) */}
+                      {(categoryProgressData || []).some((p) => p.total_attempts > 0) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-white/10 hover:bg-white/5"
+                          onClick={handleStartWeakPoints}
+                        >
+                          {t('trainer.weakPointsModeCta')}
+                        </Button>
+                      )}
+
+                      {/* Go to related tests for this category */}
+                      <Button
+                        size="sm"
+                        asChild
+                        variant="outline"
+                        className="border-white/10 hover:bg-white/5"
+                      >
+                        <Link href={`/category/${lastSessionSummary.category.toLowerCase()}`}>
+                          {t('trainer.goToTestsCta')}
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </GlassCard>
@@ -649,8 +693,8 @@ export default function DecisionTrainerPage() {
           )}
 
           {trainerStats && (
-            <div className="mb-6">
-              <GlassCard className="p-6 border border-border/80 bg-black/80">
+            <div className="mb-8">
+              <GlassCard className="p-6 md:p-8 border border-border/80 bg-black/80">
                 {(() => {
                   const achievements = [
                     {
@@ -695,35 +739,39 @@ export default function DecisionTrainerPage() {
 
                   return (
                     <>
-                      <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-sm font-semibold flex items-center gap-2">
-                          <Trophy className="w-4 h-4 text-primary" />
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-lg font-semibold flex items-center gap-2">
+                          <Trophy className="w-5 h-5 text-orange-400" />
                           {t('dashboard.testAchievementsTitle')}
                         </h2>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-muted-foreground">
                           {unlockedCount}/{achievements.length} {t('trainer.achievementsUnlockedLabel')}
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {achievements.map((ach) => (
                           <div
                             key={ach.id}
-                            className={`border rounded-lg px-3 py-2 text-xs ${
+                            className={`border rounded-xl p-4 transition-all duration-300 ${
                               ach.unlocked
-                                ? 'border-primary/60 bg-primary/15'
-                                : 'border-border/70 bg-black/60 opacity-80'
+                                ? 'border-orange-500/30 bg-orange-500/5 shadow-[0_0_15px_rgba(249,115,22,0.05)]'
+                                : 'border-white/5 bg-black/40 opacity-60 grayscale'
                             }`}
                           >
-                            <div className="font-semibold flex items-center gap-1 mb-1">
+                            <div className="font-semibold flex items-center gap-2 mb-2 text-sm">
                               {ach.unlocked ? (
-                                <Check className="w-3 h-3 text-primary" />
+                                <div className="w-5 h-5 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                                  <Check className="w-3 h-3 text-orange-400" />
+                                </div>
                               ) : (
-                                <span className="w-2 h-2 rounded-full bg-muted-foreground/40" />
+                                <div className="w-5 h-5 rounded-full bg-white/10 flex-shrink-0" />
                               )}
-                              {ach.label}
+                              <span className={ach.unlocked ? 'text-orange-100' : 'text-muted-foreground'}>
+                                {ach.label}
+                              </span>
                             </div>
-                            <p className="text-[11px] text-muted-foreground">{ach.description}</p>
+                            <p className="text-xs text-muted-foreground pl-7 leading-relaxed">{ach.description}</p>
                           </div>
                         ))}
                       </div>
@@ -734,19 +782,27 @@ export default function DecisionTrainerPage() {
             </div>
           )}
           
-          <GlassCard className="p-4 mb-6 border border-border/80 bg-black/80">
+          <GlassCard className="p-6 border border-border/80 bg-black/80 mb-8">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">
-                  {t('trainer.practiceModes')}
-                </span>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                  <Zap className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <span className="text-sm font-semibold block text-foreground/90">
+                    {t('trainer.practiceModes')}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Choose your challenge level
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 w-full md:w-auto">
                 <Button
                   size="sm"
                   variant={mode === 'full' ? 'default' : 'outline'}
                   onClick={() => setMode('full')}
+                  className={mode === 'full' ? 'bg-orange-500 text-black hover:bg-orange-600' : 'border-white/10 hover:bg-white/5'}
                 >
                   {t('trainer.fullCategory')}
                 </Button>
@@ -754,6 +810,7 @@ export default function DecisionTrainerPage() {
                   size="sm"
                   variant={mode === 'quick5' ? 'default' : 'outline'}
                   onClick={() => setMode('quick5')}
+                  className={mode === 'quick5' ? 'bg-orange-500 text-black hover:bg-orange-600' : 'border-white/10 hover:bg-white/5'}
                 >
                   {t('trainer.quick5')}
                 </Button>
@@ -761,6 +818,7 @@ export default function DecisionTrainerPage() {
                   size="sm"
                   variant={mode === 'quick10' ? 'default' : 'outline'}
                   onClick={() => setMode('quick10')}
+                  className={mode === 'quick10' ? 'bg-orange-500 text-black hover:bg-orange-600' : 'border-white/10 hover:bg-white/5'}
                 >
                   {t('trainer.quick10')}
                 </Button>
@@ -769,6 +827,7 @@ export default function DecisionTrainerPage() {
                     size="sm"
                     variant={mode === 'weak' ? 'default' : 'outline'}
                     onClick={handleStartWeakPoints}
+                    className={mode === 'weak' ? 'bg-orange-500 text-black hover:bg-orange-600' : 'border-white/10 hover:bg-white/5'}
                   >
                     {t('trainer.weakPoints')}
                   </Button>
@@ -805,13 +864,15 @@ export default function DecisionTrainerPage() {
                 const correctAnswers = progressForCategory?.correct_answers ?? 0;
                 const accuracy = totalAttempts > 0 ? Math.round((correctAnswers / totalAttempts) * 100) : null;
                 let statusLabel = t('trainer.statusNew');
-                let statusClass = 'bg-muted text-muted-foreground';
+                let statusClass = 'bg-white/5 text-muted-foreground border border-white/10';
+                
                 if (totalAttempts > 0 && accuracy !== null) {
                   if (accuracy >= 80) {
                     statusLabel = t('trainer.statusStrong');
-                    statusClass = 'bg-green-500/10 text-green-600 border border-green-500/30';
+                    statusClass = 'bg-green-500/10 text-green-400 border border-green-500/20';
                   } else if (accuracy >= 50) {
                     statusLabel = t('trainer.statusImproving');
+
                     statusClass = 'bg-blue-500/10 text-blue-600 border border-blue-500/30';
                   } else {
                     statusLabel = t('trainer.statusNeedsAttention');
@@ -821,10 +882,14 @@ export default function DecisionTrainerPage() {
                 return (
                   <GlassCard
                     key={key}
-                    className="p-6 md:p-7 border border-border/80 bg-black/80 hover:border-primary/60 hover:shadow-[0_22px_60px_rgba(0,0,0,0.9)] transition-all cursor-pointer"
+                    className="group relative overflow-hidden p-6 md:p-7 border border-border/80 bg-black/80 hover:border-primary/60 hover:shadow-[0_22px_60px_rgba(0,0,0,0.9)] transition-all cursor-pointer"
                     onClick={() => startCategory(key as Category)}
                   >
-                    <div className="flex items-start gap-4">
+                    {/* Hover effects */}
+                    <div className="pointer-events-none absolute -right-10 top-8 h-40 w-40 rounded-full border border-dashed border-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="pointer-events-none absolute -bottom-8 left-6 h-24 w-24 rounded-full bg-primary/10 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                    <div className="relative z-10 flex items-start gap-4">
                       <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
                         {CATEGORY_ICONS[key as Category]}
                       </div>

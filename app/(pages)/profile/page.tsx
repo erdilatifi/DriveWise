@@ -26,13 +26,14 @@ import { useLanguage } from '@/contexts/language-context';
 import { useUserPlans, useGlobalPremium } from '@/hooks/use-subscriptions';
 import { BILLING_CONFIG, type PaidPlanTier } from '@/lib/subscriptions';
 import { createClient } from '@/utils/supabase/client';
-import { AlertTriangle, Trash2 } from 'lucide-react';
+import { AlertTriangle, Trash2, User, Shield, CreditCard, Settings, LogOut, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { user, loading: authLoading, isAdmin, userProfile, refreshUser, signOut } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isSq = language === 'sq';
   const [fullNameInput, setFullNameInput] = useState(
     userProfile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '',
   );
@@ -166,244 +167,298 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background text-foreground overflow-hidden">
+      {/* Background grid */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(60%_60%_at_50%_20%,#000_20%,transparent_70%)]"
+      >
+        <svg className="h-full w-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="profile-grid" width="32" height="32" patternUnits="userSpaceOnUse">
+              <path d="M32 0H0V32" fill="none" stroke="currentColor" strokeWidth="0.4" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#profile-grid)" />
+        </svg>
+      </div>
+
+      {/* Warm glows & rails */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-orange-500/25 via-transparent to-transparent blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="hidden lg:block absolute top-24 bottom-24 left-[10%] w-px bg-gradient-to-b from-transparent via-orange-500/25 to-transparent" />
+        <div className="hidden lg:block absolute top-24 bottom-24 right-[10%] w-px bg-gradient-to-b from-transparent via-orange-500/25 to-transparent" />
+      </div>
+
       <Navbar />
+
       <div className="pt-28 md:pt-32 pb-12">
-        <div className="container mx-auto px-4 max-w-5xl space-y-6">
-          <GlassCard className="p-6 md:p-7 border border-border/80 bg-black/85 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">{t('profile.title') || 'Plan & usage summary'}</p>
-              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-1">{displayName}</h1>
-              {email && <p className="text-sm text-muted-foreground">{email}</p>}
-              {!isAdmin && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {hasAnyActivePlan
-                    ? 'You have at least one active paid plan. See details below.'
-                    : 'You are currently on the free plan. Start a paid plan to unlock all premium features.'}
-                </p>
-              )}
-              {isAdmin && (
-                <p className="mt-2 text-xs text-amber-400">
-                  {t('profile.adminUnlimited') ||
-                    'Admin: You already have unlimited access to all categories and features.'}
-                </p>
-              )}
+        <div className="container mx-auto px-4 max-w-5xl relative">
+          {/* Header */}
+          <div className="mb-10">
+            <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/40 bg-orange-500/10 px-3 py-1 text-[11px] font-medium text-orange-300 mb-4">
+              <Settings className="w-3.5 h-3.5" />
+              <span>{t('profile.title') || 'Account & Settings'}</span>
             </div>
-            <div className="flex flex-col items-end gap-2">
-              {hasAnyActivePlan && !isAdmin && (
-                <Badge variant="outline" className="border-emerald-500/70 text-emerald-400 text-xs">
-                  {t('profile.premiumBadge') || 'Active paid plan'}
-                </Badge>
-              )}
-            </div>
-          </GlassCard>
+            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+              {isSq ? 'Menaxho llogarinë' : 'Manage your account'}
+            </h1>
+            <p className="text-sm md:text-base text-muted-foreground mt-2 max-w-xl">
+              {isSq 
+                ? 'Menaxho profilin, planet aktive dhe sigurinë e llogarisë.' 
+                : 'Manage your profile, active plans, and account security.'}
+            </p>
+          </div>
 
-          <GlassCard className="p-6 md:p-7 border border-border/80 bg-black/85">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-sm font-semibold tracking-tight">
-                  {t('profile.accountSettingsTitle')}
-                </h2>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t('profile.accountSettingsDescription')}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="full-name">{t('profile.displayNameLabel')}</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="full-name"
-                    value={fullNameInput}
-                    onChange={(e) => setFullNameInput(e.target.value)}
-                    className="text-sm"
-                  />
-                  <Button
-                    size="sm"
-                    type="button"
-                    onClick={handleSaveName}
-                    disabled={savingName || !fullNameInput.trim() || fullNameInput.trim() === displayName}
-                    className="whitespace-nowrap"
-                  >
-                    {savingName ? 'Saving...' : 'Save'}
-                  </Button>
+          <div className="grid gap-8">
+            {/* Profile Summary Card */}
+            <GlassCard className="p-6 md:p-8 border border-border/80 bg-black/85 relative overflow-hidden">
+              <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-orange-500/10 blur-3xl opacity-60" />
+              <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500/20 to-black border border-orange-500/30 flex items-center justify-center">
+                    <User className="w-8 h-8 text-orange-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold tracking-tight">{displayName}</h2>
+                    <p className="text-sm text-muted-foreground">{email}</p>
+                    {!isAdmin && (
+                      <div className="flex items-center gap-2 mt-2">
+                        {hasAnyActivePlan ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-400">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            {isSq ? 'Plan aktiv' : 'Active plan'}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-medium text-muted-foreground">
+                            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+                            {isSq ? 'Plan falas' : 'Free plan'}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {isAdmin && (
+                      <p className="mt-2 text-xs text-orange-300 font-medium">
+                        {t('profile.adminUnlimited') || 'Admin Access: Unlimited'}
+                      </p>
+                    )}
+                  </div>
                 </div>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full md:w-auto border-white/10 hover:bg-white/5 hover:text-red-400 hover:border-red-500/30 transition-colors"
+                  onClick={() => signOut()}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  {isSq ? 'Dil nga llogaria' : 'Log out'}
+                </Button>
+              </div>
+            </GlassCard>
+
+            {/* Settings Grid */}
+            <div className="grid gap-8 md:grid-cols-2">
+              {/* Personal Info */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+                  <User className="w-4 h-4 text-orange-400" />
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t('profile.accountSettingsTitle')}
+                  </h2>
+                </div>
+                
+                <GlassCard className="p-6 border border-border/80 bg-black/80">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="full-name" className="text-xs text-muted-foreground">
+                        {t('profile.displayNameLabel')}
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="full-name"
+                          value={fullNameInput}
+                          onChange={(e) => setFullNameInput(e.target.value)}
+                          className="text-sm bg-black/50 border-border/60 focus:ring-orange-500/50"
+                        />
+                        <Button
+                          size="sm"
+                          type="button"
+                          onClick={handleSaveName}
+                          disabled={savingName || !fullNameInput.trim() || fullNameInput.trim() === displayName}
+                          className="whitespace-nowrap bg-white/10 hover:bg-white/20 border-transparent text-foreground"
+                        >
+                          {savingName ? 'Saving...' : isSq ? 'Ruaj' : 'Save'}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="account-email" className="text-xs text-muted-foreground">
+                        {t('profile.emailLabel')}
+                      </Label>
+                      <Input 
+                        id="account-email" 
+                        value={email} 
+                        disabled 
+                        className="text-sm bg-white/5 border-transparent text-muted-foreground" 
+                      />
+                      <p className="text-[10px] text-muted-foreground/60">
+                        {t('profile.emailHelp')}
+                      </p>
+                    </div>
+                  </div>
+                </GlassCard>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="account-email">{t('profile.emailLabel')}</Label>
-                <Input id="account-email" value={email} disabled className="text-sm" />
-                <p className="text-xs text-muted-foreground">
-                  {t('profile.emailHelp')}
-                </p>
+              {/* Subscription Info */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-orange-400" />
+                    <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                      {t('plans.profilePaidPlansTitle') || 'Active Plans'}
+                    </h2>
+                  </div>
+                  {!isAdmin && paidPlans.length > 0 && (
+                    <Link 
+                      href="/pricing" 
+                      className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
+                    >
+                      {isSq ? 'Zgjero planet' : 'Extend plans'} →
+                    </Link>
+                  )}
+                </div>
+
+                <GlassCard className="p-6 border border-border/80 bg-black/80 min-h-[200px]">
+                  {paidPlans.length === 0 && !isAdmin ? (
+                    <div className="flex flex-col items-center justify-center h-full py-8 text-center space-y-4">
+                      <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
+                        <CreditCard className="w-6 h-6 text-muted-foreground/50" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{isSq ? 'Asnjë plan aktiv' : 'No active plans'}</p>
+                        <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">
+                          {isSq 
+                            ? 'Fillo një plan për të hapur të gjitha veçoritë.'
+                            : 'Start a plan to unlock all premium features.'}
+                        </p>
+                      </div>
+                      <Button size="sm" asChild className="bg-orange-600 hover:bg-orange-500 text-white border-none">
+                        <Link href="/pricing">{t('plans.profileExtendViaPricingCta') || 'View Pricing'}</Link>
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {paidPlans.map((plan) => {
+                        const category = (plan.category as LicenseCategory) || 'B';
+                        const info = CATEGORY_INFO[category];
+                        const startDate = plan.start_date ? new Date(plan.start_date) : null;
+                        const endDate = plan.end_date ? new Date(plan.end_date) : null;
+                        const now = new Date();
+
+                        let progressPct = 0;
+                        let remainingDays: number | null = null;
+                        if (startDate && endDate) {
+                          const totalMs = endDate.getTime() - startDate.getTime();
+                          const usedMs = Math.min(Math.max(now.getTime() - startDate.getTime(), 0), Math.max(totalMs, 0));
+                          progressPct = totalMs > 0 ? Math.min(100, Math.max(0, (usedMs / totalMs) * 100)) : 100;
+                          const diffDays = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                          remainingDays = diffDays > 0 ? diffDays : 0;
+                        }
+
+                        const isActive = plan.status === 'active' && endDate && endDate.getTime() >= now.getTime();
+                        const planTier = plan.plan_tier as PaidPlanTier;
+                        const planDef = BILLING_CONFIG.plans[planTier] || null;
+
+                        return (
+                          <div
+                            key={plan.id}
+                            className="rounded-xl border border-white/10 bg-white/5 p-4 flex flex-col gap-3 hover:border-orange-500/30 transition-colors"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
+                                  <span className="font-bold text-orange-400">{category}</span>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold">{info?.name || category}</p>
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                                    {planDef?.label || plan.plan_tier}
+                                  </p>
+                                </div>
+                              </div>
+                              {isActive && (
+                                <span className="flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                              )}
+                            </div>
+
+                            {startDate && endDate && (
+                              <div className="space-y-1.5">
+                                <div className="flex justify-between text-[10px] text-muted-foreground">
+                                  <span>{isSq ? 'Progresi' : 'Usage'}</span>
+                                  <span>{remainingDays} {isSq ? 'ditë mbetura' : 'days left'}</span>
+                                </div>
+                                <div className="w-full bg-black/40 rounded-full h-1.5 overflow-hidden border border-white/5">
+                                  <div
+                                    className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-500 transition-all"
+                                    style={{ width: `${progressPct}%` }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {!isAdmin && isActive && remainingDays !== null && remainingDays <= 7 && (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="w-full h-7 text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                                asChild
+                              >
+                                <Link href={`/pricing?category=${category}`}>
+                                  {isSq ? 'Rinovoni tani' : 'Renew now'}
+                                </Link>
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </GlassCard>
               </div>
             </div>
 
-            <div className="mt-6 border-t border-border/60 pt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-destructive mt-0.5" />
-                <div>
-                  <p className="text-sm font-semibold text-destructive">{t('profile.dangerZoneTitle')}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+            {/* Danger Zone */}
+            <div className="mt-8 pt-8 border-t border-white/10">
+              <div className="flex items-center gap-2 mb-6">
+                <Shield className="w-4 h-4 text-red-400" />
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t('profile.dangerZoneTitle')}
+                </h2>
+              </div>
+              
+              <GlassCard className="p-6 border border-red-500/20 bg-red-500/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium text-red-200">
+                    {t('profile.deleteAccountButton')}
+                  </h3>
+                  <p className="text-xs text-red-200/60 max-w-md">
                     {t('profile.dangerZoneDescription')}
                   </p>
                 </div>
-              </div>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                className="inline-flex items-center gap-2 self-start md:self-auto"
-                onClick={() => setDeleteDialogOpen(true)}
-              >
-                <Trash2 className="w-4 h-4" />
-                {t('profile.deleteAccountButton')}
-              </Button>
-            </div>
-          </GlassCard>
-
-          <GlassCard className="p-6 md:p-7 border border-border/80 bg-black/85">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-sm font-semibold tracking-tight">
-                  {t('plans.profilePaidPlansTitle') || 'Your paid plans'}
-                </h2>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {paidPlans.length > 0
-                    ? 'These are your paid plans by license category. You can extend them from the pricing page.'
-                    : 'You do not have any paid plans yet. Start a plan from the pricing page to unlock all premium features.'}
-                </p>
-              </div>
-              {!isAdmin && paidPlans.length > 0 && (
-                <Button size="sm" variant="outline" asChild>
-                  <Link href="/pricing">{t('plans.profileExtendViaPricingCta') || 'Go to pricing'}</Link>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="inline-flex items-center gap-2 whitespace-nowrap bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40"
+                  onClick={() => setDeleteDialogOpen(true)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {t('profile.deleteAccountButton')}
                 </Button>
-              )}
+              </GlassCard>
             </div>
-
-            {paidPlans.length === 0 && !isAdmin && (
-              <div className="mt-2">
-                <Button asChild>
-                  <Link href="/pricing">{t('plans.profileExtendViaPricingCta') || 'Go to pricing'}</Link>
-                </Button>
-              </div>
-            )}
-
-            {paidPlans.length > 0 && (
-              <div className="mt-4 space-y-3">
-                {paidPlans.map((plan) => {
-                  const category = (plan.category as LicenseCategory) || 'B';
-                  const info = CATEGORY_INFO[category];
-                  const startDate = plan.start_date ? new Date(plan.start_date) : null;
-                  const endDate = plan.end_date ? new Date(plan.end_date) : null;
-                  const now = new Date();
-
-                  let progressPct = 0;
-                  let remainingDays: number | null = null;
-                  if (startDate && endDate) {
-                    const totalMs = endDate.getTime() - startDate.getTime();
-                    const usedMs = Math.min(Math.max(now.getTime() - startDate.getTime(), 0), Math.max(totalMs, 0));
-                    progressPct = totalMs > 0 ? Math.min(100, Math.max(0, (usedMs / totalMs) * 100)) : 100;
-                    const diffDays = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                    remainingDays = diffDays > 0 ? diffDays : 0;
-                  }
-
-                  const isActive = plan.status === 'active' && endDate && endDate.getTime() >= now.getTime();
-                  const statusLabel = isActive ? 'Active' : 'Expired';
-                  const statusClass = isActive
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/40'
-                    : 'bg-muted text-muted-foreground border border-border/60';
-
-                  const planTier = plan.plan_tier as PaidPlanTier;
-                  const planDef = BILLING_CONFIG.plans[planTier] || null;
-
-                  return (
-                    <div
-                      key={plan.id}
-                      className="rounded-xl border border-border/80 bg-black/70 p-4 flex flex-col gap-3"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">
-                            Category {category}
-                          </p>
-                          <p className="text-sm font-semibold">{info?.name || category}</p>
-                        </div>
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClass}`}
-                        >
-                          {statusLabel}
-                        </span>
-                      </div>
-                      {isActive && remainingDays !== null && remainingDays <= 7 && (
-                        <p className="mt-1 text-[11px] text-amber-400">
-                          Expiring soon
-                        </p>
-                      )}
-
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        <p>
-                          Plan:{' '}
-                          <span className="font-medium">
-                            {planDef?.label || plan.plan_tier}
-                          </span>
-                        </p>
-                        <p>
-                          Starts:{' '}
-                          <span className="font-medium">
-                            {startDate ? startDate.toLocaleDateString() : '-'}
-                          </span>
-                        </p>
-                        <p>
-                          Ends:{' '}
-                          <span className="font-medium">
-                            {endDate ? endDate.toLocaleDateString() : '-'}
-                          </span>
-                          {remainingDays !== null && (
-                            <span className="text-muted-foreground/70">
-                              {' '}
-                              ({remainingDays} days left)
-                            </span>
-                          )}
-                        </p>
-                      </div>
-
-                      {startDate && endDate && (
-                        <div className="mt-1">
-                          <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-                            <div
-                              className="h-2 rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all"
-                              style={{ width: `${progressPct}%` }}
-                            />
-                          </div>
-                          <p className="mt-1 text-[11px] text-muted-foreground">
-                            Time used: {Math.round(progressPct)}%
-                          </p>
-                        </div>
-                      )}
-
-                      {!isAdmin && (
-                        <div className="mt-1 flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs flex-1"
-                            asChild
-                          >
-                            <Link href={`/pricing?category=${category}&plan=${plan.plan_tier}`}>
-                              {t('plans.profileExtendViaPricingCta') || 'Go to pricing'}
-                            </Link>
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </GlassCard>
+          </div>
         </div>
       </div>
 
@@ -416,18 +471,18 @@ export default function ProfilePage() {
           }
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-zinc-950 border-border/80">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="w-4 h-4" />
+            <AlertDialogTitle className="flex items-center gap-2 text-red-500">
+              <AlertTriangle className="w-5 h-5" />
               {t('profile.deleteDialogTitle')}
             </AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="text-muted-foreground">
               {t('profile.deleteDialogDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="mt-4 space-y-2">
-            <Label htmlFor="delete-confirm" className="text-xs">
+          <div className="mt-4 space-y-3">
+            <Label htmlFor="delete-confirm" className="text-xs uppercase tracking-wider text-muted-foreground">
               {t('profile.deleteDialogConfirmLabel')}
             </Label>
             <Input
@@ -435,17 +490,17 @@ export default function ProfilePage() {
               value={deleteConfirmInput}
               onChange={(e) => setDeleteConfirmInput(e.target.value)}
               placeholder="DELETE"
-              className="text-sm"
+              className="bg-black/50 border-red-500/20 focus:border-red-500/50 focus:ring-red-500/20"
             />
           </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
+          <AlertDialogFooter className="mt-6">
+            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)} className="border-white/10 hover:bg-white/5 hover:text-foreground">
               {t('profile.deleteDialogCancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDeleteAccount}
               disabled={deletingAccount || deleteConfirmInput !== 'DELETE'}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-600 hover:bg-red-700 text-white border-none"
             >
               {deletingAccount ? t('profile.deleteDialogConfirming') : t('profile.deleteDialogConfirm')}
             </AlertDialogAction>
