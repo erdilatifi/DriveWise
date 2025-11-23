@@ -152,7 +152,8 @@ export default function PricingPage() {
         plan: selectedPlan,
         user_id: user.id,
       };
-      urlObj.searchParams.append('custom_data', JSON.stringify(customData));
+      // Use set() to avoid duplicates if custom_data already exists
+      urlObj.searchParams.set('custom_data', JSON.stringify(customData));
 
       window.location.href = urlObj.toString();
     } catch (error) {

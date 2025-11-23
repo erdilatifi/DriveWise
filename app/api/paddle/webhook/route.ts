@@ -81,16 +81,28 @@ export async function POST(req: NextRequest) {
 
       // Extract Email & Custom Data
       // In Paddle Billing, custom_data is directly on the transaction object
-      const customData = data.custom_data || {};
-      console.log('🔍 Raw Custom Data:', JSON.stringify(customData));
+      let customData = data.custom_data || {};
+      
+      // Handle case where custom_data is a JSON string
+      if (typeof customData === 'string') {
+        try {
+          console.log('⚠️ custom_data is a string, parsing...');
+          customData = JSON.parse(customData);
+        } catch (e) {
+          console.error('❌ Failed to parse custom_data string:', e);
+          customData = {}; 
+        }
+      }
+      
+      console.log('🔍 Processed Custom Data:', JSON.stringify(customData));
 
       const customerEmail = data.customer?.email || customData.guest_email || customData.email;
 
-      // Helper to safely extract from nested structures (Paddle sometimes nests custom_data inside custom_data)
+      // Helper to safely extract from nested structures
       const getCustomDataValue = (key: string) => {
         // Check direct key
         if (customData[key]) return customData[key];
-        // Check nested custom_data
+        // Check nested custom_data (some implementations nest it)
         if (customData.custom_data && customData.custom_data[key]) return customData.custom_data[key];
         // Check capitalized key (Category vs category)
         const capKey = key.charAt(0).toUpperCase() + key.slice(1);
