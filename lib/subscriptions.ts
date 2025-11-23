@@ -42,7 +42,7 @@ const rawPlans: Omit<PlanDefinition, 'pricePerMonthEur'>[] = [
     id: 'PLAN_B',
     label: '2 months',
     months: 2,
-    priceEur: 5,
+    priceEur: 6,
   },
   {
     id: 'PLAN_C',

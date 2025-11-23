@@ -1224,7 +1224,7 @@ export default function HomePage() {
             </div>
 
             <div className="flex items-end gap-2">
-              <span className="text-3xl md:text-4xl font-semibold">5€</span>
+              <span className="text-3xl md:text-4xl font-semibold">6€</span>
               <span className="text-xs text-muted-foreground mb-1">
                 / category
               </span>
@@ -1239,7 +1239,7 @@ export default function HomePage() {
 
             <ul className="space-y-2 text-xs text-muted-foreground">
               <li>• Everything included in the 1 month plan</li>
-              <li>• Better value at 2.50€/month</li>
+              <li>• Consistent value at 3.00€/month</li>
               <li>• Perfect if your exam date might move</li>
             </ul>
 
