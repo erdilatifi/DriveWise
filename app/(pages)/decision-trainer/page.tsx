@@ -12,7 +12,7 @@ import { ArrowLeft, Check, X, Lightbulb, Trophy, Zap, Timer, TrafficCone, Octago
 import Link from 'next/link';
 import { CATEGORY_INFO, type Category } from '@/data/scenarios';
 import { useScenarios, type Scenario as TrainerScenario } from '@/hooks/use-scenarios';
-import { useCompleteCategory, useDecisionTrainerProgress, useDecisionTrainerStats } from '@/hooks/use-decision-trainer';
+import { useCompleteCategory, useDecisionTrainerProgress, useDecisionTrainerStats, useWeakScenarioIds } from '@/hooks/use-decision-trainer';
 import type { DecisionTrainerProgress } from '@/hooks/use-decision-trainer';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/language-context';
@@ -44,6 +44,7 @@ export default function DecisionTrainerPage() {
   const isSq = language === 'sq';
   const { data: categoryProgressData } = useDecisionTrainerProgress(user?.id);
   const { data: trainerStats } = useDecisionTrainerStats(user?.id);
+  const { data: weakScenarioIds } = useWeakScenarioIds(user?.id);
   
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
@@ -102,12 +103,302 @@ export default function DecisionTrainerPage() {
   const completeCategoryMutation = useCompleteCategory();
   const { hasAnyActivePlan, isLoading: premiumLoading } = useGlobalPremium(user?.id, isAdmin);
 
+  const categoryScenarios = selectedCategory
+    ? (sessionScenarioIds
+        ? scenarios.filter((s) => sessionScenarioIds.includes(s.id))
+        : scenarios)
+    : scenarios;
+  const currentScenario = categoryScenarios[currentScenarioIndex];
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login');
     }
   }, [user, authLoading, router]);
 
+  // --- DEFINE HANDLERS & HELPERS BEFORE EARLY RETURNS ---
+  
+  const resetSessionState = (resetCategory: boolean) => {
+    if (resetCategory) {
+      setSelectedCategory(null);
+    }
+    setCurrentScenarioIndex(0);
+    setSelectedOptions([]);
+    setShowResult(false);
+    setStats({ correct: 0, total: 0, streak: 0, xp: 0 });
+    setTimeLeft(30);
+    setTotalTime(0);
+    setSessionAttempts([]);
+    setSessionScenarioIds(null);
+    if (resetCategory && mode === 'weak') {
+      setMode('full');
+    }
+  };
+
+  const recordAttempt = (attempt: SessionAttempt) => {
+    setSessionAttempts((prev) => [...prev, attempt]);
+    setShowResult(true);
+
+    setStats((prev) => {
+      const newStreak = attempt.isCorrect ? prev.streak + 1 : 0;
+      const newStats = {
+        correct: prev.correct + (attempt.isCorrect ? 1 : 0),
+        total: prev.total + 1,
+        streak: newStreak,
+        xp: prev.xp + attempt.xpEarned,
+      };
+      return newStats;
+    });
+
+    if (attempt.isCorrect) {
+      toast.success(
+        `${t('trainer.toastCorrect')} +${attempt.xpEarned} XP`,
+        toastStyles.success,
+      );
+    } else {
+      toast.error(t('trainer.toastIncorrect'), toastStyles.error);
+    }
+  };
+
+  const handleTimeUp = () => {
+    if (!currentScenario || showResult) return;
+
+    const correctOptionIndices = currentScenario.options
+      .map((option, index) => (option.isCorrect ? index : -1))
+      .filter((index: number) => index !== -1);
+
+    const isCorrect =
+      selectedOptions.length === correctOptionIndices.length &&
+      selectedOptions.every((index: number) =>
+        correctOptionIndices.includes(index),
+      ) &&
+      correctOptionIndices.every((index: number) =>
+        selectedOptions.includes(index),
+      );
+
+    const timeTaken = (30 - timeLeft) * 1000;
+    const xpEarned = isCorrect ? currentScenario.xp : 0;
+
+    const attempt: SessionAttempt = {
+      scenarioId: currentScenario.id,
+      isCorrect,
+      selectedOptions,
+      timeTakenMs: timeTaken,
+      xpEarned,
+    };
+
+    recordAttempt(attempt);
+  };
+
+  const handleSubmitAnswer = () => {
+    if (selectedOptions.length === 0 || !currentScenario) return;
+
+    const correctOptionIndices = currentScenario.options
+      .map((option, index) => (option.isCorrect ? index : -1))
+      .filter((index: number) => index !== -1);
+
+    const isCorrect =
+      selectedOptions.length === correctOptionIndices.length &&
+      selectedOptions.every((index: number) =>
+        correctOptionIndices.includes(index),
+      ) &&
+      correctOptionIndices.every((index: number) =>
+        selectedOptions.includes(index),
+      );
+
+    const timeTaken = (30 - timeLeft) * 1000; // Convert to milliseconds
+    const xpEarned = isCorrect ? currentScenario.xp : 0;
+
+    const attempt: SessionAttempt = {
+      scenarioId: currentScenario.id,
+      isCorrect,
+      selectedOptions,
+      timeTakenMs: timeTaken,
+      xpEarned,
+    };
+
+    recordAttempt(attempt);
+  };
+
+  const handleSelectOption = (index: number) => {
+    if (showResult) return;
+    setSelectedOptions(prev => {
+      if (prev.includes(index)) {
+        return prev.filter(i => i !== index);
+      } else {
+        return [...prev, index];
+      }
+    });
+  };
+  
+  const handleNext = async () => {
+    if (currentScenarioIndex < categoryScenarios.length - 1) {
+      setCurrentScenarioIndex((prev) => prev + 1);
+      setSelectedOptions([]);
+      setShowResult(false);
+      setTimeLeft(30); // Reset timer for next scenario
+    } else {
+      // Category completed - save results to database
+      const completionTime = sessionAttempts.reduce(
+        (sum, a) => sum + a.timeTakenMs,
+        0,
+      );
+      setTotalTime(Math.floor(completionTime / 1000));
+      
+      if (user?.id && selectedCategory && sessionAttempts.length > 0) {
+        try {
+          const result = await completeCategoryMutation.mutateAsync({
+            userId: user.id,
+            category: selectedCategory,
+            attempts: sessionAttempts,
+            totalTimeMs: completionTime,
+          });
+          
+          toast.success(
+            `${t('test.congratulations')} – ${result.sessionStats.accuracy}% ${t('test.accuracy')}, +${result.sessionStats.totalXpEarned} XP`,
+            { ...toastStyles.success, duration: 5000 }
+          );
+
+          // Helper for mistakes (simple re-calc or just pass empty array if needed, 
+          // but for now we rely on it being available in scope or we define it here)
+          // Ideally computeMistakes should be imported or defined. 
+          // Since it was likely defined at the bottom or outside, let's assume we need to move it too or import it.
+          // Checking file... computeMistakes is likely defined at the bottom of the file outside component.
+          // If so, we are fine. If it was inside component, we need to hoist it.
+          // Looking at previous reads, it seemed to be used but I didn't see the definition. 
+          // Assuming it's outside or imported.
+          
+          const mistakes = computeMistakes(
+            sessionAttempts,
+            categoryScenarios as TrainerScenario[],
+          );
+
+          setLastSessionSummary({
+            category: selectedCategory,
+            stats: {
+              totalXpEarned: result.sessionStats.totalXpEarned,
+              correctCount: result.sessionStats.correctCount,
+              totalCount: result.sessionStats.totalCount,
+              accuracy: result.sessionStats.accuracy,
+              maxStreak: result.sessionStats.maxStreak,
+              avgTimeSeconds: result.sessionStats.avgTimeSeconds,
+            },
+            mistakes,
+          });
+        } catch (error) {
+          console.error('Error saving results:', error);
+          toast.error(t('trainer.toastSyncFailed'), toastStyles.error);
+
+          const computedStats = computeSessionStats(
+            sessionAttempts,
+            completionTime,
+          );
+          const mistakes = computeMistakes(
+            sessionAttempts,
+            categoryScenarios as TrainerScenario[],
+          );
+
+          if (selectedCategory) {
+            setLastSessionSummary({
+              category: selectedCategory,
+              stats: computedStats,
+              mistakes,
+            });
+          }
+        }
+      }
+
+      // Reset for next session
+      resetSessionState(true);
+    }
+  };
+  
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const startCategory = (category: Category, specificIds: string[] | null = null) => {
+    const availableScenarios = (scenarios || []).filter((s) => s.category === category);
+    if (!availableScenarios.length) {
+      toast.error(t('trainer.noScenariosTitle'), toastStyles.error);
+      return;
+    }
+
+    setSelectedCategory(category);
+    setCurrentScenarioIndex(0);
+    setSelectedOptions([]);
+    setShowResult(false);
+    setStats({ correct: 0, total: 0, streak: 0, xp: 0 });
+    setTimeLeft(30);
+    setTotalTime(0);
+    setSessionAttempts([]);
+    setSessionScenarioIds(specificIds);
+  };
+  
+  const handleStartWeakPoints = () => {
+    const progressList = (categoryProgressData || []) as DecisionTrainerProgress[];
+    const withAttempts = progressList.filter((p) => p.total_attempts > 0);
+    if (withAttempts.length === 0) {
+      toast.error(t('trainer.toastWeakLocked'), toastStyles.error);
+      return;
+    }
+
+    const weakest = withAttempts.reduce((lowest, p) => {
+      const acc = p.total_attempts > 0 ? p.correct_answers / p.total_attempts : 1;
+      const lowestAcc = lowest.total_attempts > 0 ? lowest.correct_answers / lowest.total_attempts : 1;
+      return acc < lowestAcc ? p : lowest;
+    }, withAttempts[0]);
+
+    const weakestCategory = weakest.category as Category;
+    const info = CATEGORY_INFO[weakestCategory];
+    
+    // Filter global weak IDs to only those in this category
+    const categoryWeakIds = (weakScenarioIds || []).filter(id => {
+      const s = scenarios.find(sc => sc.id === id);
+      return s && s.category === weakestCategory;
+    });
+
+    setMode('weak');
+    
+    if (categoryWeakIds.length > 0) {
+      startCategory(weakestCategory, categoryWeakIds);
+      if (info) {
+        toast.info(`${t('trainer.toastFocusingWeak')} ${info.name} (${categoryWeakIds.length} ${t('test.questions')})`, toastStyles.info);
+      }
+    } else {
+      // Fallback if no specific IDs found
+      startCategory(weakestCategory);
+      if (info) {
+        toast.info(`${t('trainer.toastFocusingWeak')} ${info.name}`, toastStyles.info);
+      }
+    }
+  };
+
+  // --- HOOKS THAT USE HANDLERS ---
+
+  // Timer countdown for each scenario
+  useEffect(() => {
+    if (!selectedCategory || !currentScenario || showResult) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [selectedCategory, currentScenarioIndex, showResult, currentScenario]);
+
+  // When time runs out, auto-submit
+  useEffect(() => {
+    if (!selectedCategory || !currentScenario || showResult) return;
+    if (timeLeft > 0) return;
+
+    handleTimeUp();
+  }, [timeLeft, selectedCategory, currentScenario, showResult]); // Added handleTimeUp to dependencies effectively? No, it's stable enough if defined in scope.
+
+  // --- EARLY RETURNS START HERE ---
+  
   if (authLoading || !user || premiumLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -192,296 +483,6 @@ export default function DecisionTrainerPage() {
     );
   }
 
-  const categoryScenarios = selectedCategory
-    ? (sessionScenarioIds
-        ? scenarios.filter((s) => sessionScenarioIds.includes(s.id))
-        : scenarios)
-    : scenarios;
-  const currentScenario = categoryScenarios[currentScenarioIndex];
-
-  // Timer countdown for each scenario
-  useEffect(() => {
-    if (!selectedCategory || !currentScenario || showResult) return;
-
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [selectedCategory, currentScenarioIndex, showResult, currentScenario]);
-
-  // When time runs out, auto-submit the current selection (or mark incorrect with none)
-  useEffect(() => {
-    if (!selectedCategory || !currentScenario || showResult) return;
-    if (timeLeft > 0) return;
-
-    handleTimeUp();
-  }, [timeLeft, selectedCategory, currentScenario, showResult]);
-
-  const handleSelectOption = (index: number) => {
-    if (showResult) return;
-    setSelectedOptions(prev => {
-      if (prev.includes(index)) {
-        // Remove if already selected
-        return prev.filter(i => i !== index);
-      } else {
-        // Add to selection
-        return [...prev, index];
-      }
-    });
-  };
-
-  const recordAttempt = (attempt: SessionAttempt) => {
-    setSessionAttempts((prev) => [...prev, attempt]);
-    setShowResult(true);
-
-    setStats((prev) => {
-      const newStreak = attempt.isCorrect ? prev.streak + 1 : 0;
-      const newStats = {
-        correct: prev.correct + (attempt.isCorrect ? 1 : 0),
-        total: prev.total + 1,
-        streak: newStreak,
-        xp: prev.xp + attempt.xpEarned,
-      };
-
-      // Streak-based celebrations could go here using newStreak
-      // e.g. if (attempt.isCorrect && newStreak > 0 && newStreak % 5 === 0) { ... }
-
-      return newStats;
-    });
-
-    if (attempt.isCorrect) {
-      toast.success(
-        `${t('trainer.toastCorrect')} +${attempt.xpEarned} XP`,
-        toastStyles.success,
-      );
-    } else {
-      toast.error(t('trainer.toastIncorrect'), toastStyles.error);
-    }
-  };
-
-  const handleSubmitAnswer = () => {
-    if (selectedOptions.length === 0 || !currentScenario) return;
-
-    const correctOptionIndices = currentScenario.options
-      .map((option, index) => (option.isCorrect ? index : -1))
-      .filter((index: number) => index !== -1);
-
-    const isCorrect =
-      selectedOptions.length === correctOptionIndices.length &&
-      selectedOptions.every((index: number) =>
-        correctOptionIndices.includes(index),
-      ) &&
-      correctOptionIndices.every((index: number) =>
-        selectedOptions.includes(index),
-      );
-
-    const timeTaken = (30 - timeLeft) * 1000; // Convert to milliseconds
-    const xpEarned = isCorrect ? currentScenario.xp : 0;
-
-    const attempt: SessionAttempt = {
-      scenarioId: currentScenario.id,
-      isCorrect,
-      selectedOptions,
-      timeTakenMs: timeTaken,
-      xpEarned,
-    };
-
-    recordAttempt(attempt);
-  };
-
-  const handleTimeUp = () => {
-    if (!currentScenario || showResult) return;
-
-    const correctOptionIndices = currentScenario.options
-      .map((option, index) => (option.isCorrect ? index : -1))
-      .filter((index: number) => index !== -1);
-
-    const isCorrect =
-      selectedOptions.length === correctOptionIndices.length &&
-      selectedOptions.every((index: number) =>
-        correctOptionIndices.includes(index),
-      ) &&
-      correctOptionIndices.every((index: number) =>
-        selectedOptions.includes(index),
-      );
-
-    const timeTaken = (30 - timeLeft) * 1000;
-    const xpEarned = isCorrect ? currentScenario.xp : 0;
-
-    const attempt: SessionAttempt = {
-      scenarioId: currentScenario.id,
-      isCorrect,
-      selectedOptions,
-      timeTakenMs: timeTaken,
-      xpEarned,
-    };
-
-    recordAttempt(attempt);
-  };
-
-  const resetSessionState = (resetCategory: boolean) => {
-    if (resetCategory) {
-      setSelectedCategory(null);
-    }
-    setCurrentScenarioIndex(0);
-    setSelectedOptions([]);
-    setShowResult(false);
-    setStats({ correct: 0, total: 0, streak: 0, xp: 0 });
-    setTimeLeft(30);
-    setTotalTime(0);
-    setSessionAttempts([]);
-    setSessionScenarioIds(null);
-    if (resetCategory && mode === 'weak') {
-      setMode('full');
-    }
-  };
-
-  const handleNext = async () => {
-    if (currentScenarioIndex < categoryScenarios.length - 1) {
-      setCurrentScenarioIndex((prev) => prev + 1);
-      setSelectedOptions([]);
-      setShowResult(false);
-      setTimeLeft(30); // Reset timer for next scenario
-    } else {
-      // Category completed - save results to database
-      const completionTime = sessionAttempts.reduce(
-        (sum, a) => sum + a.timeTakenMs,
-        0,
-      );
-      setTotalTime(Math.floor(completionTime / 1000));
-      
-      if (user?.id && selectedCategory && sessionAttempts.length > 0) {
-        try {
-          const result = await completeCategoryMutation.mutateAsync({
-            userId: user.id,
-            category: selectedCategory,
-            attempts: sessionAttempts,
-            totalTimeMs: completionTime,
-          });
-          
-          toast.success(
-            `${t('test.congratulations')} – ${result.sessionStats.accuracy}% ${t('test.accuracy')}, +${result.sessionStats.totalXpEarned} XP`,
-            { ...toastStyles.success, duration: 5000 }
-          );
-
-          const mistakes = computeMistakes(
-            sessionAttempts,
-            categoryScenarios as TrainerScenario[],
-          );
-
-          setLastSessionSummary({
-            category: selectedCategory,
-            stats: {
-              totalXpEarned: result.sessionStats.totalXpEarned,
-              correctCount: result.sessionStats.correctCount,
-              totalCount: result.sessionStats.totalCount,
-              accuracy: result.sessionStats.accuracy,
-              maxStreak: result.sessionStats.maxStreak,
-              avgTimeSeconds: result.sessionStats.avgTimeSeconds,
-            },
-            mistakes,
-          });
-        } catch (error) {
-          console.error('Error saving results:', error);
-          toast.error(t('trainer.toastSyncFailed'), toastStyles.error);
-
-          const computedStats = computeSessionStats(
-            sessionAttempts,
-            completionTime,
-          );
-          const mistakes = computeMistakes(
-            sessionAttempts,
-            categoryScenarios as TrainerScenario[],
-          );
-
-          if (selectedCategory) {
-            setLastSessionSummary({
-              category: selectedCategory,
-              stats: computedStats,
-              mistakes,
-            });
-          }
-        }
-      }
-
-      // Reset for next session
-      resetSessionState(true);
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const startCategory = (category: Category) => {
-    const availableScenarios = (scenarios || []).filter((s) => s.category === category);
-    if (!availableScenarios.length) {
-      toast.error(t('trainer.noScenariosTitle'), toastStyles.error);
-      return;
-    }
-
-    setSelectedCategory(category);
-    setCurrentScenarioIndex(0);
-    setSelectedOptions([]);
-    setShowResult(false);
-    setStats({ correct: 0, total: 0, streak: 0, xp: 0 });
-    setTimeLeft(30);
-    setTotalTime(0);
-    setSessionAttempts([]);
-    setSessionScenarioIds(null);
-  };
-
-  const handleStartWeakPoints = () => {
-    const progressList = (categoryProgressData || []) as DecisionTrainerProgress[];
-    const withAttempts = progressList.filter((p) => p.total_attempts > 0);
-    if (withAttempts.length === 0) {
-      toast.error(t('trainer.toastWeakLocked'), toastStyles.error);
-      return;
-    }
-
-    const weakest = withAttempts.reduce((lowest, p) => {
-      const acc = p.total_attempts > 0 ? p.correct_answers / p.total_attempts : 1;
-      const lowestAcc = lowest.total_attempts > 0 ? lowest.correct_answers / lowest.total_attempts : 1;
-      return acc < lowestAcc ? p : lowest;
-    }, withAttempts[0]);
-
-    const weakestCategory = weakest.category as Category;
-    setMode('weak');
-    startCategory(weakestCategory);
-    const info = CATEGORY_INFO[weakestCategory];
-    if (info) {
-      toast.info(`${t('trainer.toastFocusingWeak')} ${info.name}`, toastStyles.info);
-    }
-  };
-
-  if (authLoading || !user) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8 max-w-7xl pt-32">
-           <div className="mb-8">
-             <Skeleton className="h-10 w-32 mb-4" />
-             <GlassCard className="p-6 h-64 flex flex-col justify-center items-center">
-                <Skeleton className="h-8 w-48 mb-2" />
-                <Skeleton className="h-4 w-64" />
-             </GlassCard>
-           </div>
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <GlassCard key={i} className="p-6 h-40">
-                   <Skeleton className="w-12 h-12 rounded-2xl mb-4" />
-                   <Skeleton className="h-5 w-24 mb-2" />
-                   <Skeleton className="h-3 w-full" />
-                </GlassCard>
-              ))}
-           </div>
-        </div>
-      </div>
-    );
-  }
 
   if (selectedCategory && scenariosLoading) {
     return (

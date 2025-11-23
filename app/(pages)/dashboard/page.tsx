@@ -362,8 +362,8 @@ export default function DashboardPage() {
           {/* === MAIN LAYOUT === */}
           {hasData ? (
             <div className="space-y-8">
-              {/* Weak topics */}
-              {weakTopicsData && (
+              {/* Weak topics - Only show after 20 tests */}
+              {weakTopicsData && stats.totalTests >= 20 && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -389,8 +389,11 @@ export default function DashboardPage() {
                             asChild
                           >
                             <Link
-                              href={`/test/${(categories[0] || 'B')
-                                .toLowerCase()}/personalized`}
+                              href={`/test/${(
+                                weakTopicsData.dominantCategory ||
+                                categories[0] ||
+                                'B'
+                              ).toLowerCase()}/personalized`}
                             >
                               {isSq
                                 ? 'Ushtro pikat e dobëta'

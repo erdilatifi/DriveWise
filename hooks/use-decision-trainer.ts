@@ -98,6 +98,43 @@ export function useDecisionTrainerStats(userId?: string) {
   });
 }
 
+// Get IDs of scenarios where the user's latest attempt was incorrect
+export function useWeakScenarioIds(userId?: string) {
+  return useQuery({
+    queryKey: ['weak-scenario-ids', userId],
+    queryFn: async () => {
+      const supabase = createClient();
+      
+      // Get all attempts for this user, ordered by date
+      const { data, error } = await supabase
+        .from('decision_trainer_attempts')
+        .select('scenario_id, is_correct, created_at')
+        .eq('user_id', userId!)
+        .order('created_at', { ascending: true }); // Oldest to newest
+
+      if (error) throw error;
+
+      // Calculate latest status for each scenario
+      const latestStatus = new Map<string, boolean>();
+      (data || []).forEach((attempt) => {
+        latestStatus.set(attempt.scenario_id, attempt.is_correct);
+      });
+
+      // Filter for IDs where the latest attempt was FALSE (incorrect)
+      const weakIds: string[] = [];
+      latestStatus.forEach((isCorrect, id) => {
+        if (!isCorrect) {
+          weakIds.push(id);
+        }
+      });
+
+      return weakIds;
+    },
+    enabled: !!userId,
+    staleTime: 0, // Always fresh
+  });
+}
+
 // Submit scenario attempt and update progress
 export function useSubmitScenarioAttempt() {
   const queryClient = useQueryClient();

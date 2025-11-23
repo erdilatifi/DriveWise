@@ -46,6 +46,7 @@ export interface WeakTopicStat {
 export interface WeakTopicsSummary {
   topics: WeakTopicStat[];
   weakTopics: WeakTopicStat[];
+  dominantCategory: string | null;
 }
 
 export interface TestAchievements {
@@ -476,7 +477,6 @@ export function useTestCount(category: string, enabled: boolean = true) {
     enabled: enabled && !!category,
   });
 }
-
 // Get overall weak-topic statistics across all past tests for a user
 export function useWeakTopics(userId?: string) {
   return useQuery<WeakTopicsSummary>({
@@ -484,16 +484,18 @@ export function useWeakTopics(userId?: string) {
     queryFn: async () => {
       const supabase = createClient();
 
-      // 1) Get all test attempts for this user
+      // 1) Get all test attempts for this user (limit to last 50 for performance/stability)
       const { data: attempts, error: attemptsError } = await supabase
         .from('test_attempts')
         .select('id')
-        .eq('user_id', userId!);
+        .eq('user_id', userId!)
+        .order('completed_at', { ascending: false })
+        .limit(50);
 
       if (attemptsError) throw attemptsError;
       const attemptIds = (attempts || []).map(a => a.id);
       if (attemptIds.length === 0) {
-        return { topics: [], weakTopics: [] };
+        return { topics: [], weakTopics: [], dominantCategory: null };
       }
 
       // 2) Get all answers for those attempts
@@ -504,32 +506,33 @@ export function useWeakTopics(userId?: string) {
 
       if (answersError) throw answersError;
       if (!answers || answers.length === 0) {
-        return { topics: [], weakTopics: [] };
+        return { topics: [], weakTopics: [], dominantCategory: null };
       }
 
       const questionIds = [...new Set(answers.map(a => a.question_id))];
 
-      // 3) Get topics for those questions
+      // 3) Get topics AND categories for those questions
       const { data: questions, error: questionsError } = await supabase
         .from('admin_questions')
-        .select('id, topic')
+        .select('id, topic, category')
         .in('id', questionIds);
 
       if (questionsError) throw questionsError;
 
-      const topicByQuestionId = new Map<string, string | null>();
-      (questions || []).forEach((q: { id: string; topic: string | null }) => {
-        topicByQuestionId.set(q.id, q.topic ?? null);
+      const topicByQuestionId = new Map<string, { topic: string | null, category: string | null }>();
+      (questions || []).forEach((q: { id: string; topic: string | null; category: string | null }) => {
+        topicByQuestionId.set(q.id, { topic: q.topic ?? null, category: q.category ?? null });
       });
 
-      const topicStatsMap: Record<string, { total: number; correct: number }> = {};
+      const topicStatsMap: Record<string, { total: number; correct: number; category: string | null }> = {};
 
       answers.forEach((ans: { question_id: string; is_correct: boolean }) => {
-        const topic = topicByQuestionId.get(ans.question_id);
-        if (!topic) return;
+        const info = topicByQuestionId.get(ans.question_id);
+        if (!info || !info.topic) return;
 
+        const topic = info.topic;
         if (!topicStatsMap[topic]) {
-          topicStatsMap[topic] = { total: 0, correct: 0 };
+          topicStatsMap[topic] = { total: 0, correct: 0, category: info.category };
         }
         topicStatsMap[topic].total += 1;
         if (ans.is_correct) {
@@ -549,7 +552,42 @@ export function useWeakTopics(userId?: string) {
 
       const weakTopics = topics.filter(t => t.totalQuestions >= 3 && t.accuracy < 0.8).slice(0, 5);
 
-      return { topics, weakTopics };
+      // Determine dominant category from weak topics
+      const categoryCounts: Record<string, number> = {};
+      weakTopics.forEach(wt => {
+        const cat = topicStatsMap[wt.topic]?.category;
+        if (cat) {
+          categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+        }
+      });
+      
+      let dominantCategory: string | null = null;
+      let maxCount = 0;
+      Object.entries(categoryCounts).forEach(([cat, count]) => {
+        if (count > maxCount) {
+          maxCount = count;
+          dominantCategory = cat;
+        }
+      });
+
+      // Fallback: if no dominant category found from weak topics (e.g. empty), use the most frequent category from all topics
+      if (!dominantCategory && topics.length > 0) {
+         const allCategoryCounts: Record<string, number> = {};
+         Object.values(topicStatsMap).forEach(stats => {
+            if (stats.category) {
+               allCategoryCounts[stats.category] = (allCategoryCounts[stats.category] || 0) + 1;
+            }
+         });
+         let allMaxCount = 0;
+         Object.entries(allCategoryCounts).forEach(([cat, count]) => {
+            if (count > allMaxCount) {
+               allMaxCount = count;
+               dominantCategory = cat;
+            }
+         });
+      }
+
+      return { topics, weakTopics, dominantCategory };
     },
     enabled: !!userId,
     staleTime: 2 * 60 * 1000,
