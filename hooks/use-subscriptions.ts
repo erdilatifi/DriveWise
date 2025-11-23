@@ -136,7 +136,6 @@ export function useCategoryEntitlements(
       };
     },
     enabled: !!userId && !!category,
-    staleTime: 0,
-    refetchOnMount: 'always',
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

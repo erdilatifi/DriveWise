@@ -54,15 +54,33 @@ export default function DashboardPage() {
     }
   }, [user, authLoading, router]);
 
-  // Show loader if no user (even during loading) to prevent empty dashboard flash
+  // Show skeleton loader if no user (even during loading) to prevent empty dashboard flash
   if (!user) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">
-            {authLoading ? 'Authenticating...' : 'Redirecting...'}
-          </p>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-28">
+          <div className="container mx-auto px-8 py-12 max-w-7xl">
+            {/* Header skeleton */}
+            <div className="mb-12 space-y-3">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-80" />
+            </div>
+
+            {/* Stats grid skeleton */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <GlassCard key={i} className="p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-5 w-5 rounded-full" />
+                  </div>
+                  <Skeleton className="h-7 w-16 mb-2" />
+                  <Skeleton className="h-3 w-32" />
+                </GlassCard>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );

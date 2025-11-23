@@ -9,7 +9,7 @@ import {
   useCallback,
   useMemo,
 } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
@@ -18,11 +18,15 @@ import { toast } from 'sonner';
 interface UserProfile {
   full_name?: string;
   email?: string;
+  is_blocked?: boolean;
+  is_admin?: boolean;
+  is_instructor?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
-  loading: boolean;
+  loading: boolean; // True only during initial auth check
+  profileLoading: boolean; // True while fetching profile
   isAdmin: boolean;
   isInstructor: boolean;
   isBlocked: boolean;
@@ -37,164 +41,109 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isBlocked, setIsBlocked] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isInstructor, setIsInstructor] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [initialized, setInitialized] = useState(false);
-
+  const [authLoading, setAuthLoading] = useState(true);
+  
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const fetchUserProfile = useCallback(
-    async (userId: string, skipProfileUpdate = false): Promise<{ blocked: boolean }> => {
-      try {
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('is_blocked, is_admin, is_instructor, full_name, email')
-          .eq('id', userId)
-          .single();
+  // 1. Query for User Profile
+  const { data: profileData, isLoading: profileLoading } = useQuery({
+    queryKey: ['userProfile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('is_blocked, is_admin, is_instructor, full_name, email')
+        .eq('id', user.id)
+        .single();
 
-        if (error) {
-          console.error('Error fetching user profile:', error);
-          return { blocked: false };
-        }
-
-        if (data) {
-          setIsAdmin(data.is_admin || false);
-          setIsInstructor(data.is_instructor || false);
-          
-          if (!skipProfileUpdate) {
-            setUserProfile({
-              full_name: data.full_name,
-              email: data.email,
-            });
-          }
-          return { blocked: !!data.is_blocked };
-        }
-        
-        return { blocked: false };
-      } catch (error) {
-        console.error('Error checking user status:', error);
-        return { blocked: false };
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
       }
+      return data;
     },
-    [supabase]
-  );
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 10, // 10 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
+  });
+
+  // Derived state
+  const isAdmin = !!profileData?.is_admin;
+  const isInstructor = !!profileData?.is_instructor;
+  const isBlocked = !!profileData?.is_blocked;
+  const userProfile = profileData ? {
+    full_name: profileData.full_name,
+    email: profileData.email
+  } : null;
 
   const handleBlockedAccount = useCallback(async () => {
-    setIsBlocked(true);
+    // Immediate local logout
     setUser(null);
-    setUserProfile(null);
-    setIsAdmin(false);
-    setIsInstructor(false);
-
-    // Clear client cache as well so UI is fully reset
     queryClient.clear();
-
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.error('Error during signOut for blocked user:', error);
-    }
 
     toast.error('Account Blocked', {
       description: 'Your account has been blocked. Please contact support.',
       duration: 5000,
     });
 
-    // Replace to avoid weird back-navigation into blocked state
     router.replace('/');
+    
+    // Cleanup server session in background
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Error during signOut for blocked user:', error);
+    }
   }, [router, supabase, queryClient]);
 
+  // 2. React to blocked status
   useEffect(() => {
-    if (initialized) return;
+    if (isBlocked) {
+      handleBlockedAccount();
+    }
+  }, [isBlocked, handleBlockedAccount]);
 
+  // 3. Initialize Auth & Listen for Changes
+  useEffect(() => {
     let mounted = true;
 
+    // Initial session check
     const initializeAuth = async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!mounted) return;
-
-        setUser(user);
-        setLoading(false);
-        setInitialized(true);
-
-        if (!user) {
-          setUserProfile(null);
-          setIsBlocked(false);
-          setIsAdmin(false);
-          setIsInstructor(false);
-          return;
-        }
-
-        const { blocked } = await fetchUserProfile(user.id);
-
-        if (!mounted) return;
-
-        setIsBlocked(blocked);
-
-        if (blocked) {
-          await handleBlockedAccount();
+        // using getSession instead of getUser for faster initial load (cache-first)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mounted) {
+          setUser(session?.user ?? null);
+          setAuthLoading(false);
         }
       } catch (error) {
-        console.error('Error getting user:', error);
+        console.error('Error getting session:', error);
         if (mounted) {
-          setLoading(false);
-          setInitialized(true);
+          setAuthLoading(false);
         }
       }
     };
 
     initializeAuth();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
-
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setUserProfile(null);
-        setIsBlocked(false);
-        setIsAdmin(false);
-        setIsInstructor(false);
-        setLoading(false);
-        queryClient.clear();
-        return;
-      }
 
       const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      setLoading(false);
-
-      if (!currentUser) {
-        setUserProfile(null);
-        setIsBlocked(false);
-        setIsAdmin(false);
-        setIsInstructor(false);
+      
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setAuthLoading(false);
         queryClient.clear();
-        return;
-      }
-
-      // Auth state changed to a non-null user (e.g. login, email confirm, token refresh).
-      // Invalidate queries so they refetch with the new authenticated session.
-      queryClient.invalidateQueries();
-
-      const { blocked } = await fetchUserProfile(currentUser.id);
-
-      if (!mounted) return;
-
-      setIsBlocked(blocked);
-
-      if (blocked) {
-        await handleBlockedAccount();
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setUser(currentUser);
+        setAuthLoading(false);
+      } else if (event === 'INITIAL_SESSION') {
+        // Handled by initializeAuth, but good as fallback
+        setUser(currentUser);
+        setAuthLoading(false);
       }
     });
 
@@ -202,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [supabase, router, fetchUserProfile, handleBlockedAccount, initialized, queryClient]);
+  }, [supabase, queryClient]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -214,9 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
-            throw new Error(
-              'Account does not exist or password is incorrect. Please check your credentials or sign up.'
-            );
+            throw new Error('Account does not exist or password is incorrect.');
           } else if (error.message.includes('Email not confirmed')) {
             throw new Error('Please confirm your email address before logging in.');
           } else {
@@ -225,31 +172,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (data.user) {
-          // Clear any stale data from previous session / anon state
           queryClient.clear();
-
           setUser(data.user);
-          setLoading(false);
-
-          // Immediately check blocked status and fetch roles
-          const { blocked } = await fetchUserProfile(data.user.id);
-
-          setIsBlocked(blocked);
-
-          if (blocked) {
-            await handleBlockedAccount();
-            return {
-              error: new Error(
-                'Your account has been blocked. Please contact support for more information.'
-              ),
-            };
-          }
-
-          // Force all queries to refetch now that auth changed
-          queryClient.invalidateQueries();
-
-          // Remove router.refresh() here. Let the consuming component handle navigation/refresh.
-          // This prevents double-firing requests when the login page does router.push().
+          // Profile query will auto-run because of enabled: !!user.id
         }
 
         return { error: null };
@@ -257,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: err as Error };
       }
     },
-    [supabase, router, fetchUserProfile, handleBlockedAccount, queryClient]
+    [supabase, queryClient]
   );
 
   const signUp = useCallback(
@@ -270,7 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
 
         if (existingUser) {
-          throw new Error('An account with this email already exists. Please log in instead.');
+          throw new Error('An account with this email already exists.');
         }
 
         const emailRedirectTo =
@@ -288,27 +213,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (error) {
-          if (error.message.includes('User already registered')) {
-            throw new Error('An account with this email already exists. Please log in instead.');
-          } else if (error.message.includes('Password should be at least')) {
-            throw new Error('Password must be at least 6 characters long.');
-          } else {
-            throw error;
-          }
+           throw error;
         }
 
         if (data?.session || data?.user) {
-          try {
-            await supabase.auth.signOut();
-          } catch (signOutError) {
-            console.error('Error clearing session after sign up:', signOutError);
-          }
-
+          // Don't auto-login on signup if email confirmation is required, 
+          // but if it's not, this might sign them in. 
+          // For safety/consistency with strict auth flow:
+          await supabase.auth.signOut();
           setUser(null);
-          setUserProfile(null);
-          setIsBlocked(false);
-          setIsAdmin(false);
-          setIsInstructor(false);
           queryClient.clear();
         }
 
@@ -321,56 +234,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signOut = useCallback(async () => {
-    // Clear local state + React Query immediately so the UI
-    // reflects a logged-out state without waiting for Supabase
-    // network calls to complete.
+    // Optimistic UI update
     setUser(null);
-    setUserProfile(null);
-    setIsBlocked(false);
-    setIsAdmin(false);
-    setIsInstructor(false);
-    queryClient.clear(); // Clear all cached data
-
+    queryClient.clear(); 
+    router.replace('/login');
+    
     try {
       await supabase.auth.signOut();
+      // router.refresh() is often unnecessary if we just redirect to /login
+      // but if you have server components depending on cookies on the /login page, it might be needed.
+      // Usually for logout -> login flow, client navigation is enough.
+      router.refresh(); 
     } catch (error) {
       console.error('Error during Supabase signOut:', error);
-    } finally {
-      router.refresh();
-      router.replace('/login');
     }
   }, [supabase, router, queryClient]);
 
   const refreshUser = useCallback(
     async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
-
       if (user) {
-        const { blocked } = await fetchUserProfile(user.id);
-        setIsBlocked(blocked);
-
-        if (blocked) {
-          await handleBlockedAccount();
-        }
-      } else {
-        setUserProfile(null);
-        setIsBlocked(false);
-        setIsAdmin(false);
-        setIsInstructor(false);
-        queryClient.clear();
+         queryClient.invalidateQueries({ queryKey: ['userProfile', user.id] });
       }
     },
-    [supabase, fetchUserProfile, handleBlockedAccount, queryClient]
+    [supabase, queryClient]
   );
 
   const contextValue = useMemo(
     () => ({
       user,
-      loading,
+      loading: authLoading, // Only block on initial auth check
+      profileLoading,       // Expose this for granular loading states if needed
       isAdmin,
       isInstructor,
       isBlocked,
@@ -380,7 +275,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut,
       refreshUser,
     }),
-    [user, loading, isAdmin, isInstructor, isBlocked, userProfile, signIn, signUp, signOut, refreshUser]
+    [user, authLoading, profileLoading, isAdmin, isInstructor, isBlocked, userProfile, signIn, signUp, signOut, refreshUser]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

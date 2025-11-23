@@ -6,6 +6,7 @@ import { Navbar } from '@/components/navbar';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, CheckCircle, XCircle, CheckSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -59,7 +60,7 @@ export default function ReviewPage() {
   const [loading, setLoading] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
 
-  const { data: entitlementResult } = useCategoryEntitlements(
+  const { data: entitlementResult, isLoading: entitlementsLoading } = useCategoryEntitlements(
     user?.id,
     (testInfo?.category as LicenseCategory | undefined) || undefined,
     isAdmin,
@@ -70,6 +71,7 @@ export default function ReviewPage() {
   }, [testId]);
 
   const fetchTestDetails = async () => {
+    setLoading(true);
     try {
       // Get test attempt info
       const { data: test, error: testError } = await supabase
@@ -132,12 +134,53 @@ export default function ReviewPage() {
     }
   };
 
-  if (loading) {
+  const isLoading = loading || (!!testInfo && entitlementsLoading);
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <Navbar />
-        <div className="container mx-auto px-6 py-8 max-w-7xl flex items-center justify-center pt-28">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="container mx-auto px-6 py-8 max-w-7xl pt-28">
+          {/* Header Skeleton */}
+          <div className="mb-6">
+            <Skeleton className="w-32 h-9 mb-4" />
+            <div className="flex justify-between items-start">
+              <div className="space-y-2">
+                <Skeleton className="w-64 h-8" />
+                <Skeleton className="w-48 h-4" />
+              </div>
+              <div className="space-y-2 flex flex-col items-end">
+                <Skeleton className="w-20 h-8" />
+                <Skeleton className="w-24 h-4" />
+              </div>
+            </div>
+          </div>
+
+          {/* Topics Skeleton */}
+          <div className="mb-6 max-w-4xl mx-auto">
+             <GlassCard className="p-4">
+                <Skeleton className="w-full h-32" />
+             </GlassCard>
+          </div>
+
+          {/* Question Card Skeleton */}
+          <div className="max-w-4xl mx-auto mb-6">
+             <GlassCard className="p-6 h-[400px]">
+                <div className="flex gap-4 mb-6">
+                   <Skeleton className="w-10 h-10 rounded-lg" />
+                   <div className="space-y-2">
+                      <Skeleton className="w-40 h-6" />
+                      <Skeleton className="w-24 h-4" />
+                   </div>
+                </div>
+                <Skeleton className="w-full h-8 mb-6" />
+                <div className="space-y-4">
+                   <Skeleton className="w-full h-16 rounded-lg" />
+                   <Skeleton className="w-full h-16 rounded-lg" />
+                   <Skeleton className="w-full h-16 rounded-lg" />
+                </div>
+             </GlassCard>
+          </div>
         </div>
       </div>
     );

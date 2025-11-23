@@ -57,11 +57,6 @@ export async function POST(req: NextRequest) {
 
     if (calculatedHash !== h1) {
       console.error('❌ Paddle signature verification failed');
-      console.log(`   - Received Signature TS: ${ts}`);
-      console.log(`   - Received Hash (h1): ${h1}`);
-      console.log(`   - Calculated Hash: ${calculatedHash}`);
-      console.log(`   - Secret Key defined? ${!!secret}`);
-      console.log(`   - Raw Body Length: ${rawBody.length}`);
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
@@ -142,142 +137,147 @@ export async function POST(req: NextRequest) {
       console.log(`✅ Identified Plan: ${planTier} for Category: ${category} (Amount: ${amountCents} ${currency})`);
 
       // 5. Database Operations
-      const supabase = createAdminClient();
-      
-      let userId = userIdFromCustomData;
-      let userEmail = customerEmail;
-
-      // Lookup User by Email if ID missing
-      if (!userId && customerEmail) {
-        console.log(`🔍 Looking up user by email: ${customerEmail}`);
-        const { data: userProfile, error: userError } = await supabase
-          .from('user_profiles')
-          .select('id')
-          .eq('email', customerEmail)
-          .single();
-
-        if (userError || !userProfile) {
-          // Check auth.users just in case profile is missing but auth exists
-          const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-          const authUser = authUsers?.users.find(u => u.email === customerEmail);
-          
-          if (authUser) {
-             console.log(`⚠️ User found in Auth but not Profiles. Creating profile for ${authUser.id}`);
-             userId = authUser.id;
-             // Create missing profile
-             await supabase.from('user_profiles').insert({
-                id: authUser.id,
-                email: customerEmail,
-                full_name: customerEmail.split('@')[0], // Fallback name
-                updated_at: new Date().toISOString()
-             });
-          } else {
-             console.error('❌ User not found for email:', customerEmail);
-             return NextResponse.json({ received: true });
-          }
-        } else {
-            userId = userProfile.id;
-        }
-      }
-      
-      if (!userId) {
-         console.error('❌ Could not resolve a valid User ID');
-         return NextResponse.json({ received: true });
-      }
-
-      // Ensure User Profile Exists (Double Check for FK Constraint)
-      const { data: profileCheck } = await supabase.from('user_profiles').select('id').eq('id', userId).single();
-      if (!profileCheck) {
-          console.log(`⚠️ Profile missing for ID ${userId}. Attempting to create stub.`);
-          // Try to find email if we don't have it
-          if (!userEmail) {
-             const { data: u } = await supabase.auth.admin.getUserById(userId);
-             userEmail = u.user?.email || `unknown_${userId}@example.com`;
-          }
-          
-          const { error: createProfileError } = await supabase.from('user_profiles').insert({
-                id: userId,
-                email: userEmail,
-                full_name: 'Valued Customer',
-                updated_at: new Date().toISOString()
-          });
-          if (createProfileError) {
-              console.error('❌ Failed to create stub profile:', createProfileError);
-              // Can't proceed with Order creation if FK fails
-              return NextResponse.json({ received: true });
-          }
-      }
-
-      console.log(`👤 Processing for User ID: ${userId}`);
-
-      // A. Create Order
-      console.log('📦 Creating Order...');
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: userId,
-          category: category, // 'A', 'B', 'C', 'D'
-          plan_tier: planTier,
-          amount_cents: amountCents,
-          currency: currency,
-          status: 'paid', 
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (orderError) {
-        console.error('❌ Failed to create order:', orderError);
-        // If Order fails, Transaction will fail (FK). 
-        // We try to upsert Plan anyway so user gets what they paid for.
-      } else {
-        console.log(`✅ Order created: ${order.id}`);
+      try {
+        const supabase = createAdminClient();
         
-        // B. Create Payment Transaction
-        const { error: txError } = await supabase
-          .from('payment_transactions')
+        let userId = userIdFromCustomData;
+        let userEmail = customerEmail;
+
+        // Lookup User by Email if ID missing
+        if (!userId && customerEmail) {
+          console.log(`🔍 Looking up user by email: ${customerEmail}`);
+          const { data: userProfile, error: userError } = await supabase
+            .from('user_profiles')
+            .select('id')
+            .eq('email', customerEmail)
+            .single();
+
+          if (userError || !userProfile) {
+            // Check auth.users just in case profile is missing but auth exists
+            const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+            const authUser = authUsers?.users.find(u => u.email === customerEmail);
+            
+            if (authUser) {
+               console.log(`⚠️ User found in Auth but not Profiles. Creating profile for ${authUser.id}`);
+               userId = authUser.id;
+               // Create missing profile
+               await supabase.from('user_profiles').insert({
+                  id: authUser.id,
+                  email: customerEmail,
+                  full_name: customerEmail.split('@')[0], // Fallback name
+                  updated_at: new Date().toISOString()
+               });
+            } else {
+               console.error('❌ User not found for email:', customerEmail);
+               return NextResponse.json({ received: true });
+            }
+          } else {
+              userId = userProfile.id;
+          }
+        }
+        
+        if (!userId) {
+           console.error('❌ Could not resolve a valid User ID');
+           return NextResponse.json({ received: true });
+        }
+
+        // Ensure User Profile Exists (Double Check for FK Constraint)
+        const { data: profileCheck } = await supabase.from('user_profiles').select('id').eq('id', userId).single();
+        if (!profileCheck) {
+            console.log(`⚠️ Profile missing for ID ${userId}. Attempting to create stub.`);
+            // Try to find email if we don't have it
+            if (!userEmail) {
+               const { data: u } = await supabase.auth.admin.getUserById(userId);
+               userEmail = u.user?.email || `unknown_${userId}@example.com`;
+            }
+            
+            const { error: createProfileError } = await supabase.from('user_profiles').insert({
+                  id: userId,
+                  email: userEmail,
+                  full_name: 'Valued Customer',
+                  updated_at: new Date().toISOString()
+            });
+            if (createProfileError) {
+                console.error('❌ Failed to create stub profile:', createProfileError);
+                // Can't proceed with Order creation if FK fails
+                return NextResponse.json({ received: true });
+            }
+        }
+
+        console.log(`👤 Processing for User ID: ${userId}`);
+
+        // A. Create Order
+        console.log('📦 Creating Order...');
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
           .insert({
-            order_id: order.id,
-            provider: 'paddle',
-            provider_status: 'completed',
+            user_id: userId,
+            category: category, // 'A', 'B', 'C', 'D'
+            plan_tier: planTier,
             amount_cents: amountCents,
             currency: currency,
-            raw_payload: event, 
+            status: 'paid', 
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          });
+          })
+          .select()
+          .single();
+
+        if (orderError) {
+          console.error('❌ Failed to create order:', orderError);
+          // If Order fails, Transaction will fail (FK). 
+          // We try to upsert Plan anyway so user gets what they paid for.
+        } else {
+          console.log(`✅ Order created: ${order.id}`);
           
-        if (txError) console.error('❌ Failed to log transaction:', txError);
+          // B. Create Payment Transaction
+          const { error: txError } = await supabase
+            .from('payment_transactions')
+            .insert({
+              order_id: order.id,
+              provider: 'paddle',
+              provider_status: 'completed',
+              amount_cents: amountCents,
+              currency: currency,
+              raw_payload: event, 
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+            
+          if (txError) console.error('❌ Failed to log transaction:', txError);
+        }
+
+        // C. Activate Plan
+        console.log('🔓 Activating Plan...');
+        const planDef = BILLING_CONFIG.plans[planTier];
+        const now = new Date();
+        const startDate = new Date(now);
+        const endDate = new Date(now);
+        endDate.setMonth(endDate.getMonth() + planDef.months);
+
+        const { error: upsertError } = await supabase.from('user_plans').upsert(
+          {
+            user_id: userId,
+            category: category,
+            plan_tier: planTier,
+            start_date: startDate.toISOString(),
+            end_date: endDate.toISOString(),
+            status: 'active',
+            updated_at: now.toISOString() // Ensure updated_at changes
+          },
+          { onConflict: 'user_id,category' }
+        );
+
+        if (upsertError) {
+          console.error('❌ Failed to activate plan in DB:', upsertError);
+          return NextResponse.json({ error: 'DB Error' }, { status: 500 });
+        }
+
+        console.log('🎉 Plan Activated Successfully!');
+      } catch (dbError: any) {
+        console.error('❌ Database Operation Failed:', dbError);
+        return NextResponse.json({ error: 'Database Error', details: dbError.message }, { status: 500 });
       }
-
-      // C. Activate Plan
-      console.log('🔓 Activating Plan...');
-      const planDef = BILLING_CONFIG.plans[planTier];
-      const now = new Date();
-      const startDate = new Date(now);
-      const endDate = new Date(now);
-      endDate.setMonth(endDate.getMonth() + planDef.months);
-
-      const { error: upsertError } = await supabase.from('user_plans').upsert(
-        {
-          user_id: userId,
-          category: category,
-          plan_tier: planTier,
-          start_date: startDate.toISOString(),
-          end_date: endDate.toISOString(),
-          status: 'active',
-          updated_at: now.toISOString() // Ensure updated_at changes
-        },
-        { onConflict: 'user_id,category' }
-      );
-
-      if (upsertError) {
-        console.error('❌ Failed to activate plan in DB:', upsertError);
-        return NextResponse.json({ error: 'DB Error' }, { status: 500 });
-      }
-
-      console.log('🎉 Plan Activated Successfully!');
     }
 
     // Return success

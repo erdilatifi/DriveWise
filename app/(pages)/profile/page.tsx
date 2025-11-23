@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,12 +55,29 @@ export default function ProfilePage() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">
-            {authLoading ? t('auth.signingIn') : t('test.loadingQuestions')}
-          </p>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-28 md:pt-32 pb-12">
+          <div className="container mx-auto px-4 max-w-5xl space-y-6">
+            <GlassCard className="p-6 md:p-7 h-32 border border-border/80 bg-black/85 flex items-center justify-between">
+               <div className="space-y-2">
+                 <Skeleton className="h-4 w-32" />
+                 <Skeleton className="h-8 w-48" />
+                 <Skeleton className="h-3 w-40" />
+               </div>
+               <Skeleton className="h-8 w-24" />
+            </GlassCard>
+            <GlassCard className="p-6 md:p-7 h-64 border border-border/80 bg-black/85">
+               <div className="mb-6 space-y-2">
+                 <Skeleton className="h-5 w-40" />
+                 <Skeleton className="h-3 w-64" />
+               </div>
+               <div className="grid gap-4 md:grid-cols-2">
+                 <Skeleton className="h-10 w-full" />
+                 <Skeleton className="h-10 w-full" />
+               </div>
+            </GlassCard>
+          </div>
         </div>
       </div>
     );

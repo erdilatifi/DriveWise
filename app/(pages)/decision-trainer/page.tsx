@@ -42,7 +42,6 @@ export default function DecisionTrainerPage() {
   const { t } = useLanguage();
   const { data: categoryProgressData } = useDecisionTrainerProgress(user?.id);
   const { data: trainerStats } = useDecisionTrainerStats(user?.id);
-  const { hasAnyActivePlan, isLoading: premiumLoading } = useGlobalPremium(user?.id, isAdmin);
   
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
@@ -389,57 +388,27 @@ export default function DecisionTrainerPage() {
     }
   };
 
-  if (authLoading || !user || premiumLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">
-            {!user ? t('auth.signingIn') : t('test.loadingQuestions')}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAdmin && !hasAnyActivePlan) {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 py-8 max-w-3xl pt-28">
-          <GlassCard className="p-6 border border-border/80 bg-black/80">
-            <h1 className="text-2xl font-semibold mb-2 flex items-center gap-2">
-              <Lightbulb className="w-5 h-5 text-primary" />
-              {t('trainer.premiumRequiredTitle') || 'Unlock Decision Trainer'}
-            </h1>
-            <p className="text-sm text-muted-foreground mb-4">
-              {t('trainer.premiumRequiredDescription') ||
-                'Decision Trainer is part of the paid plan. With a paid plan you get full access to all trainer categories, smarter practice modes, and detailed review features.'}
-            </p>
-            <ul className="text-sm text-muted-foreground mb-4 list-disc pl-5 space-y-1">
-              <li>
-                {t('trainer.premiumBenefitUnlimited') || 'Unlimited Decision Trainer practice across all categories.'}
-              </li>
-              <li>
-                {t('trainer.premiumBenefitStudy') || 'Access to related study material and test reviews for deeper learning.'}
-              </li>
-              <li>
-                {t('trainer.premiumBenefitFocus') || 'Smart modes that focus on your weak points and speed.'}
-              </li>
-            </ul>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button asChild className="flex-1">
-                <Link href="/pricing">
-                  {t('trainer.premiumUpgradeCta') || 'See plans'}
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="flex-1">
-                <Link href="/dashboard">
-                  {t('auth.backToHome')}
-                </Link>
-              </Button>
-            </div>
-          </GlassCard>
+        <div className="container mx-auto px-4 py-8 max-w-7xl pt-28">
+           <div className="mb-8">
+             <Skeleton className="h-10 w-32 mb-4" />
+             <GlassCard className="p-6 h-64 flex flex-col justify-center items-center">
+                <Skeleton className="h-8 w-48 mb-2" />
+                <Skeleton className="h-4 w-64" />
+             </GlassCard>
+           </div>
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <GlassCard key={i} className="p-6 h-40">
+                   <Skeleton className="w-12 h-12 rounded-2xl mb-4" />
+                   <Skeleton className="h-5 w-24 mb-2" />
+                   <Skeleton className="h-3 w-full" />
+                </GlassCard>
+              ))}
+           </div>
         </div>
       </div>
     );
