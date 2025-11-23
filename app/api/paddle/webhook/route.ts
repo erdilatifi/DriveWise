@@ -76,9 +76,28 @@ export async function POST(req: NextRequest) {
       // Extract Email & Custom Data
       // In Paddle Billing, custom_data is directly on the transaction object
       const customData = data.custom_data || {};
-      const customerEmail = data.customer?.email || customData.guest_email;
-      let category = customData.category as string;
-      const userIdFromCustomData = customData.user_id;
+      console.log('🔍 Raw Custom Data:', JSON.stringify(customData));
+
+      const customerEmail = data.customer?.email || customData.guest_email || customData.email;
+      let category = customData.category;
+      
+      // Fallback: Check if category is nested or in different casing
+      if (!category && customData.custom_data) {
+         category = customData.custom_data.category;
+      }
+      if (!category && customData.Category) {
+         category = customData.Category;
+      }
+
+      let userIdFromCustomData = customData.user_id;
+      // Fallback for user_id as well
+      if (!userIdFromCustomData && customData.custom_data) {
+         userIdFromCustomData = customData.custom_data.user_id;
+      }
+      if (!userIdFromCustomData && customData.userId) {
+         userIdFromCustomData = customData.userId;
+      }
+
       const transactionId = data.id;
       const currency = data.currency_code || 'EUR';
       
@@ -97,23 +116,19 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ received: true });
       }
 
-      if (!category) {
-        console.warn('⚠️ No category found in custom_data. Checking logic...');
-        // Fallback logic or error
-        // If we can't identify category, we can't grant the specific license plan
-        // But we should log it.
-      }
-      
       // Normalize Category (A, B, C, D)
       if (category) {
-        category = category.toUpperCase();
+        category = category.toString().trim().toUpperCase();
         if (!['A', 'B', 'C', 'D'].includes(category)) {
-           console.warn(`⚠️ Invalid category received: ${category}. Defaulting to 'B'.`);
-           category = 'B';
+           console.warn(`⚠️ Invalid category received: ${category}. Keeping as is for investigation.`);
+           // We don't default here, we let it pass so we can see the error in DB
         }
       } else {
-        console.warn(`⚠️ Missing category. Defaulting to 'B'.`);
-        category = 'B';
+        console.error(`❌ Missing category in custom_data. Transaction ID: ${transactionId}`);
+        // Do NOT default to 'B' blindly. This causes data corruption (overwriting Plan B).
+        // We return 200 to stop retries if we can't process it, OR we can insert as 'UNKNOWN'.
+        // Better to insert as 'UNKNOWN' so user gets *something* and we can fix it manually.
+        category = 'UNKNOWN';
       }
 
       // Determine Plan Tier based on amount

@@ -130,8 +130,9 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            {/* Charts skeleton */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            {/* Charts skeleton matching actual layout (Wide, Narrow, Narrow, Wide) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-fr mb-12">
+              {/* Weekly Progress Skeleton (Wide) */}
               <GlassCard className="p-6 lg:col-span-2">
                 <div className="mb-6 space-y-2">
                   <Skeleton className="h-5 w-40" />
@@ -140,12 +141,49 @@ export default function DashboardPage() {
                 <Skeleton className="h-60 w-full rounded-xl" />
               </GlassCard>
 
-              <GlassCard className="p-6 border border-border/80 bg-black/80">
+              {/* Trainer Stats Skeleton (Narrow) */}
+              <GlassCard className="p-6 lg:col-span-1 flex flex-col gap-6">
+                <div className="flex justify-between">
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                  <Skeleton className="h-8 w-8 rounded-lg" />
+                </div>
+                <div className="grid grid-cols-2 gap-3 flex-1">
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                </div>
+                <Skeleton className="h-10 w-full mt-auto" />
+              </GlassCard>
+
+              {/* Quick Access Skeleton (Narrow) */}
+              <GlassCard className="p-6 lg:col-span-1 flex flex-col justify-between">
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-24 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-40" />
+                    <Skeleton className="h-3 w-full" />
+                  </div>
+                </div>
+                <div className="space-y-3 mt-8">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              </GlassCard>
+
+              {/* Pass Rate Skeleton (Wide) */}
+              <GlassCard className="p-6 lg:col-span-2">
                 <div className="mb-6 space-y-2">
                   <Skeleton className="h-5 w-32" />
                   <Skeleton className="h-3 w-52" />
                 </div>
-                <Skeleton className="h-60 w-full rounded-full" />
+                <div className="flex items-center justify-center h-60">
+                  <Skeleton className="h-48 w-48 rounded-full" />
+                </div>
               </GlassCard>
             </div>
           </div>
