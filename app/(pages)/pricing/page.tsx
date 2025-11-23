@@ -146,9 +146,13 @@ export default function PricingPage() {
         urlObj.searchParams.append('guest_email', user.email);
       }
 
-      urlObj.searchParams.append('custom_data[category]', selectedCategory);
-      urlObj.searchParams.append('custom_data[plan]', selectedPlan);
-      urlObj.searchParams.append('custom_data[user_id]', user.id);
+      // Pass custom_data as a JSON string for Paddle Billing
+      const customData = {
+        category: selectedCategory,
+        plan: selectedPlan,
+        user_id: user.id,
+      };
+      urlObj.searchParams.append('custom_data', JSON.stringify(customData));
 
       window.location.href = urlObj.toString();
     } catch (error) {

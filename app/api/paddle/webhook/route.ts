@@ -73,8 +73,12 @@ export async function POST(req: NextRequest) {
       console.log('📝 Processing transaction completed');
       const data = event.data;
       
-      // Extract Email & Custom Data
-      // In Paddle Billing, custom_data is directly on the transaction object
+      // DEBUG: Log keys to understand payload structure
+      console.log('🔑 Data Keys:', Object.keys(data));
+      if (data.custom_data) {
+         console.log('🔍 custom_data type:', typeof data.custom_data);
+      }
+
       // Extract Email & Custom Data
       // In Paddle Billing, custom_data is directly on the transaction object
       const customData = data.custom_data || {};
