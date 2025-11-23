@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
@@ -60,6 +60,11 @@ export default function MaterialsPage() {
 
   const [selectedCategory, setSelectedCategory] = useState<LicenseCategory | undefined>(undefined);
 
+  const { data, isLoading, error } = useMaterials({
+    pageSize: 50,
+    category: selectedCategory,
+  });
+
   // Prompt user to select category if none selected
   useEffect(() => {
     if (!selectedCategory && !isLoading) {
@@ -69,10 +74,6 @@ export default function MaterialsPage() {
     }
   }, [selectedCategory, isLoading, isSq]);
 
-  const { data, isLoading, error } = useMaterials({
-    pageSize: 50,
-    category: selectedCategory,
-  });
   const materials = (data?.materials ?? []) as Material[];
   const { hasAnyActivePlan, isLoading: premiumLoading } = useGlobalPremium(user?.id, isAdmin);
 
