@@ -11,12 +11,14 @@ import { useAuth } from '@/contexts/auth-context';
 import { useUserPlans } from '@/hooks/use-subscriptions';
 import { isPlanCurrentlyActive } from '@/lib/subscriptions';
 import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
   const { t, language } = useLanguage();
   const { user, loading: authLoading } = useAuth();
   const isSq = language === 'sq';
+  const queryClient = useQueryClient();
   
   // Poll user plans
   const { data: plans, refetch, isError } = useUserPlans(user?.id);
@@ -31,6 +33,14 @@ export default function PaymentSuccessPage() {
       isPlanCurrentlyActive({ startDate: p.start_date, endDate: p.end_date })
   );
 
+  // Force invalidate on mount to check for fresh data immediately
+  useEffect(() => {
+    if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['user-plans', user.id] });
+        refetch();
+    }
+  }, [user?.id, queryClient, refetch]);
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
@@ -42,21 +52,23 @@ export default function PaymentSuccessPage() {
     if (hasActivePlan) {
       setConfirmedPlan(true);
       setIsChecking(false);
+      // Invalidate global premium queries so other components update
+      queryClient.invalidateQueries({ queryKey: ['premium-status', user.id] });
       return;
     }
 
     // Poll if no active plan found yet
-    if (attempts < 10) { // Poll for ~30 seconds (10 * 3s)
+    if (attempts < 20) { // Poll for ~40 seconds (20 * 2s)
       const timer = setTimeout(() => {
         refetch();
         setAttempts((prev) => prev + 1);
-      }, 3000);
+      }, 2000);
       return () => clearTimeout(timer);
     } else {
       // Stop checking after timeout
       setIsChecking(false);
     }
-  }, [authLoading, user, hasActivePlan, attempts, refetch]);
+  }, [authLoading, user, hasActivePlan, attempts, refetch, queryClient]);
 
   // UI State
   let icon = <Loader2 className="w-12 h-12 text-primary animate-spin" />;
@@ -117,3 +129,4 @@ export default function PaymentSuccessPage() {
     </div>
   );
 }
+

@@ -115,6 +115,7 @@ export async function POST(req: NextRequest) {
       const supabase = createAdminClient();
       
       let userId = userIdFromCustomData;
+      let userEmail = customerEmail;
 
       // Lookup User by Email if ID missing
       if (!userId && customerEmail) {
@@ -126,18 +127,55 @@ export async function POST(req: NextRequest) {
           .single();
 
         if (userError || !userProfile) {
-          console.error('❌ User not found for email:', customerEmail);
-          // IMPORTANT: In a real app, we might want to CREATE the user here if they don't exist (Guest Checkout).
-          // But 'handle_new_user' trigger handles auth.users inserts. We can't insert into auth.users easily here without a password.
-          // For now, we return success to Paddle so it stops retrying, but we log the error.
-          return NextResponse.json({ received: true });
+          // Check auth.users just in case profile is missing but auth exists
+          const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+          const authUser = authUsers?.users.find(u => u.email === customerEmail);
+          
+          if (authUser) {
+             console.log(`⚠️ User found in Auth but not Profiles. Creating profile for ${authUser.id}`);
+             userId = authUser.id;
+             // Create missing profile
+             await supabase.from('user_profiles').insert({
+                id: authUser.id,
+                email: customerEmail,
+                full_name: customerEmail.split('@')[0], // Fallback name
+                updated_at: new Date().toISOString()
+             });
+          } else {
+             console.error('❌ User not found for email:', customerEmail);
+             return NextResponse.json({ received: true });
+          }
+        } else {
+            userId = userProfile.id;
         }
-        userId = userProfile.id;
       }
       
       if (!userId) {
          console.error('❌ Could not resolve a valid User ID');
          return NextResponse.json({ received: true });
+      }
+
+      // Ensure User Profile Exists (Double Check for FK Constraint)
+      const { data: profileCheck } = await supabase.from('user_profiles').select('id').eq('id', userId).single();
+      if (!profileCheck) {
+          console.log(`⚠️ Profile missing for ID ${userId}. Attempting to create stub.`);
+          // Try to find email if we don't have it
+          if (!userEmail) {
+             const { data: u } = await supabase.auth.admin.getUserById(userId);
+             userEmail = u.user?.email || `unknown_${userId}@example.com`;
+          }
+          
+          const { error: createProfileError } = await supabase.from('user_profiles').insert({
+                id: userId,
+                email: userEmail,
+                full_name: 'Valued Customer',
+                updated_at: new Date().toISOString()
+          });
+          if (createProfileError) {
+              console.error('❌ Failed to create stub profile:', createProfileError);
+              // Can't proceed with Order creation if FK fails
+              return NextResponse.json({ received: true });
+          }
       }
 
       console.log(`👤 Processing for User ID: ${userId}`);
@@ -148,11 +186,11 @@ export async function POST(req: NextRequest) {
         .from('orders')
         .insert({
           user_id: userId,
-          category: category,
+          category: category, // 'A', 'B', 'C', 'D'
           plan_tier: planTier,
           amount_cents: amountCents,
           currency: currency,
-          status: 'paid', // Paddle transaction.completed means it's paid
+          status: 'paid', 
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -161,8 +199,8 @@ export async function POST(req: NextRequest) {
 
       if (orderError) {
         console.error('❌ Failed to create order:', orderError);
-        // We continue to try to grant the plan even if order logging fails, 
-        // because the user paid. But this is critical for accounting.
+        // If Order fails, Transaction will fail (FK). 
+        // We try to upsert Plan anyway so user gets what they paid for.
       } else {
         console.log(`✅ Order created: ${order.id}`);
         
@@ -175,7 +213,7 @@ export async function POST(req: NextRequest) {
             provider_status: 'completed',
             amount_cents: amountCents,
             currency: currency,
-            raw_payload: event, // Store full event for debugging
+            raw_payload: event, 
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
