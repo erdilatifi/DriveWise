@@ -267,7 +267,7 @@ export default function ProfilePage() {
                   </h2>
                 </div>
                 
-                <GlassCard className="p-6 border border-border/80 bg-black/80">
+                <GlassCard className="p-6 border border-border/80 bg-black/80 h-[300px]">
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="full-name" className="text-xs text-muted-foreground">
@@ -329,9 +329,9 @@ export default function ProfilePage() {
                   )}
                 </div>
 
-                <GlassCard className="p-6 border border-border/80 bg-black/80 min-h-[200px]">
+                <GlassCard className="p-6 border border-border/80 bg-black/80 h-[300px] flex flex-col">
                   {paidPlans.length === 0 && !isAdmin ? (
-                    <div className="flex flex-col items-center justify-center h-full py-8 text-center space-y-4">
+                    <div className="flex flex-col items-center justify-center h-full py-4 text-center space-y-4">
                       <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
                         <CreditCard className="w-6 h-6 text-muted-foreground/50" />
                       </div>
@@ -348,7 +348,7 @@ export default function ProfilePage() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-3 flex-1 overflow-y-auto pr-2 -mr-2">
                       {paidPlans.map((plan) => {
                         const category = (plan.category as LicenseCategory) || 'B';
                         const info = CATEGORY_INFO[category];
@@ -373,7 +373,7 @@ export default function ProfilePage() {
                         return (
                           <div
                             key={plan.id}
-                            className="rounded-xl border border-white/10 bg-white/5 p-4 flex flex-col gap-3 hover:border-orange-500/30 transition-colors"
+                            className="rounded-xl border border-white/10 bg-white/5 p-4 flex flex-col gap-3 hover:border-orange-500/30 transition-colors flex-shrink-0"
                           >
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex items-center gap-3">
