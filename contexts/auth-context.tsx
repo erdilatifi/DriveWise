@@ -239,19 +239,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signOut = useCallback(async () => {
-    // Optimistic UI update
-    setUser(null);
-    queryClient.clear(); 
-    router.replace('/login');
-    
     try {
       await supabase.auth.signOut();
-      // router.refresh() is often unnecessary if we just redirect to /login
-      // but if you have server components depending on cookies on the /login page, it might be needed.
-      // Usually for logout -> login flow, client navigation is enough.
-      router.refresh(); 
     } catch (error) {
       console.error('Error during Supabase signOut:', error);
+    } finally {
+      // Optimistic UI update & navigation
+      setUser(null);
+      queryClient.clear();
+      router.replace('/'); // Redirect to home page
+      router.refresh(); // Update server components/middleware
     }
   }, [supabase, router, queryClient]);
 

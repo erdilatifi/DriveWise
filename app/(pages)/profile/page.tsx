@@ -428,10 +428,26 @@ export default function ProfilePage() {
                   )}
                 </GlassCard>
                 
-                {/* Paddle Subscription Management (if applicable) */}
-                {userProfile?.subscription_id && (
+                {/* Paddle Subscription Management */}
+                {userProfile?.subscription_id ? (
                   <SubscriptionManagement subscriptionId={userProfile.subscription_id} />
-                )}
+                ) : hasAnyActivePlan && !isAdmin ? (
+                   <GlassCard className="p-6 border border-border/80 bg-black/80 flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0">
+                        <Check className="w-5 h-5 text-emerald-500" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium">
+                          {isSq ? 'Nuk ka abonim automatik' : 'No active subscription'}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          {isSq 
+                            ? 'Planet tuaja janë me pagesë të njëhershme. Nuk do të tarifoheni sërish.' 
+                            : 'Your plans are one-time payments. You will not be charged again automatically.'}
+                        </p>
+                      </div>
+                   </GlassCard>
+                ) : null}
               </div>
             </div>
 

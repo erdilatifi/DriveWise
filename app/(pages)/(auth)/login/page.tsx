@@ -108,8 +108,11 @@ export default function LoginPage() {
       }
 
       toast.success('Login successful!');
+      
+      // Refresh the router to ensure middleware/server components see the new session cookie
+      router.refresh();
+      
       // Do NOT setSubmitting(false) here. Keep it true while we redirect.
-      // This prevents the user from clicking again during the navigation.
       router.push('/dashboard');
     } catch (err) {
       console.error('Unexpected error during login:', err);
