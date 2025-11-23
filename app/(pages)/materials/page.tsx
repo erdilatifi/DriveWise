@@ -65,15 +65,6 @@ export default function MaterialsPage() {
     category: selectedCategory,
   });
 
-  // Prompt user to select category if none selected
-  useEffect(() => {
-    if (!selectedCategory && !isLoading) {
-      toast.info(isSq ? 'Ju lutem zgjidhni një kategori' : 'Please select a category to view materials', {
-        duration: 4000,
-      });
-    }
-  }, [selectedCategory, isLoading, isSq]);
-
   const materials = (data?.materials ?? []) as Material[];
   const { hasAnyActivePlan, isLoading: premiumLoading } = useGlobalPremium(user?.id, isAdmin);
 

@@ -29,6 +29,8 @@ import { createClient } from '@/utils/supabase/client';
 import { AlertTriangle, Trash2, User, Shield, CreditCard, Settings, LogOut, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { SubscriptionManagement } from '@/components/subscription-management';
+
 export default function ProfilePage() {
   const router = useRouter();
   const { user, loading: authLoading, isAdmin, userProfile, refreshUser, signOut } = useAuth();
@@ -425,6 +427,11 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </GlassCard>
+                
+                {/* Paddle Subscription Management (if applicable) */}
+                {userProfile?.subscription_id && (
+                  <SubscriptionManagement subscriptionId={userProfile.subscription_id} />
+                )}
               </div>
             </div>
 

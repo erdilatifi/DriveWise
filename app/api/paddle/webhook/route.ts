@@ -178,6 +178,11 @@ export async function POST(req: NextRequest) {
       const amountCents = Math.round(parseFloat(amountStr) * 100);
 
       console.log(`💰 Amount Parsed: ${amountStr} -> ${amountCents} cents`);
+      
+      const subscriptionId = data.subscription_id;
+      if (subscriptionId) {
+        console.log(`🔄 Subscription ID found: ${subscriptionId}`);
+      }
 
       if (!userIdFromCustomData && !customerEmail) {
         console.error('❌ No user identifier (user_id or email) found in transaction');
@@ -300,6 +305,14 @@ export async function POST(req: NextRequest) {
         }
 
         console.log(`👤 Processing for User ID: ${userId}`);
+        
+        // Update subscription_id if present
+        if (subscriptionId) {
+           await supabase.from('user_profiles').update({ 
+              subscription_id: subscriptionId,
+              updated_at: new Date().toISOString() 
+           }).eq('id', userId);
+        }
 
         // A. Create Order
         console.log('📦 Creating Order...');

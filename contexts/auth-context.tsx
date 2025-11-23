@@ -21,6 +21,7 @@ interface UserProfile {
   is_blocked?: boolean;
   is_admin?: boolean;
   is_instructor?: boolean;
+  subscription_id?: string | null;
 }
 
 interface AuthContextType {
@@ -54,12 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!user?.id) return null;
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('is_blocked, is_admin, is_instructor, full_name, email')
+        .select('*')
         .eq('id', user.id)
         .single();
 
       if (error) {
-        console.error('Error fetching user profile:', error);
+        console.error('Error fetching user profile:', error.message, error.details);
         return null;
       }
       return data;
@@ -75,7 +76,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isBlocked = !!profileData?.is_blocked;
   const userProfile = profileData ? {
     full_name: profileData.full_name,
-    email: profileData.email
+    email: profileData.email,
+    subscription_id: profileData.subscription_id,
+    is_admin: isAdmin,
+    is_instructor: isInstructor,
+    is_blocked: isBlocked
   } : null;
 
   const handleBlockedAccount = useCallback(async () => {

@@ -96,7 +96,6 @@ export default function PricingPage() {
     }
 
     if (!selectedCategory || !selectedPlan) {
-      toast.error(isSq ? 'Ju lutem zgjidhni kategorinë dhe planin.' : 'Please select a category and a plan.');
       return;
     }
 
@@ -215,9 +214,8 @@ export default function PricingPage() {
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="hidden lg:block absolute top-24 bottom-24 left-[10%] w-px bg-gradient-to-b from-transparent via-orange-500/25 to-transparent" />
         <div className="hidden lg:block absolute top-24 bottom-24 right-[10%] w-px bg-gradient-to-b from-transparent via-orange-500/25 to-transparent" />
-        <div className="hidden md:block absolute top-28 bottom-32 left-1/2 w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-orange-400/30 to-transparent" />
+        <div className="hidden md:block absolute top-28 bottom-32 left-1/2 w-px -translate-x-1/2 bg-gradient-to-b from-orange-400/30 to-transparent" />
         <div className="hidden md:block absolute inset-x-[12%] top-64 h-px bg-gradient-to-r from-transparent via-orange-500/16 to-transparent" />
-        <div className="hidden lg:block absolute inset-x-[14%] bottom-40 h-px bg-gradient-to-r from-transparent via-orange-400/14 to-transparent" />
       </div>
 
       <Navbar />
@@ -450,7 +448,6 @@ export default function PricingPage() {
                   </Card>
 
                   <Card className="relative overflow-hidden border border-orange-400/70 bg-orange-500/5">
-                    <div className="pointer-events-none absolute inset-x-4 top-3 h-px bg-gradient-to-r from-transparent via-orange-500/60 to-transparent" />
                     <CardHeader className="relative px-3 pb-2 pt-3">
                       <CardTitle className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
@@ -522,10 +519,10 @@ export default function PricingPage() {
                         key={plan.id}
                         className={`relative flex h-full cursor-pointer flex-col justify-between border transition-all duration-300 !overflow-visible rounded-3xl before:rounded-3xl ${
                           isSelected
-                            ? 'border-orange-500 ring-1 ring-orange-500 bg-black/90 shadow-[0_0_50px_rgba(249,115,22,0.4)] scale-[1.03] z-10'
+                            ? 'border-orange-500 ring-1 ring-orange-500 bg-black shadow-[0_0_50px_rgba(249,115,22,0.4)] scale-[1.03] z-10'
                             : isBestValue
-                            ? 'border-orange-500/40 bg-black/80 hover:border-orange-500/70 hover:bg-black/90 scale-[1.01] z-0'
-                            : 'border-border/70 bg-black/60 hover:border-orange-400/40 hover:bg-black/80'
+                            ? 'border-orange-500/40 bg-zinc-950 hover:border-orange-500/70 hover:bg-black scale-[1.01] z-0'
+                            : 'border-border/70 bg-zinc-950 hover:border-orange-400/40 hover:bg-black'
                         }`}
                         onClick={() => {
                           if (!isCurrentActivePlan && !isProcessing && !isAdmin) {

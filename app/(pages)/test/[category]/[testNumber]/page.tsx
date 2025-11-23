@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, CheckCircle, CheckSquare } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, CheckSquare, Lock } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -418,40 +419,62 @@ export default function TestPage() {
     const used = entitlementResult.testsTakenThisCycle;
     const remaining = entitlementResult.entitlements.remainingFreeTests ?? 0;
     const total = used + remaining;
+    const isSq = language === 'sq';
 
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <Card className="max-w-lg w-full border border-border/80 bg-black/80 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.85)]">
-          <CardHeader>
-            <CardTitle className="text-2xl">
-              {t('test.limitReachedTitle') || 'Free test limit reached'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm text-muted-foreground">
-            <p>
-              {t('test.limitReachedDescription') ||
-                `You have used ${used}/${total} free tests for ${
-                  CATEGORY_INFO[category].name
-                } this cycle.`}
-            </p>
-            <p>
-              {t('test.limitReachedBenefits') ||
-                'Upgrade to a paid plan for this category to unlock more tests, Decision Trainer, study material, and full test review.'}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Button asChild className="flex-1">
-                <Link href={`/pricing?category=${category}`}>
-                  {t('test.upgradeCta') || 'See plans for this category'}
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="flex-1">
-                <Link href={`/category/${category.toLowerCase()}`}>
-                  {t('test.backToTests')}
-                </Link>
-              </Button>
+      <div className="min-h-screen bg-background text-foreground">
+        {/* Background elements */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-orange-500/20 via-transparent to-transparent blur-3xl" />
+        
+        <div className="flex items-center justify-center min-h-screen p-4">
+          <GlassCard className="w-full max-w-2xl p-8 md:p-10 border border-orange-500/30 bg-black/85 text-center relative overflow-hidden">
+            <div className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl" />
+            
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="w-16 h-16 rounded-full bg-orange-500/10 flex items-center justify-center mb-6 border border-orange-500/20">
+                <Lock className="w-8 h-8 text-orange-400" />
+              </div>
+              
+              <h1 className="text-3xl font-semibold mb-3 tracking-tight">
+                {t('test.limitReachedTitle') || 'Free test limit reached'}
+              </h1>
+              <p className="text-base text-muted-foreground mb-8 max-w-lg mx-auto leading-relaxed">
+                {t('test.limitReachedDescription') ||
+                  `You have used ${used}/${total} free tests for ${
+                    CATEGORY_INFO[category].name
+                  } this cycle.`}
+              </p>
+              
+              <div className="grid gap-4 text-left max-w-md mx-auto mb-8 w-full">
+                {[
+                  isSq ? 'Teste të pakufizuara në këtë kategori' : 'Unlimited tests in this category',
+                  isSq ? 'Rishikim i plotë me përgjigje të sakta' : 'Full review with correct answers',
+                  isSq ? 'Decision Trainer i hapur' : 'Decision Trainer unlocked'
+                ].map((benefit, i) => (
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+                    <div className="mt-0.5 w-5 h-5 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                      <div className="w-2 h-2 rounded-full bg-orange-400" />
+                    </div>
+                    <span className="text-sm text-muted-foreground">{benefit}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
+                <Button asChild className="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-medium h-11">
+                  <Link href={`/pricing?category=${category}`}>
+                    {t('test.upgradeCta') || 'See plans'}
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="flex-1 h-11 border-white/10 hover:bg-white/5">
+                  <Link href={`/category/${category.toLowerCase()}`}>
+                    {t('test.backToTests')}
+                  </Link>
+                </Button>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </GlassCard>
+        </div>
       </div>
     );
   }

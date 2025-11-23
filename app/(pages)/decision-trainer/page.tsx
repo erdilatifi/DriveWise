@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Check, X, Lightbulb, Trophy, Zap, Timer, TrafficCone, Octagon, User, GitBranch, AlertTriangle, Car, Play } from 'lucide-react';
+import { ArrowLeft, Check, X, Lightbulb, Trophy, Zap, Timer, TrafficCone, Octagon, User, GitBranch, AlertTriangle, Car, Play, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { CATEGORY_INFO, type Category } from '@/data/scenarios';
 import { useScenarios, type Scenario as TrainerScenario } from '@/hooks/use-scenarios';
@@ -16,7 +16,8 @@ import { useCompleteCategory, useDecisionTrainerProgress, useDecisionTrainerStat
 import type { DecisionTrainerProgress } from '@/hooks/use-decision-trainer';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/language-context';
-import { useGlobalPremium } from '@/hooks/use-subscriptions';
+import { useGlobalPremium, useUserPlans } from '@/hooks/use-subscriptions';
+import { isPlanCurrentlyActive } from '@/lib/subscriptions';
 // import Confetti from 'react-canvas-confetti';
 
 type SessionAttempt = {
@@ -99,6 +100,7 @@ export default function DecisionTrainerPage() {
   
   // Mutation for completing category
   const completeCategoryMutation = useCompleteCategory();
+  const { hasAnyActivePlan, isLoading: premiumLoading } = useGlobalPremium(user?.id, isAdmin);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -106,23 +108,89 @@ export default function DecisionTrainerPage() {
     }
   }, [user, authLoading, router]);
 
-  useEffect(() => {
-    if (!selectedCategory || scenariosLoading) return;
-    if (!scenarios.length) return;
+  if (authLoading || !user || premiumLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 max-w-7xl pt-32">
+           <div className="mb-8">
+             <Skeleton className="h-10 w-32 mb-4" />
+             <GlassCard className="p-6 h-64 flex flex-col justify-center items-center">
+                <Skeleton className="h-8 w-48 mb-2" />
+                <Skeleton className="h-4 w-64" />
+             </GlassCard>
+           </div>
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <GlassCard key={i} className="p-6 h-40">
+                   <Skeleton className="w-12 h-12 rounded-2xl mb-4" />
+                   <Skeleton className="h-5 w-24 mb-2" />
+                   <Skeleton className="h-3 w-full" />
+                </GlassCard>
+              ))}
+           </div>
+        </div>
+      </div>
+    );
+  }
 
-    if (mode === 'full') {
-      setSessionScenarioIds(null);
-      return;
-    }
+  if (!isAdmin && !hasAnyActivePlan) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        {/* Background elements */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-orange-500/20 via-transparent to-transparent blur-3xl" />
+        <Navbar />
+        <div className="pt-32">
+          <div className="container mx-auto px-4 py-10 max-w-3xl">
+            <GlassCard className="p-8 md:p-10 border border-orange-500/30 bg-black/85 text-center relative overflow-hidden">
+              <div className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl" />
+              
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="w-16 h-16 rounded-full bg-orange-500/10 flex items-center justify-center mb-6 border border-orange-500/20">
+                  <Lock className="w-8 h-8 text-orange-400" />
+                </div>
+                
+                <h1 className="text-3xl font-semibold mb-3 tracking-tight">
+                  {t('trainer.premiumRequiredTitle') || 'Unlock Decision Trainer'}
+                </h1>
+                <p className="text-base text-muted-foreground mb-8 max-w-lg mx-auto leading-relaxed">
+                  {t('trainer.premiumRequiredDescription') || 'Decision Trainer is part of the paid plan. With any active plan you get full access to all scenarios, smarter practice modes, and detailed reviews.'}
+                </p>
+                
+                <div className="grid gap-4 text-left max-w-md mx-auto mb-8 w-full">
+                  {[
+                    t('trainer.premiumBenefitUnlimited') || 'Unlimited Decision Trainer practice across all categories.',
+                    t('trainer.premiumBenefitStudy') || 'Connect scenarios with matching study chapters and test reviews.',
+                    t('trainer.premiumBenefitFocus') || 'Smart modes that focus on your weak points and timing.'
+                  ].map((benefit, i) => (
+                    <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+                      <div className="mt-0.5 w-5 h-5 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                        <div className="w-2 h-2 rounded-full bg-orange-400" />
+                      </div>
+                      <span className="text-sm text-muted-foreground">{benefit}</span>
+                    </div>
+                  ))}
+                </div>
 
-    if (sessionScenarioIds && sessionScenarioIds.length > 0) {
-      return;
-    }
-
-    const subset = selectSessionScenarioIds({ scenarios, mode });
-    setSessionScenarioIds(subset);
-    setCurrentScenarioIndex(0);
-  }, [selectedCategory, scenariosLoading, scenarios, mode, sessionScenarioIds]);
+                <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
+                  <Button asChild className="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-medium h-11">
+                    <Link href="/pricing">
+                      {t('trainer.premiumUpgradeCta') || 'See plans'}
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="flex-1 h-11 border-white/10 hover:bg-white/5">
+                    <Link href="/dashboard">
+                      {t('auth.backToHome')}
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </GlassCard>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const categoryScenarios = selectedCategory
     ? (sessionScenarioIds
