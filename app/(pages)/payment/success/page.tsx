@@ -1,117 +1,115 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/language-context';
-
-type OrderStatus = 'loading' | 'paid' | 'pending' | 'error';
+import { useAuth } from '@/contexts/auth-context';
+import { useUserPlans } from '@/hooks/use-subscriptions';
+import { isPlanCurrentlyActive } from '@/lib/subscriptions';
+import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 
 export default function PaymentSuccessPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const { t } = useLanguage();
-  const orderId = searchParams.get('orderId');
+  const { t, language } = useLanguage();
+  const { user, loading: authLoading } = useAuth();
+  const isSq = language === 'sq';
+  
+  // Poll user plans
+  const { data: plans, refetch, isError } = useUserPlans(user?.id);
+  
+  const [isChecking, setIsChecking] = useState(true);
+  const [confirmedPlan, setConfirmedPlan] = useState(false);
+  const [attempts, setAttempts] = useState(0);
 
-  const [status, setStatus] = useState<OrderStatus>('loading');
+  const hasActivePlan = plans?.some(
+    (p) =>
+      p.status === 'active' &&
+      isPlanCurrentlyActive({ startDate: p.start_date, endDate: p.end_date })
+  );
 
   useEffect(() => {
-    if (!orderId) {
-      setStatus('error');
+    if (authLoading) return;
+    if (!user) {
+      // If not logged in, we can't check. Redirect to login or show message?
+      // Probably redirect to login with a return url
       return;
     }
 
-    let cancelled = false;
-    let attempts = 0;
+    if (hasActivePlan) {
+      setConfirmedPlan(true);
+      setIsChecking(false);
+      return;
+    }
 
-    const poll = async () => {
-      if (cancelled) return;
-      try {
-        const res = await fetch(`/api/orders/${orderId}`);
-        if (!res.ok) {
-          if (attempts >= 8) {
-            setStatus('error');
-          } else {
-            attempts += 1;
-            setTimeout(poll, 3000);
-          }
-          return;
-        }
+    // Poll if no active plan found yet
+    if (attempts < 10) { // Poll for ~30 seconds (10 * 3s)
+      const timer = setTimeout(() => {
+        refetch();
+        setAttempts((prev) => prev + 1);
+      }, 3000);
+      return () => clearTimeout(timer);
+    } else {
+      // Stop checking after timeout
+      setIsChecking(false);
+    }
+  }, [authLoading, user, hasActivePlan, attempts, refetch]);
 
-        const order = await res.json();
-        if (order.status === 'paid') {
-          setStatus('paid');
-        } else if (attempts >= 8) {
-          setStatus('pending');
-        } else {
-          attempts += 1;
-          setTimeout(poll, 3000);
-        }
-      } catch {
-        if (attempts >= 8) {
-          setStatus('error');
-        } else {
-          attempts += 1;
-          setTimeout(poll, 3000);
-        }
-      }
-    };
+  // UI State
+  let icon = <Loader2 className="w-12 h-12 text-primary animate-spin" />;
+  let title = isSq ? 'Duke verifikuar pagesën...' : 'Verifying payment...';
+  let description = isSq 
+    ? 'Jemi duke pritur konfirmimin nga banka. Kjo mund të zgjasë pak sekonda.'
+    : 'We are waiting for confirmation from the payment provider. This may take a few seconds.';
+  let colorClass = 'border-primary/50 bg-primary/5';
 
-    poll();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [orderId]);
-
-  let title = 'Checking payment...';
-  let description = 'We are confirming your payment status. This may take a few seconds.';
-
-  if (!orderId) {
-    title = 'Missing order information';
-    description = 'We could not find payment details. Please go back to pricing and try again.';
-  } else if (status === 'paid') {
-    title = 'Payment successful';
-    description = 'Your plan should now be active. You can start using all premium features.';
-  } else if (status === 'pending') {
-    title = 'Payment processing';
-    description =
-      'We have not yet received a final confirmation from the payment provider. If this persists, please contact support.';
-  } else if (status === 'error') {
-    title = 'Could not confirm payment';
-    description = 'Something went wrong while checking your payment. Please try again later.';
+  if (confirmedPlan) {
+    icon = <CheckCircle2 className="w-12 h-12 text-emerald-500" />;
+    title = isSq ? 'Pagesa u krye me sukses!' : 'Payment successful!';
+    description = isSq
+      ? 'Plani juaj tani është aktiv. Mund të filloni të përdorni të gjitha veçoritë premium.'
+      : 'Your plan is now active. You can start using all premium features.';
+    colorClass = 'border-emerald-500/50 bg-emerald-500/5';
+  } else if (!isChecking && !confirmedPlan) {
+    // Timeout or error
+    icon = <AlertCircle className="w-12 h-12 text-amber-500" />;
+    title = isSq ? 'Pagesa është në proces' : 'Payment processing';
+    description = isSq
+      ? 'Ende nuk kemi marrë konfirmimin përfundimtar. Ju lutemi prisni pak minuta dhe rifreskoni faqen, ose kontrolloni email-in tuaj.'
+      : 'We haven\'t received final confirmation yet. Please wait a few minutes and refresh the page, or check your email.';
+    colorClass = 'border-amber-500/50 bg-amber-500/5';
   }
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-24 pb-12">
-        <div className="container mx-auto px-4 max-w-2xl">
-          <GlassCard className="p-6 md:p-8 border border-border/80 bg-black/85">
-            <h1 className="text-xl md:text-2xl font-semibold mb-2">{title}</h1>
-            <p className="text-sm text-muted-foreground mb-6">{description}</p>
+      <div className="pt-32 pb-12">
+        <div className="container mx-auto px-4 max-w-xl">
+          <GlassCard className={`p-8 border ${colorClass} text-center flex flex-col items-center`}>
+            <div className="mb-6 p-4 rounded-full bg-black/20 backdrop-blur-md">
+              {icon}
+            </div>
+            
+            <h1 className="text-2xl font-bold mb-3">{title}</h1>
+            <p className="text-muted-foreground mb-8 leading-relaxed max-w-md mx-auto">
+              {description}
+            </p>
 
-            {status === 'loading' && (
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                <span className="text-xs text-muted-foreground">{t('payment.processing') || 'Processing payment...'}</span>
-              </div>
-            )}
-
-            {orderId && (
-              <p className="text-[11px] text-muted-foreground mb-4">Order ID: {orderId}</p>
-            )}
-
-            <div className="flex flex-col sm:flex-row gap-3 mt-4">
-              <Button asChild className="flex-1">
-                <Link href="/dashboard">{t('auth.backToHome')}</Link>
+            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs mx-auto">
+              <Button asChild className="flex-1 w-full" size="lg">
+                <Link href="/dashboard">
+                  {t('auth.backToHome') || 'Go to Dashboard'}
+                </Link>
               </Button>
-              <Button asChild variant="outline" className="flex-1">
-                <Link href="/pricing">Go to pricing</Link>
-              </Button>
+              
+              {(!confirmedPlan && !isChecking) && (
+                 <Button variant="outline" onClick={() => { setAttempts(0); setIsChecking(true); refetch(); }} className="flex-1 w-full">
+                    {isSq ? 'Provo përsëri' : 'Try again'}
+                 </Button>
+              )}
             </div>
           </GlassCard>
         </div>

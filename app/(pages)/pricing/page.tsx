@@ -31,31 +31,31 @@ export default function PricingPage() {
 
   const paymentStatus = searchParams.get('payment');
 
-  const initialCategory = useMemo<LicenseCategory>(() => {
+  const initialCategory = useMemo<LicenseCategory | null>(() => {
     const fromQuery = (searchParams.get('category') || '').toUpperCase();
     if (LICENSE_CATEGORIES.includes(fromQuery as LicenseCategory)) {
       return fromQuery as LicenseCategory;
     }
-    return 'B';
+    return null;
   }, [searchParams]);
 
-  const initialPlan = useMemo<PaidPlanTier>(() => {
+  const initialPlan = useMemo<PaidPlanTier | null>(() => {
     const fromQuery = (searchParams.get('plan') || '').toUpperCase() as PaidPlanTier;
     if (fromQuery && BILLING_CONFIG.plans[fromQuery]) {
       return fromQuery;
     }
-    return BILLING_CONFIG.bestValuePlan;
+    return null;
   }, [searchParams]);
 
-  const [selectedCategory, setSelectedCategory] = useState<LicenseCategory>(initialCategory);
-  const [selectedPlan, setSelectedPlan] = useState<PaidPlanTier>(initialPlan);
+  const [selectedCategory, setSelectedCategory] = useState<LicenseCategory | null>(initialCategory);
+  const [selectedPlan, setSelectedPlan] = useState<PaidPlanTier | null>(initialPlan);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const { data: existingPlans } = useUserPlans(user?.id || undefined);
   const { hasAnyActivePlan } = useGlobalPremium(user?.id, isAdmin);
 
   const currentCategoryPlan = useMemo(() => {
-    if (!existingPlans) return null;
+    if (!existingPlans || !selectedCategory) return null;
     return existingPlans.find((p) => p.category === selectedCategory) || null;
   }, [existingPlans, selectedCategory]);
 
@@ -67,6 +67,13 @@ export default function PricingPage() {
       endDate: currentCategoryPlan.end_date,
     });
   }, [currentCategoryPlan]);
+
+  const handleSelectCategory = (cat: LicenseCategory) => {
+    if (cat !== selectedCategory) {
+      setSelectedCategory(cat);
+      setSelectedPlan(null); // Reset plan when category changes
+    }
+  };
 
   const handlePurchase = async () => {
     if (!user) {
@@ -86,6 +93,12 @@ export default function PricingPage() {
       );
       return;
     }
+
+    if (!selectedCategory || !selectedPlan) {
+      toast.error(isSq ? 'Ju lutem zgjidhni kategorinë dhe planin.' : 'Please select a category and a plan.');
+      return;
+    }
+
     if (currentCategoryPlanActive) {
       toast.info(
         isSq
@@ -131,14 +144,13 @@ export default function PricingPage() {
       }
 
       // Redirect to Paddle hosted checkout with email pre-filled
-      // Paddle supports 'guest_email' query param for HSC
       if (user?.email) {
         urlObj.searchParams.append('guest_email', user.email);
       }
       
-      // Pass the selected category as custom_data so the webhook knows which plan to activate
-      // Format: custom_data[key]=value
+      // Pass custom data
       urlObj.searchParams.append('custom_data[category]', selectedCategory);
+      urlObj.searchParams.append('custom_data[user_id]', user.id);
       
       console.log('Redirecting to Paddle:', urlObj.toString());
       window.location.href = urlObj.toString();
@@ -177,7 +189,7 @@ export default function PricingPage() {
         'Full review with correct answers',
       ];
 
-  const selectedPlanData = BILLING_CONFIG.plans[selectedPlan];
+  const selectedPlanData = selectedPlan ? BILLING_CONFIG.plans[selectedPlan] : null;
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black text-foreground overflow-hidden">
@@ -247,152 +259,130 @@ export default function PricingPage() {
           <div className="grid gap-6 lg:grid-cols-[1.2fr,1.8fr] items-start mb-10">
             {/* LEFT: Steps + category + free vs paid */}
             <GlassCard className="p-6 md:p-7 border border-border/80 bg-black/85">
-              {/* Stepper */}
-              <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-                    1
-                  </div>
-                  <span>{isSq ? 'Zgjidh kategorinë' : 'Choose category'}</span>
-                </div>
-                <div className="h-px w-7 bg-border/60" />
-                <div className="flex items-center gap-2 opacity-80">
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full border border-border text-[10px]">
-                    2
-                  </div>
-                  <span>{isSq ? 'Zgjidh planin' : 'Choose plan'}</span>
-                </div>
-                <div className="h-px w-7 bg-border/40" />
-                <div className="flex items-center gap-2 opacity-60">
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full border border-border text-[10px]">
-                    3
-                  </div>
-                  <span>{isSq ? 'Paguaj dhe fillo' : 'Pay & start'}</span>
-                </div>
-              </div>
-
               {/* Hero */}
-              <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center justify-between gap-3 mb-6">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
-                    {isSq ? 'Çmime të thjeshta për provimin tënd' : 'Simple pricing for your exam'}
+                    {isSq ? 'Çmime të thjeshta' : 'Simple pricing'}
                   </h1>
                   <p className="mt-1 text-xs md:text-sm text-muted-foreground">
                     {isSq
-                      ? 'Paguaj një herë dhe ushtro sa të duash gjatë periudhës së qasjes.'
-                      : 'Pay once, practice as much as you want during your access period.'}
+                      ? 'Paguaj një herë dhe ushtro sa të duash.'
+                      : 'Pay once, practice as much as you want.'}
                   </p>
                 </div>
                 <div className="hidden md:flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-[11px] text-primary">
                   <Sparkles className="w-4 h-4" />
                   <span>
-                    {isSq ? 'Pa abonim automatik. Pa tarifa të fshehta.' : 'No auto-renew. No hidden fees.'}
+                    {isSq ? 'Pa abonim automatik' : 'No auto-renew'}
                   </span>
                 </div>
               </div>
 
-              {/* Category selector */}
-              <div className="mt-4">
-                <p className="text-xs font-medium text-muted-foreground mb-2">
-                  {isSq ? 'Kategoria e lejes së vozitjes' : 'License category'}
-                </p>
-                <div className="flex flex-wrap gap-2">
+              {/* Step 1: Category Selector */}
+              <div className="mb-8">
+                 <div className="flex items-center gap-2 mb-3">
+                    <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${selectedCategory ? 'bg-primary text-black' : 'bg-muted text-muted-foreground'}`}>1</div>
+                    <h3 className={`text-sm font-medium ${selectedCategory ? 'text-foreground' : 'text-muted-foreground'}`}>
+                        {isSq ? 'Zgjidh kategorinë' : 'Choose your category'}
+                    </h3>
+                 </div>
+
+                <div className="flex flex-wrap gap-2 pl-8">
                   {LICENSE_CATEGORIES.map((cat) => {
                     const info = CATEGORY_INFO[cat];
                     const isActive = cat === selectedCategory;
-                    const isThisCategoryActivePlan =
-                      !!currentCategoryPlan &&
-                      currentCategoryPlan.category === cat &&
-                      currentCategoryPlanActive;
+                    // Check if user has active plan for this category (not selected, but actually active in DB)
+                    const planForThisCat = existingPlans?.find(p => p.category === cat);
+                    const isPlanActive = planForThisCat && planForThisCat.status === 'active' && isPlanCurrentlyActive({ startDate: planForThisCat.start_date, endDate: planForThisCat.end_date });
 
                     return (
                       <button
                         key={cat}
                         type="button"
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`relative flex items-center gap-2 rounded-full px-3 py-1.5 text-xs border transition-all duration-150 ${
+                        onClick={() => handleSelectCategory(cat)}
+                        className={`relative flex items-center gap-2 rounded-lg px-4 py-3 text-xs border transition-all duration-200 ${
                           isActive
-                            ? 'border-primary/90 bg-primary text-white shadow-md shadow-primary/30 scale-[1.02]'
-                            : 'border-border/70 bg-black/40 text-foreground hover:border-primary/50 hover:bg-primary/5 hover:-translate-y-[1px]'
+                            ? 'border-primary bg-primary/10 text-foreground shadow-[0_0_15px_rgba(251,146,60,0.15)]'
+                            : 'border-border/70 bg-black/40 text-muted-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-foreground'
                         }`}
                       >
-                        <span>{info.name}</span>
-                        {isThisCategoryActivePlan && (
-                          <span className="rounded-full bg-emerald-500/10 text-emerald-400 px-2 py-[1px] text-[10px] border border-emerald-500/40">
-                            {isSq ? 'Aktiv' : 'Active'}
+                        <span className="font-semibold">{info.name}</span>
+                        {isPlanActive && (
+                          <span className="ml-1 rounded-full bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 text-[9px] border border-emerald-500/30">
+                             ✓
                           </span>
                         )}
+                         {isActive && (
+                            <div className="absolute -top-1 -right-1">
+                                <span className="flex h-3 w-3">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                                </span>
+                            </div>
+                         )}
                       </button>
                     );
                   })}
                 </div>
-
-                {currentCategoryPlan && (
-                  <p className="mt-3 text-[11px] text-emerald-400">
-                    {t('pricing.currentPlanFor')}{' '}
-                    {CATEGORY_INFO[selectedCategory].name}:{' '}
-                    <span className="font-semibold">{currentCategoryPlan.plan_tier}</span>
-                    {currentCategoryPlanActive && currentCategoryPlan.end_date && (
-                      <>
-                        {' '}
-                        {t('pricing.until')}{' '}
-                        {new Date(currentCategoryPlan.end_date).toLocaleDateString()}
-                      </>
-                    )}
-                  </p>
-                )}
-
-                {isAdmin && (
-                  <p className="mt-3 text-[11px] text-amber-400">
-                    {isSq
-                      ? 'Ju jeni administrator dhe tashmë keni qasje të plotë. Kjo faqe është vetëm pamje paraprake.'
-                      : 'You are an admin and already have full access. This screen is a preview only.'}
-                  </p>
+                
+                {currentCategoryPlan && currentCategoryPlanActive && (
+                  <div className="pl-8 mt-2">
+                      <p className="text-[11px] text-emerald-400">
+                        {t('pricing.currentPlanFor')}{' '}
+                        {CATEGORY_INFO[selectedCategory!].name}:{' '}
+                        <span className="font-semibold">{currentCategoryPlan.plan_tier}</span>
+                        {currentCategoryPlan.end_date && (
+                        <>
+                            {' '}
+                            {t('pricing.until')}{' '}
+                            {new Date(currentCategoryPlan.end_date).toLocaleDateString()}
+                        </>
+                        )}
+                    </p>
+                  </div>
                 )}
               </div>
 
-              {/* Free vs Paid */}
-              <div className="mt-6 grid gap-3 md:grid-cols-2">
-                <Card className="border border-border/80 bg-black/70">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center justify-between">
+              {/* Free vs Paid Comparison */}
+              <div className="pl-8 mt-6 grid gap-3 md:grid-cols-2 opacity-80 hover:opacity-100 transition-opacity">
+                <Card className="border border-border/60 bg-black/40">
+                  <CardHeader className="pb-2 pt-3 px-3">
+                    <CardTitle className="text-xs flex items-center justify-between">
                       <span>{isSq ? 'Falas' : 'Free'}</span>
-                      <span className="text-xs text-muted-foreground">0 €</span>
+                      <span className="text-[10px] text-muted-foreground">0 €</span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-1.5">
+                  <CardContent className="px-3 pb-3 space-y-1">
                     {featureListFree.map((f) => (
                       <p
                         key={f}
-                        className="text-xs text-muted-foreground flex items-start gap-2"
+                        className="text-[10px] text-muted-foreground flex items-start gap-2"
                       >
-                        <span className="mt-[3px] text-muted-foreground/60">•</span>
+                        <span className="mt-[2px] text-muted-foreground/60">•</span>
                         <span>{f}</span>
                       </p>
                     ))}
                   </CardContent>
                 </Card>
 
-                <Card className="border border-primary/70 bg-primary/5 relative overflow-hidden">
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.16),_transparent_55%)]" />
-                  <CardHeader className="pb-2 relative z-10">
-                    <CardTitle className="text-sm flex items-center justify-between">
+                <Card className="border border-primary/40 bg-primary/5 relative overflow-hidden">
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.1),_transparent_60%)]" />
+                  <CardHeader className="pb-2 pt-3 px-3 relative z-10">
+                    <CardTitle className="text-xs flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Crown className="w-4 h-4 text-primary" />
-                        <span>{isSq ? 'Qasje e plotë' : 'Full access'}</span>
+                        <Crown className="w-3 h-3 text-primary" />
+                        <span>{isSq ? 'Premium' : 'Premium'}</span>
                       </div>
-                      <span className="text-[11px] text-primary">
-                        {isSq ? 'E rekomanduar' : 'Recommended'}
-                      </span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-1.5 relative z-10">
+                  <CardContent className="px-3 pb-3 space-y-1 relative z-10">
                     {featureListPaid.map((f) => (
                       <p
                         key={f}
-                        className="text-xs text-muted-foreground flex items-start gap-2"
+                        className="text-[10px] text-muted-foreground flex items-start gap-2"
                       >
-                        <Check className="w-3 h-3 mt-[2px] text-primary" />
+                        <Check className="w-3 h-3 mt-[1px] text-primary" />
                         <span>{f}</span>
                       </p>
                     ))}
@@ -403,8 +393,16 @@ export default function PricingPage() {
 
             {/* RIGHT: Plan cards + summary */}
             <div className="flex flex-col gap-4">
+               {/* Step 2 Header */}
+               <div className="flex items-center gap-2 mb-1">
+                    <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${selectedPlan ? 'bg-primary text-black' : 'bg-muted text-muted-foreground'}`}>2</div>
+                    <h3 className={`text-sm font-medium ${selectedPlan ? 'text-foreground' : 'text-muted-foreground'}`}>
+                        {isSq ? 'Zgjidh planin' : 'Choose your plan'}
+                    </h3>
+               </div>
+
               {/* Plans row */}
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className={`grid gap-4 md:grid-cols-3 transition-all duration-300 ${!selectedCategory ? 'opacity-50 grayscale pointer-events-none' : 'opacity-100'}`}>
                 {Object.values(BILLING_CONFIG.plans).map((plan) => {
                   const isBestValue = plan.id === BILLING_CONFIG.bestValuePlan;
                   const isSelected = plan.id === selectedPlan;
@@ -416,12 +414,12 @@ export default function PricingPage() {
                   return (
                     <Card
                       key={plan.id}
-                      className={`relative border flex flex-col justify-between h-full cursor-pointer transition-all ${
+                      className={`relative border flex flex-col justify-between h-full cursor-pointer transition-all duration-200 ${
                         isSelected
-                          ? 'border-primary/80 ring-2 ring-primary/60 bg-gradient-to-b from-primary/10 via-black to-black shadow-[0_18px_60px_rgba(0,0,0,0.9)]'
+                          ? 'border-primary ring-1 ring-primary bg-black/90 shadow-[0_0_30px_rgba(251,146,60,0.15)] transform scale-[1.02]'
                           : isBestValue
-                          ? 'border-primary/60 bg-black/90 hover:border-primary/80 hover:shadow-[0_14px_40px_rgba(0,0,0,0.8)]'
-                          : 'border-border/80 bg-black/80 hover:border-primary/60'
+                          ? 'border-primary/50 bg-black/80 hover:border-primary/80'
+                          : 'border-border/60 bg-black/60 hover:border-primary/40'
                       }`}
                       onClick={() => {
                         if (!isCurrentActivePlan && !isProcessing && !isAdmin) {
@@ -430,31 +428,30 @@ export default function PricingPage() {
                       }}
                     >
                       {isBestValue && (
-                        <div className="absolute top-2 left-1/2 -translate-x-1/2">
-                          <Badge className="rounded-full border border-primary/90 bg-gradient-to-r from-orange-500 via-amber-300 to-orange-500 text-[10px] px-3 py-[3px] text-black shadow-md shadow-orange-500/40">
-                            Best value
+                        <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-20">
+                          <Badge className="rounded-full border border-primary/90 bg-gradient-to-r from-orange-500 via-amber-300 to-orange-500 text-[9px] px-2 py-0.5 text-black font-bold shadow-sm">
+                            {isSq ? 'MË I SHITURI' : 'BEST VALUE'}
                           </Badge>
                         </div>
+                      )}
+
+                      {isSelected && (
+                         <div className="absolute top-2 right-2 text-primary">
+                            <div className="rounded-full bg-primary/20 p-1">
+                                <Check className="w-3 h-3" />
+                            </div>
+                         </div>
                       )}
 
                       <CardHeader className="pt-6 pb-3">
                         <CardTitle className="text-sm font-semibold flex flex-col gap-1">
                           <div className="flex items-center justify-between gap-2">
                             <span>{plan.label}</span>
-                            <span className="text-[11px] text-muted-foreground">
-                              {plan.months === 1
-                                ? isSq
-                                  ? '1 muaj'
-                                  : '1 month'
-                                : isSq
-                                ? `${plan.months} muaj`
-                                : `${plan.months} months`}
-                            </span>
                           </div>
                           <div className="flex items-baseline gap-1">
                             <span className="text-2xl font-bold">{plan.priceEur}</span>
                             <span className="text-xs text-muted-foreground">
-                              {isSq ? '€ gjithsej' : '€ total'}
+                              {isSq ? '€' : '€'}
                             </span>
                           </div>
                         </CardTitle>
@@ -462,53 +459,20 @@ export default function PricingPage() {
 
                       <CardContent className="pb-2 space-y-1">
                         <p className="text-[11px] text-muted-foreground">
-                          ≈ {plan.pricePerMonthEur.toFixed(2)} € /
-                          {isSq ? ' muaj' : ' month'}
+                          {isSq ? 'Vetëm' : 'Just'} {plan.pricePerMonthEur.toFixed(2)} € /
+                          {isSq ? ' muaj' : ' mo'}
                         </p>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-[10px] text-muted-foreground/70">
                           {isSq
-                            ? 'Pagesë një herë · pa abonim'
-                            : 'One-time payment · no subscription'}
+                            ? 'Pa abonim automatik'
+                            : 'One-time payment'}
                         </p>
-                        {isBestValue && (
-                          <p className="text-[11px] text-emerald-400">
-                            {isSq ? 'Zgjedhja më e shpeshtë' : 'Most popular choice'}
-                          </p>
-                        )}
                       </CardContent>
 
-                      <CardFooter className="pt-2 flex flex-col gap-2">
-                        <Button
-                          type="button"
-                          disabled={isProcessing || isAdmin || isCurrentActivePlan}
-                          className="w-full"
-                        >
-                          {isAdmin
-                            ? isSq
-                              ? 'Pamje si admin'
-                              : 'Admin preview'
-                            : isCurrentActivePlan
-                            ? isSq
-                              ? 'Plani aktual'
-                              : 'Current plan'
-                            : isProcessing && isSelected
-                            ? isSq
-                              ? 'Duke u përpunuar...'
-                              : 'Processing...'
-                            : isSelected
-                            ? isSq
-                              ? 'I zgjedhur'
-                              : 'Selected'
-                            : isSq
-                            ? 'Zgjidh planin'
-                            : 'Choose plan'}
-                        </Button>
-                        {isCurrentActivePlan && currentCategoryPlan?.end_date && (
-                          <p className="mt-1 text-[11px] text-emerald-400 text-center">
-                            Active until{' '}
-                            {new Date(currentCategoryPlan.end_date).toLocaleDateString()}
-                          </p>
-                        )}
+                      <CardFooter className="pt-2">
+                        <div className={`w-full py-1.5 text-[10px] font-medium text-center rounded border ${isSelected ? 'bg-primary text-black border-primary' : 'bg-transparent border-border text-muted-foreground'}`}>
+                             {isSelected ? (isSq ? 'E ZGJEDHUR' : 'SELECTED') : (isSq ? 'Zgjidh' : 'Select')}
+                        </div>
                       </CardFooter>
                     </Card>
                   );
@@ -516,43 +480,37 @@ export default function PricingPage() {
               </div>
 
               {/* Summary + final CTA */}
-              <GlassCard className="border border-border/80 bg-gradient-to-r from-black via-zinc-950 to-black px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <GlassCard className={`border border-border/80 bg-gradient-to-r from-black via-zinc-950 to-black px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-500 ${selectedCategory && selectedPlan ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-4 pointer-events-none'}`}>
                 <div className="space-y-1 text-xs md:text-sm">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full border border-primary/40 bg-primary/10 px-2 py-[3px] text-[11px] text-primary flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" />
-                      {isSq ? 'Përmbledhje' : 'Summary'}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {CATEGORY_INFO[selectedCategory].name} · {selectedPlanData.label}
-                    </span>
-                  </div>
-                  <p className="text-muted-foreground">
-                    {isSq ? 'Ju paguani ' : 'You pay '}
-                    <span className="font-semibold text-foreground">
-                      {selectedPlanData.priceEur} €
-                    </span>{' '}
-                    {isSq ? 'një herë për ' : 'one time for '}
-                    <span className="font-semibold text-foreground">
-                      {selectedPlanData.months === 1
-                        ? isSq
-                          ? '1 muaj'
-                          : '1 month'
-                        : isSq
-                        ? `${selectedPlanData.months} muaj`
-                        : `${selectedPlanData.months} months`}
-                    </span>{' '}
-                    {isSq
-                      ? 'të qasjes së plotë në këtë kategori.'
-                      : 'of full access in this category.'}
-                  </p>
+                  {selectedCategory && selectedPlanData && (
+                    <>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="rounded-full border border-primary/40 bg-primary/10 px-2 py-[3px] text-[11px] text-primary flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" />
+                            {isSq ? 'Përmbledhje' : 'Summary'}
+                            </span>
+                            <span className="text-foreground font-medium">
+                            {CATEGORY_INFO[selectedCategory].name} <span className="text-muted-foreground">+</span> {selectedPlanData.label}
+                            </span>
+                        </div>
+                        <p className="text-muted-foreground text-xs">
+                            {isSq ? 'Total: ' : 'Total: '}
+                            <span className="font-semibold text-foreground">
+                            {selectedPlanData.priceEur} €
+                            </span>
+                        </p>
+                    </>
+                  )}
+                  {(!selectedCategory || !selectedPlanData) && (
+                       <p className="text-muted-foreground italic">{isSq ? 'Zgjidhni kategorinë dhe planin për të vazhduar' : 'Select a category and plan to continue'}</p>
+                  )}
                 </div>
 
                 <div className="flex flex-col items-end gap-1">
                   <Button
                     type="button"
                     onClick={handlePurchase}
-                    disabled={isProcessing || isAdmin || currentCategoryPlanActive}
+                    disabled={!selectedCategory || !selectedPlan || isProcessing || isAdmin || currentCategoryPlanActive}
                     className="min-w-[220px]"
                   >
                     {isAdmin
@@ -567,23 +525,14 @@ export default function PricingPage() {
                       ? isSq
                         ? 'Plani tashmë është aktiv'
                         : 'Plan already active'
+                      : !selectedCategory || !selectedPlan
+                      ? isSq
+                         ? 'Zgjidh opsionet...'
+                         : 'Select options...'
                       : isSq
                       ? 'Vazhdo te pagesa'
                       : 'Continue to payment'}
                   </Button>
-                  {currentCategoryPlanActive && currentCategoryPlan && (
-                    <p className="text-[11px] text-muted-foreground text-right max-w-xs">
-                      {isSq
-                        ? 'Tashmë keni një plan aktiv '
-                        : 'You already have an active '}
-                      {currentCategoryPlan.plan_tier}{' '}
-                      {isSq ? 'për ' : 'plan for '}
-                      {CATEGORY_INFO[selectedCategory].name}.{' '}
-                      {isSq
-                        ? 'Mund të blini përsëri për këtë kategori pasi të skadojë.'
-                        : 'You can buy again for this category after it expires.'}
-                    </p>
-                  )}
                 </div>
               </GlassCard>
             </div>

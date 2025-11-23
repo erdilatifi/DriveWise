@@ -389,7 +389,7 @@ export default function DecisionTrainerPage() {
     }
   };
 
-  if (authLoading || !user) {
+  if (authLoading || !user || premiumLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -402,7 +402,7 @@ export default function DecisionTrainerPage() {
     );
   }
 
-  if (!isAdmin && !premiumLoading && !hasAnyActivePlan) {
+  if (!isAdmin && !hasAnyActivePlan) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />

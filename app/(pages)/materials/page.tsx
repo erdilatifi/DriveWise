@@ -177,7 +177,7 @@ export default function MaterialsPage() {
 
   const chapterSections = Array.isArray(chapter?.sections) ? chapter!.sections : [];
 
-  if (isLoading) {
+  if (isLoading || premiumLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />

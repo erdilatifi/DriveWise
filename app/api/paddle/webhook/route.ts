@@ -59,36 +59,31 @@ export async function POST(req: NextRequest) {
 
     // 4. Handle Events
     if (eventType === 'transaction.completed') {
-      console.log('📝 Processing transaction.completed');
+      console.log('📝 Processing transaction completed');
       const data = event.data;
       
       // Extract Email & Custom Data
       // Note: In Paddle Billing, customer info is in 'customer' object if expanded, 
       // OR we rely on the email passed in custom_data/guest_email if available.
-      // Usually HSC transaction events have: data.customer.email (if customer exists) or data.details.line_items...
       // For guest checkout, check data.custom_data first for identifying info, or data.customer.
       
-      // For HSC with guest_email, Paddle creates a customer.
-      const customerEmail = data.customer?.email || data.custom_data?.guest_email;
-      const category = data.custom_data?.category;
+      const customData = data.custom_data || {};
+      const customerEmail = data.customer?.email || customData.guest_email;
+      const category = customData.category;
+      const userIdFromCustomData = customData.user_id;
 
-      if (!customerEmail) {
-        console.error('❌ No customer email found in transaction');
+      if (!userIdFromCustomData && !customerEmail) {
+        console.error('❌ No user identifier (user_id or email) found in transaction');
         return NextResponse.json({ received: true }); // Return 200 to stop retries if unfixable
       }
 
       if (!category) {
         console.error('❌ No category found in custom_data');
-        // Fallback or manual handling needed. 
         return NextResponse.json({ received: true });
       }
 
       // Determine Plan Tier based on amount
-      // data.details.totals.grand_total is string, usually in minor units (cents) if currency is EUR? 
-      // Wait, Paddle API v1 was strings. Billing API (v2) uses strings representing minor units?
-      // Actually, let's check data.items[0].price.unit_price.amount (string).
-      // 3.00 EUR -> "300"
-      
+      // data.details.totals.grand_total is string, usually in minor units (cents)
       let planTier: PaidPlanTier | null = null;
       const amountStr = data.details?.totals?.grand_total || '0';
       const amount = parseInt(amountStr, 10);
@@ -102,30 +97,42 @@ export async function POST(req: NextRequest) {
         planTier = 'PLAN_C'; // 3 Months
       } else {
         console.warn('⚠️ Unknown amount:', amount, 'Defaulting to PLAN_A or checking logic');
-        // You might want to log this critical error.
-        // For now, if unknown, we can't proceed safely.
+        // We should probably fail here or default to A? 
+        // Let's log error and return 200 to avoid endless retries for invalid amounts
         console.error('❌ Could not map amount to Plan Tier');
         return NextResponse.json({ received: true });
       }
 
-      console.log(`✅ Identified Plan: ${planTier} for User: ${customerEmail}, Category: ${category}`);
+      console.log(`✅ Identified Plan: ${planTier} for Category: ${category}`);
 
       // 5. Activate Plan in Database
       const supabase = createAdminClient();
       
-      // Find User ID
-      const { data: userProfile, error: userError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('email', customerEmail)
-        .single();
+      let userId = userIdFromCustomData;
 
-      if (userError || !userProfile) {
-        console.error('❌ User not found for email:', customerEmail);
-        return NextResponse.json({ received: true });
+      // If we don't have userId directly, look up by email
+      if (!userId && customerEmail) {
+        console.log(`🔍 Looking up user by email: ${customerEmail}`);
+        const { data: userProfile, error: userError } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('email', customerEmail)
+          .single();
+
+        if (userError || !userProfile) {
+          console.error('❌ User not found for email:', customerEmail);
+          return NextResponse.json({ received: true });
+        }
+        userId = userProfile.id;
+      }
+      
+      if (!userId) {
+         console.error('❌ Could not resolve a valid User ID');
+         return NextResponse.json({ received: true });
       }
 
-      const userId = userProfile.id;
+      console.log(`👤 Activating plan for User ID: ${userId}`);
+
       const planDef = BILLING_CONFIG.plans[planTier];
       
       // Calculate Dates
