@@ -15,7 +15,7 @@ import { useRateLimit } from '@/hooks/use-rate-limit';
 
 export default function RegisterPage() {
   const { t } = useLanguage();
-  const { signUp } = useAuth();
+  const { signUp, user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { checkLimit } = useRateLimit({ maxRequests: 3, windowMs: 60000 }); // Stricter limit for registration
   const [fullName, setFullName] = useState('');
@@ -26,6 +26,21 @@ export default function RegisterPage() {
   type Status = 'idle' | 'loading' | 'success' | 'error';
   const [status, setStatus] = useState<Status>('idle');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (user) {
+      router.replace('/dashboard');
+    }
+  }, [user, authLoading, router]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();

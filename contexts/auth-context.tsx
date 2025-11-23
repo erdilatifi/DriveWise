@@ -329,29 +329,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsBlocked(false);
     setIsAdmin(false);
     setIsInstructor(false);
-    queryClient.clear();
+    queryClient.clear(); // Clear all cached data
 
     try {
       await supabase.auth.signOut();
     } catch (error) {
       console.error('Error during Supabase signOut:', error);
-      try {
-        await supabase.auth.signOut({ scope: 'local' });
-      } catch (innerError) {
-        console.error('Error clearing local Supabase session:', innerError);
-      }
     } finally {
-      try {
-        router.refresh();
-      } catch (err) {
-        console.error('Error refreshing router after signOut:', err);
-      }
-
-      try {
-        router.push('/');
-      } catch (err) {
-        console.error('Error redirecting after signOut:', err);
-      }
+      router.refresh();
+      router.replace('/login');
     }
   }, [supabase, router, queryClient]);
 
