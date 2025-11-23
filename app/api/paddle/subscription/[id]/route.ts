@@ -65,3 +65,39 @@ export async function POST(
 
   return NextResponse.json({ success: true, data: result.data });
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Only allow removing if it matches the user's current subscription_id
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('subscription_id')
+    .eq('id', user.id)
+    .single();
+
+  if (profile?.subscription_id !== id) {
+     return NextResponse.json({ error: 'Subscription ID mismatch' }, { status: 400 });
+  }
+
+  // Update to null
+  const { error } = await supabase
+    .from('user_profiles')
+    .update({ subscription_id: null })
+    .eq('id', user.id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}

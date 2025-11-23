@@ -32,8 +32,14 @@ export function SubscriptionManagement({ subscriptionId, category }: Subscriptio
         const data = await res.json();
         setSubscription(data.subscription);
       } catch (err) {
-        console.error(err);
-        setError('Could not load subscription details');
+        const message = err instanceof Error ? err.message : 'Could not load subscription details';
+        
+        // Only log unexpected errors. 404 'Subscription not found' is expected in some cases.
+        if (message !== 'Subscription not found') {
+          console.error(err);
+        }
+        
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -41,6 +47,21 @@ export function SubscriptionManagement({ subscriptionId, category }: Subscriptio
 
     fetchSubscription();
   }, [subscriptionId]);
+
+  const handleUnlink = async () => {
+    if (!confirm('Remove this invalid subscription reference from your account?')) return;
+    
+    try {
+      const res = await fetch(`/api/paddle/subscription/${subscriptionId}`, { method: 'DELETE' });
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        toast.error('Failed to remove subscription reference');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   if (loading) {
     return (
@@ -51,6 +72,26 @@ export function SubscriptionManagement({ subscriptionId, category }: Subscriptio
   }
 
   if (error || !subscription) {
+    // If 404/not found, show a milder message or nothing
+    if (error === 'Subscription not found') {
+        return (
+            <div className="p-4 text-sm text-muted-foreground bg-zinc-900/50 rounded-lg border border-zinc-800 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>Subscription ended or not found.</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleUnlink}
+                  className="h-7 px-2 text-xs hover:bg-white/5 text-muted-foreground hover:text-foreground"
+                >
+                  Remove
+                </Button>
+            </div>
+        );
+    }
+
     return (
       <div className="p-4 text-sm text-red-400 bg-red-500/10 rounded-lg border border-red-500/20 flex items-center gap-2">
         <AlertCircle className="h-4 w-4" />

@@ -350,104 +350,109 @@ export default function ProfilePage() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="space-y-3 flex-1 overflow-y-auto pr-2 -mr-2">
-                      {paidPlans.map((plan) => {
-                        const category = (plan.category as LicenseCategory) || 'B';
-                        const info = CATEGORY_INFO[category];
-                        const startDate = plan.start_date ? new Date(plan.start_date) : null;
-                        const endDate = plan.end_date ? new Date(plan.end_date) : null;
-                        const now = new Date();
+                    <div className="flex flex-col h-full">
+                      <div className="space-y-3 flex-1 overflow-y-auto pr-2 -mr-2 mb-3">
+                        {paidPlans.map((plan) => {
+                          const category = (plan.category as LicenseCategory) || 'B';
+                          const info = CATEGORY_INFO[category];
+                          const startDate = plan.start_date ? new Date(plan.start_date) : null;
+                          const endDate = plan.end_date ? new Date(plan.end_date) : null;
+                          const now = new Date();
 
-                        let progressPct = 0;
-                        let remainingDays: number | null = null;
-                        if (startDate && endDate) {
-                          const totalMs = endDate.getTime() - startDate.getTime();
-                          const usedMs = Math.min(Math.max(now.getTime() - startDate.getTime(), 0), Math.max(totalMs, 0));
-                          progressPct = totalMs > 0 ? Math.min(100, Math.max(0, (usedMs / totalMs) * 100)) : 100;
-                          const diffDays = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                          remainingDays = diffDays > 0 ? diffDays : 0;
-                        }
+                          let progressPct = 0;
+                          let remainingDays: number | null = null;
+                          if (startDate && endDate) {
+                            const totalMs = endDate.getTime() - startDate.getTime();
+                            const usedMs = Math.min(Math.max(now.getTime() - startDate.getTime(), 0), Math.max(totalMs, 0));
+                            progressPct = totalMs > 0 ? Math.min(100, Math.max(0, (usedMs / totalMs) * 100)) : 100;
+                            const diffDays = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                            remainingDays = diffDays > 0 ? diffDays : 0;
+                          }
 
-                        const isActive = plan.status === 'active' && endDate && endDate.getTime() >= now.getTime();
-                        const planTier = plan.plan_tier as PaidPlanTier;
-                        const planDef = BILLING_CONFIG.plans[planTier] || null;
+                          const isActive = plan.status === 'active' && endDate && endDate.getTime() >= now.getTime();
+                          const planTier = plan.plan_tier as PaidPlanTier;
+                          const planDef = BILLING_CONFIG.plans[planTier] || null;
 
-                        return (
-                          <div
-                            key={plan.id}
-                            className="rounded-xl border border-white/10 bg-white/5 p-4 flex flex-col gap-3 hover:border-orange-500/30 transition-colors flex-shrink-0"
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
-                                  <span className="font-bold text-orange-400">{category}</span>
+                          return (
+                            <div
+                              key={plan.id}
+                              className="rounded-xl border border-white/10 bg-white/5 p-4 flex flex-col gap-3 hover:border-orange-500/30 transition-colors flex-shrink-0"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
+                                    <span className="font-bold text-orange-400">{category}</span>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold">{info?.name || category}</p>
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                                      {planDef?.label || plan.plan_tier}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="text-sm font-semibold">{info?.name || category}</p>
-                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                                    {planDef?.label || plan.plan_tier}
-                                  </p>
-                                </div>
+                                {isActive && (
+                                  <span className="flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                )}
                               </div>
-                              {isActive && (
-                                <span className="flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+
+                              {startDate && endDate && (
+                                <div className="space-y-1.5">
+                                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                                    <span>{isSq ? 'Progresi' : 'Usage'}</span>
+                                    <span>{remainingDays} {isSq ? 'ditë mbetura' : 'days left'}</span>
+                                  </div>
+                                  <div className="w-full bg-black/40 rounded-full h-1.5 overflow-hidden border border-white/5">
+                                    <div
+                                      className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-500 transition-all"
+                                      style={{ width: `${progressPct}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                              {!isAdmin && isActive && remainingDays !== null && remainingDays <= 7 && (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="w-full h-7 text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                                  asChild
+                                >
+                                  <Link href={`/pricing?category=${category}`}>
+                                    {isSq ? 'Rinovoni tani' : 'Renew now'}
+                                  </Link>
+                                </Button>
                               )}
                             </div>
-
-                            {startDate && endDate && (
-                              <div className="space-y-1.5">
-                                <div className="flex justify-between text-[10px] text-muted-foreground">
-                                  <span>{isSq ? 'Progresi' : 'Usage'}</span>
-                                  <span>{remainingDays} {isSq ? 'ditë mbetura' : 'days left'}</span>
-                                </div>
-                                <div className="w-full bg-black/40 rounded-full h-1.5 overflow-hidden border border-white/5">
-                                  <div
-                                    className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-500 transition-all"
-                                    style={{ width: `${progressPct}%` }}
-                                  />
-                                </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {/* One-time payment notice integrated here */}
+                      {!userProfile?.subscription_id && hasAnyActivePlan && !isAdmin && (
+                        <div className="mt-auto pt-3 border-t border-white/10">
+                           <div className="flex items-center gap-3 rounded-lg bg-emerald-500/5 p-2.5 border border-emerald-500/10">
+                              <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                                <Check className="w-3 h-3 text-emerald-500" />
                               </div>
-                            )}
-
-                            {!isAdmin && isActive && remainingDays !== null && remainingDays <= 7 && (
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="w-full h-7 text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
-                                asChild
-                              >
-                                <Link href={`/pricing?category=${category}`}>
-                                  {isSq ? 'Rinovoni tani' : 'Renew now'}
-                                </Link>
-                              </Button>
-                            )}
-                          </div>
-                        );
-                      })}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[11px] font-medium text-emerald-100 leading-tight">
+                                  {isSq ? 'Nuk ka abonim automatik' : 'No active subscription'}
+                                </p>
+                                <p className="text-[10px] text-muted-foreground truncate">
+                                  {isSq ? 'Pagesë e njëhershme.' : 'One-time payment only.'}
+                                </p>
+                              </div>
+                           </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </GlassCard>
                 
-                {/* Paddle Subscription Management */}
-                {userProfile?.subscription_id ? (
+                {/* Paddle Subscription Management - Only if ID exists */}
+                {userProfile?.subscription_id && (
                   <SubscriptionManagement subscriptionId={userProfile.subscription_id} />
-                ) : hasAnyActivePlan && !isAdmin ? (
-                   <GlassCard className="p-6 border border-border/80 bg-black/80 flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0">
-                        <Check className="w-5 h-5 text-emerald-500" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium">
-                          {isSq ? 'Nuk ka abonim automatik' : 'No active subscription'}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {isSq 
-                            ? 'Planet tuaja janë me pagesë të njëhershme. Nuk do të tarifoheni sërish.' 
-                            : 'Your plans are one-time payments. You will not be charged again automatically.'}
-                        </p>
-                      </div>
-                   </GlassCard>
-                ) : null}
+                )}
               </div>
             </div>
 
