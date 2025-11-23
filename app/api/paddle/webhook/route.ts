@@ -6,8 +6,21 @@ import { BILLING_CONFIG, type PaidPlanTier } from '@/lib/subscriptions';
 // Force dynamic to allow reading request body
 export const dynamic = 'force-dynamic';
 
+export async function GET(req: NextRequest) {
+  return NextResponse.json({
+    status: 'online',
+    env_check: {
+      PADDLE_WEBHOOK_SECRET: !!process.env.PADDLE_WEBHOOK_SECRET,
+      NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+    }
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
+    console.log('🔔 Webhook received at', new Date().toISOString());
+    
     // 1. Read raw body and signature
     const signature = req.headers.get('paddle-signature');
     const rawBody = await req.text();
