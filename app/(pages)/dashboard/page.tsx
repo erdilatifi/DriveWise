@@ -73,6 +73,14 @@ export default function DashboardPage() {
   const progressData = dashboardData?.progressData || [];
   const recentTests = dashboardData?.recentTests || [];
 
+  const pieData = useMemo(() => {
+    if (stats.totalTests === 0) return [{ name: 'Empty', value: 1, color: '#27272a' }];
+    return [
+      { name: t('dashboard.passed'), value: stats.passedTests, color: '#10b981' },
+      { name: t('dashboard.failed'), value: stats.failedTests, color: '#ef4444' },
+    ];
+  }, [stats, t]);
+
   const userFullName = userProfile?.full_name;
 
   // real trainer activity (used only when user actually has scenarios/xp/etc)
@@ -816,18 +824,16 @@ export default function DashboardPage() {
                       </Button>
                       <Button
                         asChild
-                        className="h-12 justify-between bg-orange-600 hover:bg-orange-500 text-white border-none shadow-lg shadow-orange-500/20"
+                        className="h-12 justify-between bg-white/5 hover:bg-white/10 border border-white/10 text-foreground"
                       >
                         <Link href="/category">
                           <span className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white">
+                            <span className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-400">
                               3
                             </span>
                             Category
                           </span>
-                          <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center">
-                            <ArrowRight className="w-3 h-3" />
-                          </div>
+                          <ArrowRight className="w-4 h-4 opacity-50" />
                         </Link>
                       </Button>
                     </div>
@@ -855,22 +861,7 @@ export default function DashboardPage() {
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
-                            data={
-                              stats.totalTests > 0
-                                ? [
-                                    {
-                                      name: t('dashboard.passed'),
-                                      value: stats.passedTests,
-                                      color: '#10b981',
-                                    },
-                                    {
-                                      name: t('dashboard.failed'),
-                                      value: stats.failedTests,
-                                      color: '#ef4444',
-                                    },
-                                  ]
-                                : [{ name: 'Empty', value: 1, color: '#27272a' }]
-                            }
+                            data={pieData}
                             cx="50%"
                             cy="50%"
                             innerRadius={60}
@@ -879,18 +870,18 @@ export default function DashboardPage() {
                             dataKey="value"
                             stroke="none"
                           >
-                            {stats.totalTests > 0 ? (
-                              <>
-                                <Cell fill="#10b981" />
-                                <Cell fill="#ef4444" />
-                              </>
-                            ) : (
+                            {pieData.map((entry, index) => (
                               <Cell
-                                fill="#27272a"
-                                stroke="rgba(255,255,255,0.05)"
-                                strokeWidth={1}
+                                key={`cell-${index}`}
+                                fill={entry.color}
+                                stroke={
+                                  entry.color === '#27272a'
+                                    ? 'rgba(255,255,255,0.05)'
+                                    : 'none'
+                                }
+                                strokeWidth={entry.color === '#27272a' ? 1 : 0}
                               />
-                            )}
+                            ))}
                           </Pie>
                           {stats.totalTests > 0 && (
                             <Tooltip

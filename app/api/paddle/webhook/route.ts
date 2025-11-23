@@ -135,14 +135,14 @@ export async function POST(req: NextRequest) {
       let planTier: PaidPlanTier | null = null;
       
       // Heuristic mapping - Update this if prices change!
-      // 3.00 EUR -> 300 cents -> PLAN_A
-      // 5.00 EUR -> 500 cents -> PLAN_B
-      // 8.00 EUR -> 800 cents -> PLAN_C
-      if (amountCents >= 290 && amountCents <= 310) {
+      // 3.00 EUR -> 300 cents -> PLAN_A (Range: 250-400)
+      // 5.00 EUR -> 500 cents -> PLAN_B (Range: 450-650)
+      // 8.00 EUR -> 800 cents -> PLAN_C (Range: 750-950)
+      if (amountCents >= 250 && amountCents <= 400) {
         planTier = 'PLAN_A'; 
-      } else if (amountCents >= 490 && amountCents <= 510) {
+      } else if (amountCents >= 450 && amountCents <= 650) {
         planTier = 'PLAN_B'; 
-      } else if (amountCents >= 790 && amountCents <= 810) {
+      } else if (amountCents >= 750 && amountCents <= 950) {
         planTier = 'PLAN_C'; 
       } else {
         console.warn('⚠️ Unknown amount:', amountCents, 'Defaulting to PLAN_A');

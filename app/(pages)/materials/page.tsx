@@ -8,7 +8,7 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { BookOpen, Search, ChevronRight, AlertCircle, Lock } from 'lucide-react';
+import { BookOpen, Search, ChevronRight, AlertCircle, Lock, Check } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { useMaterials, type Material } from '@/hooks/use-materials';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,8 +16,11 @@ import { useAuth } from '@/contexts/auth-context';
 import { useGlobalPremium, useUserPlans } from '@/hooks/use-subscriptions';
 import type { LicenseCategory } from '@/types/database';
 import { isPlanCurrentlyActive } from '@/lib/subscriptions';
+import { toast } from 'sonner';
 
 type SectionKey = number;
+
+const ALL_CATEGORIES: LicenseCategory[] = ['A', 'B', 'C', 'D'];
 
 const SECTION_ORDER: SectionKey[] = [
   1,
@@ -55,11 +58,20 @@ export default function MaterialsPage() {
       .map((plan) => plan.category as LicenseCategory);
   }, [userPlans, isAdmin]);
 
-  const primaryCategory = !isAdmin ? allowedCategories[0] : undefined;
+  const [selectedCategory, setSelectedCategory] = useState<LicenseCategory | undefined>(undefined);
+
+  // Prompt user to select category if none selected
+  useEffect(() => {
+    if (!selectedCategory && !isLoading) {
+      toast.info(isSq ? 'Ju lutem zgjidhni një kategori' : 'Please select a category to view materials', {
+        duration: 4000,
+      });
+    }
+  }, [selectedCategory, isLoading, isSq]);
 
   const { data, isLoading, error } = useMaterials({
     pageSize: 50,
-    category: primaryCategory,
+    category: selectedCategory,
   });
   const materials = (data?.materials ?? []) as Material[];
   const { hasAnyActivePlan, isLoading: premiumLoading } = useGlobalPremium(user?.id, isAdmin);
@@ -315,9 +327,25 @@ export default function MaterialsPage() {
         <div className="pt-32">
           <div className="container mx-auto px-4 py-10 max-w-3xl">
             <GlassCard className="p-8 text-center bg-black/80">
-              <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <h1 className="text-xl font-bold mb-2">{t('materials.emptyTitle')}</h1>
-              <p className="text-sm text-muted-foreground">{t('materials.emptySubtitle')}</p>
+              {!selectedCategory ? (
+                <>
+                  <BookOpen className="w-12 h-12 text-orange-400 mx-auto mb-4" />
+                  <h1 className="text-xl font-bold mb-2">
+                    {isSq ? 'Zgjidhni një kategori' : 'Select a category'}
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    {isSq 
+                      ? 'Përdorni butonat në të majtë për të zgjedhur materialet.' 
+                      : 'Use the buttons on the left to select materials.'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                  <h1 className="text-xl font-bold mb-2">{t('materials.emptyTitle')}</h1>
+                  <p className="text-sm text-muted-foreground">{t('materials.emptySubtitle')}</p>
+                </>
+              )}
             </GlassCard>
           </div>
         </div>
@@ -356,21 +384,65 @@ export default function MaterialsPage() {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar */}
             <aside className="w-full lg:w-80 space-y-6">
-              <GlassCard className="p-5 flex items-center gap-4 border border-border/80 bg-black/75 sticky top-32">
-                <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center shadow-inner border border-orange-500/20">
-                  <BookOpen className="w-6 h-6 text-orange-400" />
+              <GlassCard className="p-5 flex flex-col gap-4 border border-border/80 bg-black/75 sticky top-32">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center shadow-inner border border-orange-500/20">
+                    <BookOpen className="w-6 h-6 text-orange-400" />
+                  </div>
+                  <div className="space-y-1">
+                    <h1 className="text-lg font-semibold tracking-tight">
+                      {t('materials.title')}
+                    </h1>
+                    <p className="text-xs text-muted-foreground leading-tight">
+                      {isSq ? 'Lexo teorinë për të mësuar' : 'Read theory to improve'}
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <h1 className="text-lg font-semibold tracking-tight">
-                    {t('materials.title')}
-                  </h1>
-                  <p className="text-xs text-muted-foreground leading-tight">
-                    {isSq ? 'Lexo teorinë për të mësuar' : 'Read theory to improve'}
+
+                {/* Category Selector */}
+                <div className="pt-4 border-t border-white/10">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">
+                    {isSq ? 'Zgjidh Kategorinë' : 'Select Category'}
                   </p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {ALL_CATEGORIES.map((cat) => {
+                      const isAllowed = allowedCategories.includes(cat);
+                      const isSelected = selectedCategory === cat;
+                      
+                      return (
+                        <button
+                          key={cat}
+                          onClick={() => {
+                            if (isAllowed) {
+                              setSelectedCategory(cat);
+                              setSelectedSection(SECTION_ORDER[0]); // Reset section
+                            } else {
+                              toast.error(isSq ? 'Nuk keni qasje në këtë kategori' : 'No access to this category', {
+                                description: isSq ? 'Ju lutem blini një plan për të parë materialet.' : 'Please purchase a plan to view materials.'
+                              });
+                            }
+                          }}
+                          className={`
+                            relative h-10 rounded-lg text-sm font-bold transition-all flex items-center justify-center
+                            ${isSelected 
+                              ? 'bg-orange-500 text-black shadow-[0_0_10px_rgba(249,115,22,0.4)]' 
+                              : isAllowed 
+                                ? 'bg-white/10 text-foreground hover:bg-white/20 border border-white/10' 
+                                : 'bg-black/40 text-muted-foreground/40 border border-white/5 cursor-not-allowed'}
+                          `}
+                        >
+                          {cat}
+                          {!isAllowed && (
+                            <Lock className="w-3 h-3 absolute top-1 right-1 opacity-50" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </GlassCard>
 
-              <div className="lg:sticky lg:top-56 space-y-4">
+              <div className="lg:sticky lg:top-[22rem] space-y-4">
                 <GlassCard className="p-3 border border-border/80 bg-black/75">
                   <div className="relative">
                     <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
