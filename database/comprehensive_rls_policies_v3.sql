@@ -1,8 +1,9 @@
 -- ===================================================================
--- DRIVEWISE - COMPREHENSIVE ROW LEVEL SECURITY POLICIES
+-- DRIVEWISE - COMPREHENSIVE ROW LEVEL SECURITY POLICIES (V3)
 -- ===================================================================
 -- This file contains complete RLS policies for all tables and storage buckets
 -- Run this AFTER the main database setup to secure your application
+-- This replaces previous RLS scripts and includes security fixes + optimizations.
 -- ===================================================================
 
 -- ===================================================================
@@ -20,6 +21,9 @@ ALTER TABLE decision_trainer_scenarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE decision_trainer_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE decision_trainer_attempts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE decision_trainer_badges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payment_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_plans ENABLE ROW LEVEL SECURITY;
 
 -- ===================================================================
 -- STEP 2: Drop ALL existing policies (clean slate)
@@ -99,42 +103,65 @@ DROP POLICY IF EXISTS "Admins can manage badges" ON decision_trainer_badges;
 -- Audit log policies
 DROP POLICY IF EXISTS "Admins can view audit logs" ON audit_log;
 
+-- Orders & Payments policies
+DROP POLICY IF EXISTS "Users can view own orders" ON orders;
+DROP POLICY IF EXISTS "Users can insert own orders" ON orders;
+DROP POLICY IF EXISTS "Admins can view all orders" ON orders;
+DROP POLICY IF EXISTS "Admins can manage all orders" ON orders;
+DROP POLICY IF EXISTS "Users can view own transactions" ON payment_transactions;
+DROP POLICY IF EXISTS "Admins can view all transactions" ON payment_transactions;
+DROP POLICY IF EXISTS "Admins can manage all transactions" ON payment_transactions;
+
+-- User Plans policies
+DROP POLICY IF EXISTS "Users can view own plans" ON user_plans;
+DROP POLICY IF EXISTS "Users can insert own plans" ON user_plans;
+DROP POLICY IF EXISTS "Users can update own plans" ON user_plans;
+
 -- ===================================================================
--- STEP 3: Create helper functions for RLS
+-- STEP 3: Create helper functions for RLS (SECURED)
 -- ===================================================================
 
 -- Function to check if current user is admin
 CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN 
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM user_profiles 
     WHERE id = auth.uid() AND is_admin = true
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Function to check if current user is instructor
 CREATE OR REPLACE FUNCTION public.is_instructor()
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN 
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM user_profiles 
     WHERE id = auth.uid() AND is_instructor = true
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Function to check if current user is blocked
 CREATE OR REPLACE FUNCTION public.is_blocked()
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN 
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM user_profiles 
     WHERE id = auth.uid() AND is_blocked = true
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- ===================================================================
 -- STEP 4: USER PROFILES - Core user management
@@ -143,34 +170,34 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Users can view their own profile
 CREATE POLICY "Users can view own profile"
   ON user_profiles FOR SELECT
-  USING (auth.uid() = id);
+  USING ((select auth.uid()) = id);
 
 -- Users can update their own profile (except admin/instructor flags)
 CREATE POLICY "Users can update own profile"
   ON user_profiles FOR UPDATE
-  USING (auth.uid() = id)
+  USING ((select auth.uid()) = id)
   WITH CHECK (
-    auth.uid() = id AND
+    (select auth.uid()) = id AND
     -- Prevent users from changing their admin/instructor status
-    (is_admin = (SELECT is_admin FROM user_profiles WHERE id = auth.uid())) AND
-    (is_instructor = (SELECT is_instructor FROM user_profiles WHERE id = auth.uid())) AND
-    (is_blocked = (SELECT is_blocked FROM user_profiles WHERE id = auth.uid()))
+    (is_admin = (SELECT is_admin FROM user_profiles WHERE id = (select auth.uid()))) AND
+    (is_instructor = (SELECT is_instructor FROM user_profiles WHERE id = (select auth.uid()))) AND
+    (is_blocked = (SELECT is_blocked FROM user_profiles WHERE id = (select auth.uid())))
   );
 
 -- Admins can view all profiles
 CREATE POLICY "Admins can view all profiles"
   ON user_profiles FOR SELECT
-  USING (public.is_admin());
+  USING ((select public.is_admin()));
 
 -- Admins can manage all profiles (including admin/instructor flags)
 CREATE POLICY "Admins can manage all profiles"
   ON user_profiles FOR ALL
-  USING (public.is_admin());
+  USING ((select public.is_admin()));
 
 -- Allow profile creation during signup (handled by trigger)
 CREATE POLICY "Public can insert profiles"
   ON user_profiles FOR INSERT
-  WITH CHECK (auth.uid() = id);
+  WITH CHECK ((select auth.uid()) = id);
 
 -- ===================================================================
 -- STEP 5: ADMIN QUESTIONS - Theory test questions
@@ -180,12 +207,12 @@ CREATE POLICY "Public can insert profiles"
 CREATE POLICY "Authenticated users can view questions"
   ON admin_questions FOR SELECT
   TO authenticated
-  USING (NOT public.is_blocked());
+  USING (NOT (select public.is_blocked()));
 
 -- Admins can manage all questions
 CREATE POLICY "Admins can manage questions"
   ON admin_questions FOR ALL
-  USING (public.is_admin());
+  USING ((select public.is_admin()));
 
 -- ===================================================================
 -- STEP 6: TEST ATTEMPTS - User test results
@@ -194,32 +221,32 @@ CREATE POLICY "Admins can manage questions"
 -- Users can view their own test attempts
 CREATE POLICY "Users can view own test attempts"
   ON test_attempts FOR SELECT
-  USING (auth.uid() = user_id AND NOT public.is_blocked());
+  USING ((select auth.uid()) = user_id AND NOT (select public.is_blocked()));
 
 -- Users can insert their own test attempts
 CREATE POLICY "Users can insert own test attempts"
   ON test_attempts FOR INSERT
-  WITH CHECK (auth.uid() = user_id AND NOT public.is_blocked());
+  WITH CHECK ((select auth.uid()) = user_id AND NOT (select public.is_blocked()));
 
 -- Users can update their own test attempts (for time tracking, etc.)
 CREATE POLICY "Users can update own test attempts"
   ON test_attempts FOR UPDATE
-  USING (auth.uid() = user_id AND NOT public.is_blocked());
+  USING ((select auth.uid()) = user_id AND NOT (select public.is_blocked()));
 
 -- Users can delete their own test attempts
 CREATE POLICY "Users can delete own test attempts"
   ON test_attempts FOR DELETE
-  USING (auth.uid() = user_id AND NOT public.is_blocked());
+  USING ((select auth.uid()) = user_id AND NOT (select public.is_blocked()));
 
 -- Admins can view all test attempts (for analytics)
 CREATE POLICY "Admins can view all test attempts"
   ON test_attempts FOR SELECT
-  USING (public.is_admin());
+  USING ((select public.is_admin()));
 
 -- Admins can delete any test attempt (for moderation)
 CREATE POLICY "Admins can delete any test attempt"
   ON test_attempts FOR DELETE
-  USING (public.is_admin());
+  USING ((select public.is_admin()));
 
 -- ===================================================================
 -- STEP 7: TEST ATTEMPT ANSWERS - Individual question answers
@@ -232,8 +259,8 @@ CREATE POLICY "Users can view own test answers"
     EXISTS (
       SELECT 1 FROM test_attempts 
       WHERE test_attempts.id = test_attempt_id 
-      AND test_attempts.user_id = auth.uid()
-    ) AND NOT public.is_blocked()
+      AND test_attempts.user_id = (select auth.uid())
+    ) AND NOT (select public.is_blocked())
   );
 
 -- Users can insert their own test answers
@@ -243,14 +270,14 @@ CREATE POLICY "Users can insert own test answers"
     EXISTS (
       SELECT 1 FROM test_attempts 
       WHERE test_attempts.id = test_attempt_id 
-      AND test_attempts.user_id = auth.uid()
-    ) AND NOT public.is_blocked()
+      AND test_attempts.user_id = (select auth.uid())
+    ) AND NOT (select public.is_blocked())
   );
 
 -- Admins can view all test answers
 CREATE POLICY "Admins can view all test answers"
   ON test_attempt_answers FOR SELECT
-  USING (public.is_admin());
+  USING ((select public.is_admin()));
 
 -- ===================================================================
 -- STEP 8: STUDENT INSTRUCTOR LINKS - Instructor system
@@ -259,27 +286,27 @@ CREATE POLICY "Admins can view all test answers"
 -- Students can view their own instructor links
 CREATE POLICY "Students can view own links"
   ON student_instructor_links FOR SELECT
-  USING (auth.uid() = student_id AND NOT public.is_blocked());
+  USING ((select auth.uid()) = student_id AND NOT (select public.is_blocked()));
 
 -- Instructors can view their student links
 CREATE POLICY "Instructors can view their students"
   ON student_instructor_links FOR SELECT
-  USING (auth.uid() = instructor_id AND public.is_instructor() AND NOT public.is_blocked());
+  USING ((select auth.uid()) = instructor_id AND (select public.is_instructor()) AND NOT (select public.is_blocked()));
 
 -- Instructors can create links to students
 CREATE POLICY "Instructors can create student links"
   ON student_instructor_links FOR INSERT
-  WITH CHECK (auth.uid() = instructor_id AND public.is_instructor() AND NOT public.is_blocked());
+  WITH CHECK ((select auth.uid()) = instructor_id AND (select public.is_instructor()) AND NOT (select public.is_blocked()));
 
 -- Instructors can remove their student links
 CREATE POLICY "Instructors can remove student links"
   ON student_instructor_links FOR DELETE
-  USING (auth.uid() = instructor_id AND public.is_instructor() AND NOT public.is_blocked());
+  USING ((select auth.uid()) = instructor_id AND (select public.is_instructor()) AND NOT (select public.is_blocked()));
 
 -- Admins can manage all instructor-student links
 CREATE POLICY "Admins can manage all links"
   ON student_instructor_links FOR ALL
-  USING (public.is_admin());
+  USING ((select public.is_admin()));
 
 -- ===================================================================
 -- STEP 9: STUDY MATERIALS - Learning resources
@@ -289,19 +316,19 @@ CREATE POLICY "Admins can manage all links"
 CREATE POLICY "Authenticated users can view published materials"
   ON study_materials FOR SELECT
   TO authenticated
-  USING (is_published = true AND NOT public.is_blocked());
+  USING (is_published = true AND NOT (select public.is_blocked()));
 
 -- Admins can manage all study materials
 CREATE POLICY "Admins can manage all materials"
   ON study_materials FOR ALL
-  USING (public.is_admin());
+  USING ((select public.is_admin()));
 
 -- All authenticated users can view images for published materials
 CREATE POLICY "Authenticated users can view material images"
   ON material_images FOR SELECT
   TO authenticated
   USING (
-    NOT public.is_blocked() AND
+    NOT (select public.is_blocked()) AND
     EXISTS (
       SELECT 1 FROM study_materials sm
       WHERE sm.id = material_id
@@ -312,7 +339,7 @@ CREATE POLICY "Authenticated users can view material images"
 -- Admins can manage all material images
 CREATE POLICY "Admins can manage material images"
   ON material_images FOR ALL
-  USING (public.is_admin());
+  USING ((select public.is_admin()));
 
 -- ===================================================================
 -- STEP 10: DECISION TRAINER SCENARIOS - Interactive scenarios
@@ -322,12 +349,12 @@ CREATE POLICY "Admins can manage material images"
 CREATE POLICY "Authenticated users can view active scenarios"
   ON decision_trainer_scenarios FOR SELECT
   TO authenticated
-  USING (is_active = true AND NOT public.is_blocked());
+  USING (is_active = true AND NOT (select public.is_blocked()));
 
 -- Admins can manage all scenarios
 CREATE POLICY "Admins can manage all scenarios"
   ON decision_trainer_scenarios FOR ALL
-  USING (public.is_admin());
+  USING ((select public.is_admin()));
 
 -- ===================================================================
 -- STEP 11: DECISION TRAINER PROGRESS - User progress tracking
@@ -336,22 +363,22 @@ CREATE POLICY "Admins can manage all scenarios"
 -- Users can view their own progress
 CREATE POLICY "Users can view own progress"
   ON decision_trainer_progress FOR SELECT
-  USING (auth.uid() = user_id AND NOT public.is_blocked());
+  USING ((select auth.uid()) = user_id AND NOT (select public.is_blocked()));
 
 -- Users can insert their own progress
 CREATE POLICY "Users can insert own progress"
   ON decision_trainer_progress FOR INSERT
-  WITH CHECK (auth.uid() = user_id AND NOT public.is_blocked());
+  WITH CHECK ((select auth.uid()) = user_id AND NOT (select public.is_blocked()));
 
 -- Users can update their own progress
 CREATE POLICY "Users can update own progress"
   ON decision_trainer_progress FOR UPDATE
-  USING (auth.uid() = user_id AND NOT public.is_blocked());
+  USING ((select auth.uid()) = user_id AND NOT (select public.is_blocked()));
 
 -- Admins can view all progress (for analytics)
 CREATE POLICY "Admins can view all progress"
   ON decision_trainer_progress FOR SELECT
-  USING (public.is_admin());
+  USING ((select public.is_admin()));
 
 -- ===================================================================
 -- STEP 12: DECISION TRAINER ATTEMPTS - Individual scenario attempts
@@ -360,17 +387,17 @@ CREATE POLICY "Admins can view all progress"
 -- Users can view their own attempts
 CREATE POLICY "Users can view own attempts"
   ON decision_trainer_attempts FOR SELECT
-  USING (auth.uid() = user_id AND NOT public.is_blocked());
+  USING ((select auth.uid()) = user_id AND NOT (select public.is_blocked()));
 
 -- Users can insert their own attempts
 CREATE POLICY "Users can insert own attempts"
   ON decision_trainer_attempts FOR INSERT
-  WITH CHECK (auth.uid() = user_id AND NOT public.is_blocked());
+  WITH CHECK ((select auth.uid()) = user_id AND NOT (select public.is_blocked()));
 
 -- Admins can view all attempts (for analytics)
 CREATE POLICY "Admins can view all attempts"
   ON decision_trainer_attempts FOR SELECT
-  USING (public.is_admin());
+  USING ((select public.is_admin()));
 
 -- ===================================================================
 -- STEP 13: DECISION TRAINER BADGES - Achievement system
@@ -379,25 +406,68 @@ CREATE POLICY "Admins can view all attempts"
 -- Users can view their own badges
 CREATE POLICY "Users can view own badges"
   ON decision_trainer_badges FOR SELECT
-  USING (auth.uid() = user_id AND NOT public.is_blocked());
+  USING ((select auth.uid()) = user_id AND NOT (select public.is_blocked()));
 
 -- Users can insert their own badges (earned through gameplay)
 CREATE POLICY "Users can insert own badges"
   ON decision_trainer_badges FOR INSERT
-  WITH CHECK (auth.uid() = user_id AND NOT public.is_blocked());
+  WITH CHECK ((select auth.uid()) = user_id AND NOT (select public.is_blocked()));
 
 -- Admins can view all badges
 CREATE POLICY "Admins can view all badges"
   ON decision_trainer_badges FOR SELECT
-  USING (public.is_admin());
+  USING ((select public.is_admin()));
 
 -- Admins can manage badges (for special awards)
 CREATE POLICY "Admins can manage badges"
   ON decision_trainer_badges FOR ALL
-  USING (public.is_admin());
+  USING ((select public.is_admin()));
 
 -- ===================================================================
--- STEP 14: STORAGE BUCKET POLICIES
+-- STEP 14: ORDERS & TRANSACTIONS & SUBSCRIPTIONS
+-- ===================================================================
+
+-- Orders
+CREATE POLICY "Users can view own orders" ON orders 
+  FOR SELECT USING ((select auth.uid()) = user_id);
+
+CREATE POLICY "Users can insert own orders" ON orders 
+  FOR INSERT WITH CHECK ((select auth.uid()) = user_id);
+
+CREATE POLICY "Admins can view all orders" ON orders 
+  FOR SELECT USING ((select public.is_admin()));
+
+CREATE POLICY "Admins can manage all orders" ON orders 
+  FOR ALL USING ((select public.is_admin()));
+
+-- Payment Transactions
+CREATE POLICY "Users can view own transactions" ON payment_transactions 
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM orders 
+      WHERE orders.id = payment_transactions.order_id 
+      AND orders.user_id = (select auth.uid())
+    )
+  );
+
+CREATE POLICY "Admins can view all transactions" ON payment_transactions 
+  FOR SELECT USING ((select public.is_admin()));
+
+CREATE POLICY "Admins can manage all transactions" ON payment_transactions 
+  FOR ALL USING ((select public.is_admin()));
+
+-- User Plans
+CREATE POLICY "Users can view own plans" ON user_plans
+  FOR SELECT USING ((select auth.uid()) = user_id);
+
+CREATE POLICY "Users can insert own plans" ON user_plans
+  FOR INSERT WITH CHECK ((select auth.uid()) = user_id);
+
+CREATE POLICY "Users can update own plans" ON user_plans
+  FOR UPDATE USING ((select auth.uid()) = user_id);
+
+-- ===================================================================
+-- STEP 15: STORAGE BUCKET POLICIES
 -- ===================================================================
 
 -- Create storage buckets if they don't exist
@@ -434,7 +504,7 @@ CREATE POLICY "Admins can upload question images"
   ON storage.objects FOR INSERT
   WITH CHECK (
     bucket_id = 'question-images' AND
-    public.is_admin() AND
+    (select public.is_admin()) AND
     -- Ensure proper file path structure
     (storage.foldername(name))[1] = 'questions'
   );
@@ -443,14 +513,14 @@ CREATE POLICY "Admins can update question images"
   ON storage.objects FOR UPDATE
   USING (
     bucket_id = 'question-images' AND
-    public.is_admin()
+    (select public.is_admin())
   );
 
 CREATE POLICY "Admins can delete question images"
   ON storage.objects FOR DELETE
   USING (
     bucket_id = 'question-images' AND
-    public.is_admin()
+    (select public.is_admin())
   );
 
 -- Decision Trainer Images Storage Policies
@@ -462,7 +532,7 @@ CREATE POLICY "Admins can upload decision trainer images"
   ON storage.objects FOR INSERT
   WITH CHECK (
     bucket_id = 'decision-trainer' AND
-    public.is_admin() AND
+    (select public.is_admin()) AND
     -- Ensure proper file path structure
     (storage.foldername(name))[1] = 'scenario-images'
   );
@@ -471,14 +541,14 @@ CREATE POLICY "Admins can update decision trainer images"
   ON storage.objects FOR UPDATE
   USING (
     bucket_id = 'decision-trainer' AND
-    public.is_admin()
+    (select public.is_admin())
   );
 
 CREATE POLICY "Admins can delete decision trainer images"
   ON storage.objects FOR DELETE
   USING (
     bucket_id = 'decision-trainer' AND
-    public.is_admin()
+    (select public.is_admin())
   );
 
 -- Study Material Images Storage Policies
@@ -490,7 +560,7 @@ CREATE POLICY "Admins can upload material images"
   ON storage.objects FOR INSERT
   WITH CHECK (
     bucket_id = 'material-images' AND
-    public.is_admin() AND
+    (select public.is_admin()) AND
     (storage.foldername(name))[1] = 'materials'
   );
 
@@ -498,46 +568,49 @@ CREATE POLICY "Admins can update material images"
   ON storage.objects FOR UPDATE
   USING (
     bucket_id = 'material-images' AND
-    public.is_admin()
+    (select public.is_admin())
   );
 
 CREATE POLICY "Admins can delete material images"
   ON storage.objects FOR DELETE
   USING (
     bucket_id = 'material-images' AND
-    public.is_admin()
+    (select public.is_admin())
   );
 
 -- ===================================================================
--- STEP 15: Additional Security Functions
+-- STEP 16: Additional Security Functions (SECURED)
 -- ===================================================================
 
 -- Function to check if user can access another user's data (for instructor system)
 CREATE OR REPLACE FUNCTION public.can_access_user_data(target_user_id UUID)
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN 
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
 BEGIN
   -- Admin can access anyone's data
-  IF public.is_admin() THEN
+  IF (select public.is_admin()) THEN
     RETURN TRUE;
   END IF;
   
   -- User can access their own data
-  IF auth.uid() = target_user_id THEN
+  IF (select auth.uid()) = target_user_id THEN
     RETURN TRUE;
   END IF;
   
   -- Instructor can access their students' data
-  IF public.is_instructor() THEN
+  IF (select public.is_instructor()) THEN
     RETURN EXISTS (
       SELECT 1 FROM student_instructor_links
-      WHERE instructor_id = auth.uid() 
+      WHERE instructor_id = (select auth.uid()) 
       AND student_id = target_user_id
     );
   END IF;
   
   RETURN FALSE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Function to validate test attempt integrity
 CREATE OR REPLACE FUNCTION public.validate_test_attempt(
@@ -547,10 +620,13 @@ CREATE OR REPLACE FUNCTION public.validate_test_attempt(
   p_score INTEGER,
   p_total_questions INTEGER
 )
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN 
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
 BEGIN
   -- Basic validation
-  IF p_user_id != auth.uid() THEN
+  IF p_user_id != (select auth.uid()) THEN
     RETURN FALSE;
   END IF;
   
@@ -573,10 +649,10 @@ BEGIN
   
   RETURN TRUE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- ===================================================================
--- STEP 16: Create audit triggers for sensitive operations
+-- STEP 17: Create audit triggers for sensitive operations (SECURED)
 -- ===================================================================
 
 -- Create audit log table
@@ -596,11 +672,14 @@ ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 -- Only admins can view audit logs
 CREATE POLICY "Admins can view audit logs"
   ON audit_log FOR SELECT
-  USING (public.is_admin());
+  USING ((select public.is_admin()));
 
 -- Function to log sensitive operations
 CREATE OR REPLACE FUNCTION log_sensitive_operation()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
 BEGIN
   -- Log admin operations on user profiles
   IF TG_TABLE_NAME = 'user_profiles' AND (
@@ -612,7 +691,7 @@ BEGIN
     VALUES (
       TG_TABLE_NAME,
       TG_OP,
-      auth.uid(),
+      (select auth.uid()),
       row_to_json(OLD),
       row_to_json(NEW)
     );
@@ -620,7 +699,7 @@ BEGIN
   
   RETURN COALESCE(NEW, OLD);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Create audit triggers
 DROP TRIGGER IF EXISTS audit_user_profiles ON user_profiles;
@@ -630,8 +709,12 @@ CREATE TRIGGER audit_user_profiles
   EXECUTE FUNCTION log_sensitive_operation();
 
 -- ===================================================================
--- STEP 17: Performance optimization for RLS
+-- STEP 18: Performance optimization for RLS
 -- ===================================================================
+
+-- Clean up duplicate indexes detected by linter
+DROP INDEX IF EXISTS idx_test_attempts_user_id_only;
+DROP INDEX IF EXISTS idx_user_profiles_is_blocked;
 
 -- Create additional indexes to optimize RLS queries
 CREATE INDEX IF NOT EXISTS idx_user_profiles_admin_status ON user_profiles(id, is_admin) WHERE is_admin = true;
@@ -647,20 +730,23 @@ CREATE INDEX IF NOT EXISTS idx_dt_progress_user_category ON decision_trainer_pro
 CREATE INDEX IF NOT EXISTS idx_dt_attempts_user_created ON decision_trainer_attempts(user_id, created_at DESC);
 
 -- ===================================================================
--- STEP 18: Verification and testing
+-- STEP 19: Verification and testing (SECURED)
 -- ===================================================================
 
 -- Create a test function to verify RLS is working
 CREATE OR REPLACE FUNCTION test_rls_policies()
-RETURNS TABLE(test_name TEXT, result TEXT) AS $$
+RETURNS TABLE(test_name TEXT, result TEXT) 
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
 BEGIN
   -- Test 1: Check if RLS is enabled on all tables
   RETURN QUERY
   SELECT 
     'RLS Enabled Check' as test_name,
     CASE 
-      WHEN COUNT(*) = 11 THEN 'PASS - All tables have RLS enabled'
-      ELSE 'FAIL - Some tables missing RLS: ' || (11 - COUNT(*))::TEXT
+      WHEN COUNT(*) = 14 THEN 'PASS - All 14 tables have RLS enabled'
+      ELSE 'FAIL - Some tables missing RLS: ' || (14 - COUNT(*))::TEXT
     END as result
   FROM pg_class c
   JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -668,7 +754,7 @@ BEGIN
   AND c.relname IN (
     'user_profiles', 'admin_questions', 'test_attempts', 'test_attempt_answers',
     'student_instructor_links', 'study_materials', 'material_images', 'decision_trainer_scenarios',
-    'decision_trainer_progress', 'decision_trainer_attempts', 'decision_trainer_badges'
+    'decision_trainer_progress', 'decision_trainer_attempts', 'decision_trainer_badges', 'orders', 'payment_transactions', 'user_plans'
   )
   AND c.relrowsecurity = true;
   
@@ -682,7 +768,7 @@ BEGIN
     END as result
   FROM pg_proc p
   JOIN pg_namespace n ON n.oid = p.pronamespace
-  WHERE n.nspname = 'auth'
+  WHERE n.nspname = 'public'
   AND p.proname IN ('is_admin', 'is_instructor', 'is_blocked');
   
   -- Test 3: Check storage bucket policies
@@ -690,7 +776,7 @@ BEGIN
   SELECT 
     'Storage Policies Check' as test_name,
     CASE 
-      WHEN COUNT(*) >= 8 THEN 'PASS - Storage policies created'
+      WHEN COUNT(*) >= 12 THEN 'PASS - Storage policies created'
       ELSE 'FAIL - Missing storage policies'
     END as result
   FROM pg_policies
@@ -698,7 +784,7 @@ BEGIN
   AND tablename = 'objects';
   
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- ===================================================================
 -- COMPLETION STATUS
@@ -711,78 +797,3 @@ SELECT
 
 -- Run verification tests
 SELECT * FROM test_rls_policies();
-
--- Show all created policies
-SELECT 
-  schemaname,
-  tablename,
-  policyname,
-  permissive,
-  roles,
-  cmd,
-  qual IS NOT NULL as has_using_clause,
-  with_check IS NOT NULL as has_with_check_clause
-FROM pg_policies 
-WHERE schemaname IN ('public', 'storage')
-ORDER BY schemaname, tablename, policyname;
-
--- ===================================================================
--- SECURITY NOTES AND RECOMMENDATIONS
--- ===================================================================
-
-/*
-SECURITY FEATURES IMPLEMENTED:
-
-1. **Complete Table Protection**: All tables have RLS enabled with appropriate policies
-2. **Role-Based Access**: Admin, Instructor, and User roles with proper permissions
-3. **Data Isolation**: Users can only access their own data unless authorized
-4. **Storage Security**: File upload/access controls with proper bucket policies
-5. **Audit Logging**: Sensitive operations are logged for security monitoring
-6. **Performance Optimized**: Indexes created to optimize RLS query performance
-7. **Blocked User Protection**: Blocked users cannot access any data
-8. **Input Validation**: Functions to validate data integrity
-9. **Helper Functions**: Reusable security functions for consistent checks
-10. **Comprehensive Testing**: Built-in verification functions
-
-ADMIN CAPABILITIES:
-- View and manage all user profiles
-- Create, edit, delete questions and scenarios
-- View all test attempts and progress data
-- Manage storage files
-- Block/unblock users
-- View audit logs
-
-USER CAPABILITIES:
-- View and edit their own profile (except admin flags)
-- Take tests and view their results
-- Play decision trainer scenarios
-- Track their own progress
-- Upload profile pictures (if implemented)
-
-INSTRUCTOR CAPABILITIES (when fully implemented):
-- View their assigned students' data
-- Manage student-instructor relationships
-
-SECURITY RECOMMENDATIONS:
-1. Regularly review audit logs for suspicious activity
-2. Monitor failed RLS policy violations
-3. Keep admin accounts secure with strong passwords
-4. Regularly backup the database
-5. Test RLS policies after any schema changes
-6. Monitor storage usage and file uploads
-7. Implement rate limiting at the application level
-8. Use HTTPS for all connections
-9. Regularly update Supabase and dependencies
-10. Consider implementing additional logging for sensitive operations
-
-To test the security:
-1. Create test users with different roles
-2. Try to access other users' data
-3. Verify blocked users cannot access anything
-4. Test file upload permissions
-5. Run the test_rls_policies() function regularly
-*/
-
--- ===================================================================
--- END OF RLS POLICIES SETUP
--- ===================================================================

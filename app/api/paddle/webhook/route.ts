@@ -15,7 +15,6 @@ export async function POST(req: NextRequest) {
 
     if (!secret) {
       console.error('❌ PADDLE_WEBHOOK_SECRET is missing in environment variables');
-      // Do NOT break the build, just return error
       return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 });
     }
 
@@ -25,7 +24,6 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Verify Signature (HMAC SHA256)
-    // Paddle signature format: ts=1234567890;h1=hash
     const parts = signature.split(';');
     const tsPart = parts.find((p) => p.startsWith('ts='));
     const h1Part = parts.find((p) => p.startsWith('h1='));
@@ -63,54 +61,62 @@ export async function POST(req: NextRequest) {
       const data = event.data;
       
       // Extract Email & Custom Data
-      // Note: In Paddle Billing, customer info is in 'customer' object if expanded, 
-      // OR we rely on the email passed in custom_data/guest_email if available.
-      // For guest checkout, check data.custom_data first for identifying info, or data.customer.
-      
       const customData = data.custom_data || {};
       const customerEmail = data.customer?.email || customData.guest_email;
-      const category = customData.category;
+      let category = customData.category as string;
       const userIdFromCustomData = customData.user_id;
+      const transactionId = data.id;
+      const currency = data.currency_code || 'EUR';
+      // Amount is typically a string in minor units (e.g. "300" for 3.00)
+      const amountStr = data.details?.totals?.grand_total || '0';
+      const amountCents = parseInt(amountStr, 10);
 
       if (!userIdFromCustomData && !customerEmail) {
         console.error('❌ No user identifier (user_id or email) found in transaction');
-        return NextResponse.json({ received: true }); // Return 200 to stop retries if unfixable
+        return NextResponse.json({ received: true });
       }
 
       if (!category) {
         console.error('❌ No category found in custom_data');
+        // Fallback logic could go here, but safer to fail for now
         return NextResponse.json({ received: true });
+      }
+      
+      // Normalize Category (A, B, C, D)
+      category = category.toUpperCase();
+      if (!['A', 'B', 'C', 'D'].includes(category)) {
+         console.warn(`⚠️ Invalid category received: ${category}. Defaulting to 'B' for safety or handling error.`);
+         // Proceeding might break DB constraints if not handled. Let's assume B if invalid? 
+         // Better to log and return, but user paid! Let's fallback to 'B' as standard car license.
+         category = 'B';
       }
 
       // Determine Plan Tier based on amount
-      // data.details.totals.grand_total is string, usually in minor units (cents)
       let planTier: PaidPlanTier | null = null;
-      const amountStr = data.details?.totals?.grand_total || '0';
-      const amount = parseInt(amountStr, 10);
-
-      // Approximate checks (Paddle amounts are strings of minor units, e.g. "300" for 3.00 EUR)
-      if (amount === 300) {
-        planTier = 'PLAN_A'; // 1 Month
-      } else if (amount === 500) {
-        planTier = 'PLAN_B'; // 2 Months
-      } else if (amount === 800) {
-        planTier = 'PLAN_C'; // 3 Months
+      
+      // Heuristic mapping - Update this if prices change!
+      // 3.00 EUR -> PLAN_A
+      // 5.00 EUR -> PLAN_B
+      // 8.00 EUR -> PLAN_C
+      if (amountCents >= 290 && amountCents <= 310) {
+        planTier = 'PLAN_A'; 
+      } else if (amountCents >= 490 && amountCents <= 510) {
+        planTier = 'PLAN_B'; 
+      } else if (amountCents >= 790 && amountCents <= 810) {
+        planTier = 'PLAN_C'; 
       } else {
-        console.warn('⚠️ Unknown amount:', amount, 'Defaulting to PLAN_A or checking logic');
-        // We should probably fail here or default to A? 
-        // Let's log error and return 200 to avoid endless retries for invalid amounts
-        console.error('❌ Could not map amount to Plan Tier');
-        return NextResponse.json({ received: true });
+        console.warn('⚠️ Unknown amount:', amountCents, 'Defaulting to PLAN_A');
+        planTier = 'PLAN_A';
       }
 
-      console.log(`✅ Identified Plan: ${planTier} for Category: ${category}`);
+      console.log(`✅ Identified Plan: ${planTier} for Category: ${category} (Amount: ${amountCents} ${currency})`);
 
-      // 5. Activate Plan in Database
+      // 5. Database Operations
       const supabase = createAdminClient();
       
       let userId = userIdFromCustomData;
 
-      // If we don't have userId directly, look up by email
+      // Lookup User by Email if ID missing
       if (!userId && customerEmail) {
         console.log(`🔍 Looking up user by email: ${customerEmail}`);
         const { data: userProfile, error: userError } = await supabase
@@ -121,6 +127,9 @@ export async function POST(req: NextRequest) {
 
         if (userError || !userProfile) {
           console.error('❌ User not found for email:', customerEmail);
+          // IMPORTANT: In a real app, we might want to CREATE the user here if they don't exist (Guest Checkout).
+          // But 'handle_new_user' trigger handles auth.users inserts. We can't insert into auth.users easily here without a password.
+          // For now, we return success to Paddle so it stops retrying, but we log the error.
           return NextResponse.json({ received: true });
         }
         userId = userProfile.id;
@@ -131,17 +140,57 @@ export async function POST(req: NextRequest) {
          return NextResponse.json({ received: true });
       }
 
-      console.log(`👤 Activating plan for User ID: ${userId}`);
+      console.log(`👤 Processing for User ID: ${userId}`);
 
+      // A. Create Order
+      console.log('📦 Creating Order...');
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: userId,
+          category: category,
+          plan_tier: planTier,
+          amount_cents: amountCents,
+          currency: currency,
+          status: 'paid', // Paddle transaction.completed means it's paid
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (orderError) {
+        console.error('❌ Failed to create order:', orderError);
+        // We continue to try to grant the plan even if order logging fails, 
+        // because the user paid. But this is critical for accounting.
+      } else {
+        console.log(`✅ Order created: ${order.id}`);
+        
+        // B. Create Payment Transaction
+        const { error: txError } = await supabase
+          .from('payment_transactions')
+          .insert({
+            order_id: order.id,
+            provider: 'paddle',
+            provider_status: 'completed',
+            amount_cents: amountCents,
+            currency: currency,
+            raw_payload: event, // Store full event for debugging
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+          
+        if (txError) console.error('❌ Failed to log transaction:', txError);
+      }
+
+      // C. Activate Plan
+      console.log('🔓 Activating Plan...');
       const planDef = BILLING_CONFIG.plans[planTier];
-      
-      // Calculate Dates
       const now = new Date();
       const startDate = new Date(now);
       const endDate = new Date(now);
       endDate.setMonth(endDate.getMonth() + planDef.months);
 
-      // Upsert Plan
       const { error: upsertError } = await supabase.from('user_plans').upsert(
         {
           user_id: userId,
@@ -150,6 +199,7 @@ export async function POST(req: NextRequest) {
           start_date: startDate.toISOString(),
           end_date: endDate.toISOString(),
           status: 'active',
+          updated_at: now.toISOString() // Ensure updated_at changes
         },
         { onConflict: 'user_id,category' }
       );
