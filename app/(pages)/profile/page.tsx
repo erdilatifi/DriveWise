@@ -430,16 +430,18 @@ export default function ProfilePage() {
                       {/* One-time payment notice integrated here */}
                       {!userProfile?.subscription_id && hasAnyActivePlan && !isAdmin && (
                         <div className="mt-auto pt-3 border-t border-white/10">
-                           <div className="flex items-center gap-3 rounded-lg bg-emerald-500/5 p-2.5 border border-emerald-500/10">
-                              <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                           <div className="flex items-start gap-3 rounded-lg bg-emerald-500/5 p-3 border border-emerald-500/10">
+                              <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <Check className="w-3 h-3 text-emerald-500" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-[11px] font-medium text-emerald-100 leading-tight">
-                                  {isSq ? 'Nuk ka abonim automatik' : 'No active subscription'}
+                                <p className="text-xs font-medium text-emerald-100 mb-0.5">
+                                  {isSq ? 'Statusi i pagesës: Një herë' : 'Billing Status: One-time payment'}
                                 </p>
-                                <p className="text-[10px] text-muted-foreground truncate">
-                                  {isSq ? 'Pagesë e njëhershme.' : 'One-time payment only.'}
+                                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                                  {isSq 
+                                    ? 'Planet tuaja nuk kanë rinovim automatik. Nuk do të tarifoheni sërish.' 
+                                    : 'No auto-renewal. You will not be charged again automatically.'}
                                 </p>
                               </div>
                            </div>
