@@ -147,9 +147,19 @@ export async function POST(req: NextRequest) {
       const currency = data.currency_code || 'EUR';
       
       // Amount is typically a string in major units (e.g. "3.00")
-      // We need to check where the amount is located.
-      // Usually data.details.totals.grand_total
-      const amountStr = data.details?.totals?.grand_total || '0';
+      // We check multiple locations for the amount
+      let amountStr = data.details?.totals?.grand_total;
+      
+      if (!amountStr && data.items && data.items.length > 0) {
+          // Try finding price in items
+          const item = data.items[0];
+          if (item.price && item.price.unit_price) {
+             amountStr = item.price.unit_price.amount;
+          }
+      }
+      
+      // Fallback to '0' if not found
+      amountStr = amountStr || '0';
       
       // FIX: Parse float and multiply by 100 to get cents
       const amountCents = Math.round(parseFloat(amountStr) * 100);
