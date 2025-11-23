@@ -75,28 +75,30 @@ export async function POST(req: NextRequest) {
       
       // Extract Email & Custom Data
       // In Paddle Billing, custom_data is directly on the transaction object
+      // Extract Email & Custom Data
+      // In Paddle Billing, custom_data is directly on the transaction object
       const customData = data.custom_data || {};
       console.log('🔍 Raw Custom Data:', JSON.stringify(customData));
 
       const customerEmail = data.customer?.email || customData.guest_email || customData.email;
-      let category = customData.category;
-      
-      // Fallback: Check if category is nested or in different casing
-      if (!category && customData.custom_data) {
-         category = customData.custom_data.category;
-      }
-      if (!category && customData.Category) {
-         category = customData.Category;
-      }
 
-      let userIdFromCustomData = customData.user_id;
-      // Fallback for user_id as well
-      if (!userIdFromCustomData && customData.custom_data) {
-         userIdFromCustomData = customData.custom_data.user_id;
-      }
-      if (!userIdFromCustomData && customData.userId) {
-         userIdFromCustomData = customData.userId;
-      }
+      // Helper to safely extract from nested structures (Paddle sometimes nests custom_data inside custom_data)
+      const getCustomDataValue = (key: string) => {
+        // Check direct key
+        if (customData[key]) return customData[key];
+        // Check nested custom_data
+        if (customData.custom_data && customData.custom_data[key]) return customData.custom_data[key];
+        // Check capitalized key (Category vs category)
+        const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+        if (customData[capKey]) return customData[capKey];
+        if (customData.custom_data && customData.custom_data[capKey]) return customData.custom_data[capKey];
+        
+        return undefined;
+      };
+
+      let category = getCustomDataValue('category');
+      const planFromCustomData = getCustomDataValue('plan') || getCustomDataValue('plan_tier');
+      let userIdFromCustomData = getCustomDataValue('user_id') || getCustomDataValue('userId');
 
       const transactionId = data.id;
       const currency = data.currency_code || 'EUR';
@@ -121,35 +123,47 @@ export async function POST(req: NextRequest) {
         category = category.toString().trim().toUpperCase();
         if (!['A', 'B', 'C', 'D'].includes(category)) {
            console.warn(`⚠️ Invalid category received: ${category}. Keeping as is for investigation.`);
-           // We don't default here, we let it pass so we can see the error in DB
         }
       } else {
         console.error(`❌ Missing category in custom_data. Transaction ID: ${transactionId}`);
-        // Do NOT default to 'B' blindly. This causes data corruption (overwriting Plan B).
-        // We return 200 to stop retries if we can't process it, OR we can insert as 'UNKNOWN'.
-        // Better to insert as 'UNKNOWN' so user gets *something* and we can fix it manually.
+        // Defaulting to UNKNOWN to avoid data corruption
         category = 'UNKNOWN';
       }
 
-      // Determine Plan Tier based on amount
+      // Determine Plan Tier
       let planTier: PaidPlanTier | null = null;
       
-      // Heuristic mapping - Update this if prices change!
-      // 3.00 EUR -> 300 cents -> PLAN_A (Range: 250-400)
-      // 5.00 EUR -> 500 cents -> PLAN_B (Range: 450-650)
-      // 8.00 EUR -> 800 cents -> PLAN_C (Range: 750-950)
-      if (amountCents >= 250 && amountCents <= 400) {
-        planTier = 'PLAN_A'; 
-      } else if (amountCents >= 450 && amountCents <= 650) {
-        planTier = 'PLAN_B'; 
-      } else if (amountCents >= 750 && amountCents <= 950) {
-        planTier = 'PLAN_C'; 
-      } else {
-        console.warn('⚠️ Unknown amount:', amountCents, 'Defaulting to PLAN_A');
-        planTier = 'PLAN_A';
+      // 1. Try to use explicit plan from custom_data
+      if (planFromCustomData) {
+        const normalizedPlan = planFromCustomData.toString().toUpperCase();
+        if (['PLAN_A', 'PLAN_B', 'PLAN_C'].includes(normalizedPlan)) {
+          planTier = normalizedPlan as PaidPlanTier;
+          console.log(`✅ Using explicit plan from custom_data: ${planTier}`);
+        } else {
+           console.warn(`⚠️ Invalid plan in custom_data: ${planFromCustomData}. Falling back to amount.`);
+        }
       }
 
-      console.log(`✅ Identified Plan: ${planTier} for Category: ${category} (Amount: ${amountCents} ${currency})`);
+      // 2. Fallback to Amount Heuristic if plan not found or invalid
+      if (!planTier) {
+        // Heuristic mapping - Update this if prices change!
+        // 3.00 EUR -> 300 cents -> PLAN_A (Range: 250-400)
+        // 5.00 EUR -> 500 cents -> PLAN_B (Range: 450-650)
+        // 8.00 EUR -> 800 cents -> PLAN_C (Range: 750-950)
+        if (amountCents >= 250 && amountCents <= 400) {
+          planTier = 'PLAN_A'; 
+        } else if (amountCents >= 450 && amountCents <= 650) {
+          planTier = 'PLAN_B'; 
+        } else if (amountCents >= 750 && amountCents <= 950) {
+          planTier = 'PLAN_C'; 
+        } else {
+          console.warn('⚠️ Unknown amount:', amountCents, 'Defaulting to PLAN_A');
+          planTier = 'PLAN_A';
+        }
+        console.log(`ℹ️ Inferred Plan from Amount: ${planTier} (${amountCents} cents)`);
+      }
+
+      console.log(`✅ Final Plan: ${planTier} for Category: ${category}`);
 
       // 5. Database Operations
       try {

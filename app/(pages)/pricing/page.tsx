@@ -147,6 +147,7 @@ export default function PricingPage() {
       }
 
       urlObj.searchParams.append('custom_data[category]', selectedCategory);
+      urlObj.searchParams.append('custom_data[plan]', selectedPlan);
       urlObj.searchParams.append('custom_data[user_id]', user.id);
 
       window.location.href = urlObj.toString();
