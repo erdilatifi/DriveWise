@@ -120,6 +120,19 @@ export async function POST(req: NextRequest) {
          }
       }
       
+      // CRITICAL FIX: Handle nested custom_data string
+      // If Paddle received ?custom_data={"foo":"bar"}, it often stores it as { "custom_data": "{\"foo\":\"bar\"}" }
+      if (customData && customData.custom_data && typeof customData.custom_data === 'string') {
+        try {
+           console.log('⚠️ Found nested custom_data string, parsing and merging...');
+           const nested = JSON.parse(customData.custom_data);
+           customData = { ...customData, ...nested };
+           customDataSource += '_nested_parsed';
+        } catch (e) {
+           console.error('❌ Failed to parse nested custom_data string:', e);
+        }
+      }
+
       console.log(`🔍 Found Custom Data (Source: ${customDataSource}):`, JSON.stringify(customData));
 
       const customerEmail = data.customer?.email || customData.guest_email || customData.email;
