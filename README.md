@@ -186,6 +186,39 @@ drivewise/
 
 ---
 
+## 💳 Payments & Subscriptions (Paddle)
+
+DriveWise uses **Paddle Billing (v2)** for payments and subscriptions.
+
+### Configuration
+Required environment variables in `.env.local`:
+- `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`: Client-side token for Paddle initialization (if needed).
+- `PADDLE_WEBHOOK_SECRET`: Secret key from Paddle Dashboard > Developer Tools > Webhooks.
+- `SUPABASE_SERVICE_ROLE_KEY`: Required for the webhook handler to bypass RLS and update plans.
+- `NEXT_PUBLIC_PADDLE_HSC_1M`, `..._2M`, `..._3M`: Direct checkout URLs for specific plans.
+
+### Payment Flow
+1. **User Selects Plan**: In `/pricing`, user selects a category (A/B/C/D) and plan.
+2. **Redirect**: User is redirected to a Paddle Hosted Checkout (HSC) URL.
+   - `custom_data` is attached: `{ user_id: string, category: string }`.
+   - `guest_email` is pre-filled from the logged-in user.
+3. **Paddle Processing**: User completes payment on Paddle.
+4. **Webhook**: Paddle sends a `transaction.completed` webhook to `/api/paddle/webhook`.
+   - **Validation**: Signature is verified using `PADDLE_WEBHOOK_SECRET`.
+   - **Parsing**: Amount (grand_total) is parsed to cents (e.g. "3.00" -> 300).
+   - **Mapping**: 300 cents -> PLAN_A, 500 -> PLAN_B, 800 -> PLAN_C.
+   - **DB Update**: 
+     - Record created in `orders` and `payment_transactions`.
+     - `user_plans` is upserted (created or extended) with `status: 'active'`.
+5. **Activation**: The user is redirected to `/success`, where the app polls `user_plans` until the active subscription appears.
+
+### Troubleshooting
+- **Webhook Logs**: Check Vercel/Server logs for `🔔 Webhook received`.
+- **Signature Errors**: Ensure `PADDLE_WEBHOOK_SECRET` matches the one in Paddle Dashboard.
+- **Amount Mismatch**: The webhook expects amounts of 3.00, 5.00, or 8.00 EUR. Different amounts default to PLAN_A.
+
+---
+
 ## 🔐 Security
 
 - Supabase RLS policies for per‑user data isolation.

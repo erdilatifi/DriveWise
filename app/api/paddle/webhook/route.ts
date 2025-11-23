@@ -57,6 +57,11 @@ export async function POST(req: NextRequest) {
 
     if (calculatedHash !== h1) {
       console.error('❌ Paddle signature verification failed');
+      console.log(`   - Received Signature TS: ${ts}`);
+      console.log(`   - Received Hash (h1): ${h1}`);
+      console.log(`   - Calculated Hash: ${calculatedHash}`);
+      console.log(`   - Secret Key defined? ${!!secret}`);
+      console.log(`   - Raw Body Length: ${rawBody.length}`);
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
@@ -74,15 +79,23 @@ export async function POST(req: NextRequest) {
       const data = event.data;
       
       // Extract Email & Custom Data
+      // In Paddle Billing, custom_data is directly on the transaction object
       const customData = data.custom_data || {};
       const customerEmail = data.customer?.email || customData.guest_email;
       let category = customData.category as string;
       const userIdFromCustomData = customData.user_id;
       const transactionId = data.id;
       const currency = data.currency_code || 'EUR';
-      // Amount is typically a string in minor units (e.g. "300" for 3.00)
+      
+      // Amount is typically a string in major units (e.g. "3.00")
+      // We need to check where the amount is located.
+      // Usually data.details.totals.grand_total
       const amountStr = data.details?.totals?.grand_total || '0';
-      const amountCents = parseInt(amountStr, 10);
+      
+      // FIX: Parse float and multiply by 100 to get cents
+      const amountCents = Math.round(parseFloat(amountStr) * 100);
+
+      console.log(`💰 Amount Parsed: ${amountStr} -> ${amountCents} cents`);
 
       if (!userIdFromCustomData && !customerEmail) {
         console.error('❌ No user identifier (user_id or email) found in transaction');
@@ -90,27 +103,31 @@ export async function POST(req: NextRequest) {
       }
 
       if (!category) {
-        console.error('❌ No category found in custom_data');
-        // Fallback logic could go here, but safer to fail for now
-        return NextResponse.json({ received: true });
+        console.warn('⚠️ No category found in custom_data. Checking logic...');
+        // Fallback logic or error
+        // If we can't identify category, we can't grant the specific license plan
+        // But we should log it.
       }
       
       // Normalize Category (A, B, C, D)
-      category = category.toUpperCase();
-      if (!['A', 'B', 'C', 'D'].includes(category)) {
-         console.warn(`⚠️ Invalid category received: ${category}. Defaulting to 'B' for safety or handling error.`);
-         // Proceeding might break DB constraints if not handled. Let's assume B if invalid? 
-         // Better to log and return, but user paid! Let's fallback to 'B' as standard car license.
-         category = 'B';
+      if (category) {
+        category = category.toUpperCase();
+        if (!['A', 'B', 'C', 'D'].includes(category)) {
+           console.warn(`⚠️ Invalid category received: ${category}. Defaulting to 'B'.`);
+           category = 'B';
+        }
+      } else {
+        console.warn(`⚠️ Missing category. Defaulting to 'B'.`);
+        category = 'B';
       }
 
       // Determine Plan Tier based on amount
       let planTier: PaidPlanTier | null = null;
       
       // Heuristic mapping - Update this if prices change!
-      // 3.00 EUR -> PLAN_A
-      // 5.00 EUR -> PLAN_B
-      // 8.00 EUR -> PLAN_C
+      // 3.00 EUR -> 300 cents -> PLAN_A
+      // 5.00 EUR -> 500 cents -> PLAN_B
+      // 8.00 EUR -> 800 cents -> PLAN_C
       if (amountCents >= 290 && amountCents <= 310) {
         planTier = 'PLAN_A'; 
       } else if (amountCents >= 490 && amountCents <= 510) {
