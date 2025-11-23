@@ -80,26 +80,53 @@ export async function POST(req: NextRequest) {
       }
 
       // Extract Email & Custom Data
-      // In Paddle Billing, custom_data is directly on the transaction object
-      let customData = data.custom_data || {};
-      
-      // Handle case where custom_data is a JSON string
+      // We check multiple places because Paddle's payload structure can vary based on how the checkout was initiated
+      let customData: any = data.custom_data || {};
+      let customDataSource = 'transaction';
+
+      // 1. Try Transaction custom_data (parsed or string)
       if (typeof customData === 'string') {
         try {
-          console.log('⚠️ custom_data is a string, parsing...');
           customData = JSON.parse(customData);
-        } catch (e) {
-          console.error('❌ Failed to parse custom_data string:', e);
-          customData = {}; 
-        }
+          customDataSource = 'transaction_string';
+        } catch (e) { customData = {}; }
+      }
+
+      // 2. If empty, try Line Item custom_data (sometimes it ends up here)
+      if (Object.keys(customData).length === 0 && data.items && data.items[0]?.custom_data) {
+         customData = data.items[0].custom_data;
+         customDataSource = 'line_item';
+         if (typeof customData === 'string') {
+            try { customData = JSON.parse(customData); customDataSource = 'line_item_string'; } catch (e) { customData = {}; }
+         }
+      }
+
+      // 3. If empty, try Customer custom_data
+      if (Object.keys(customData).length === 0 && data.customer?.custom_data) {
+         customData = data.customer.custom_data;
+         customDataSource = 'customer';
+         if (typeof customData === 'string') {
+            try { customData = JSON.parse(customData); customDataSource = 'customer_string'; } catch (e) { customData = {}; }
+         }
+      }
+
+      // 4. If empty, try Passthrough (Legacy/Classic)
+      // Note: TypeScript might complain if passthrough isn't in the type definition, so we access it safely
+      if (Object.keys(customData).length === 0 && (data as any).passthrough) {
+         customData = (data as any).passthrough;
+         customDataSource = 'passthrough';
+         if (typeof customData === 'string') {
+            try { customData = JSON.parse(customData); customDataSource = 'passthrough_string'; } catch (e) { customData = {}; }
+         }
       }
       
-      console.log('🔍 Processed Custom Data:', JSON.stringify(customData));
+      console.log(`🔍 Found Custom Data (Source: ${customDataSource}):`, JSON.stringify(customData));
 
       const customerEmail = data.customer?.email || customData.guest_email || customData.email;
 
       // Helper to safely extract from nested structures
       const getCustomDataValue = (key: string) => {
+        if (!customData) return undefined;
         // Check direct key
         if (customData[key]) return customData[key];
         // Check nested custom_data (some implementations nest it)

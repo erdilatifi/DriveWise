@@ -154,6 +154,8 @@ export default function PricingPage() {
       };
       // Use set() to avoid duplicates if custom_data already exists
       urlObj.searchParams.set('custom_data', JSON.stringify(customData));
+      // Also set passthrough as a fallback for some Paddle integrations
+      urlObj.searchParams.set('passthrough', JSON.stringify(customData));
 
       window.location.href = urlObj.toString();
     } catch (error) {
