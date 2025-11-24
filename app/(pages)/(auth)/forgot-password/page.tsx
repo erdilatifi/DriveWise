@@ -13,6 +13,8 @@ import { createClient } from '@/utils/supabase/client';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
 
+import { useRateLimit } from '@/hooks/use-rate-limit';
+
 // Lazy load Image component for better performance
 const Image = dynamic(() => import('next/image'), { ssr: false });
 
@@ -20,8 +22,8 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const [debugInfo, setDebugInfo] = useState('');
   const [cooldown, setCooldown] = useState(0);
+  const { checkLimit } = useRateLimit({ maxRequests: 3, windowMs: 60000 }); // Limit: 3 requests per minute
   const supabase = createClient();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -52,21 +54,21 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    setLoading(true);
-    setDebugInfo('Sending reset email...');
+    if (!checkLimit()) {
+      toast.error('Too many requests', {
+        description: 'Please wait a minute before trying again.',
+      });
+      return;
+    }
 
-    console.log('Attempting to send reset email to:', email);
+    setLoading(true);
 
     try {
       const redirectUrl = `${window.location.origin}/reset-password`;
-      setDebugInfo(`Redirect URL: ${redirectUrl}`);
       
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
       });
-
-      console.log('Reset password response:', { data, error });
-      setDebugInfo(`Response received. Error: ${error ? error.message : 'None'}`);
 
       if (error) {
         console.error('Reset password error:', error);
@@ -82,7 +84,6 @@ export default function ForgotPasswordPage() {
             description: `Please wait ${seconds} seconds before requesting another reset link.`,
             duration: 5000,
           });
-          setDebugInfo(`Rate limited. Wait ${seconds} seconds.`);
         } else {
           throw error;
         }
@@ -92,7 +93,6 @@ export default function ForgotPasswordPage() {
       // Set cooldown after successful send (60 seconds)
       setCooldown(60);
       setSent(true);
-      setDebugInfo('Success! Email sent.');
       toast.success('Reset Link Sent', {
         description: 'Check your email for the password reset link. If you don\'t see it, check your spam folder.',
         duration: 5000,
@@ -100,7 +100,6 @@ export default function ForgotPasswordPage() {
     } catch (error: unknown) {
       console.error('Caught error:', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
-      setDebugInfo(`Error: ${message}`);
       toast.error('Error', {
         description: message || 'Failed to send reset email. Please try again.',
       });
@@ -159,12 +158,6 @@ export default function ForgotPasswordPage() {
             </div>
           ) : (
             <form onSubmit={handleResetPassword} className="space-y-4">
-              {debugInfo && (
-                <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                  <p className="text-xs text-blue-500 font-mono">{debugInfo}</p>
-                </div>
-              )}
-              
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input
