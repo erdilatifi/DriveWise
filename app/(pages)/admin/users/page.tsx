@@ -8,9 +8,9 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { Search, Filter, ArrowLeft, Shield, User, GraduationCap, Crown } from 'lucide-react';
+import { Search, Filter, ArrowLeft, Shield, User, GraduationCap, Crown, Star, Ban, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useUsers, useUpdateUser } from '@/hooks/use-users';
+import { useUsers, useUpdateUser, useDeleteUser } from '@/hooks/use-users';
 import { toast } from 'sonner';
 import {
   Select,
@@ -53,6 +53,7 @@ export default function UsersPage() {
   });
 
   const updateUser = useUpdateUser();
+  const deleteUser = useDeleteUser();
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
@@ -71,6 +72,26 @@ export default function UsersPage() {
       toast.success('User role updated successfully');
     } catch (error) {
       toast.error('Failed to update user role');
+    }
+  };
+
+  const handleBlockUser = async (userId: string, isBlocked: boolean) => {
+    try {
+      await updateUser.mutateAsync({ id: userId, is_blocked: isBlocked });
+      toast.success(isBlocked ? 'User blocked successfully' : 'User unblocked successfully');
+    } catch (error) {
+      toast.error('Failed to update user status');
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+    
+    try {
+      await deleteUser.mutateAsync(userId);
+      toast.success('User deleted successfully');
+    } catch (error) {
+      toast.error('Failed to delete user');
     }
   };
 
@@ -165,6 +186,7 @@ export default function UsersPage() {
                 <tr className="border-b border-white/10 bg-white/5">
                   <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">User</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rating</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Joined</th>
                   <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
@@ -194,6 +216,24 @@ export default function UsersPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
+                      {user.app_rating ? (
+                        <div className="flex items-center gap-0.5">
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-3 h-3 ${
+                                i < user.app_rating!
+                                  ? 'fill-yellow-400 text-yellow-400'
+                                  : 'text-muted-foreground/30'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
                       {user.is_premium ? (
                         <span className="inline-flex items-center px-2 py-1 rounded-md bg-amber-500/10 text-amber-400 text-xs font-medium border border-amber-500/20">
                           <Crown className="w-3 h-3 mr-1" /> Premium
@@ -219,11 +259,25 @@ export default function UsersPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48 bg-black border-border/80">
                           <DropdownMenuItem
-                            className="text-red-400 focus:text-red-300 focus:bg-red-500/10 cursor-pointer"
+                            className="cursor-pointer"
                             onClick={() => handleRoleUpdate(user.id, { is_admin: !user.is_admin })}
                           >
                             <Shield className="w-4 h-4 mr-2" />
                             {user.is_admin ? 'Remove Admin' : 'Make Admin'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className={`${user.is_blocked ? 'text-green-400 focus:text-green-300 focus:bg-green-500/10' : 'text-orange-400 focus:text-orange-300 focus:bg-orange-500/10'} cursor-pointer`}
+                            onClick={() => handleBlockUser(user.id, !user.is_blocked)}
+                          >
+                            <Ban className="w-4 h-4 mr-2" />
+                            {user.is_blocked ? 'Unblock User' : 'Block User'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-red-400 focus:text-red-300 focus:bg-red-500/10 cursor-pointer"
+                            onClick={() => handleDeleteUser(user.id)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete User
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

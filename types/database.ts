@@ -60,6 +60,7 @@ export interface UserProfile {
   preferred_language: LanguageCode;
   role?: 'student' | 'admin';
   is_admin: boolean;
+  is_blocked: boolean;
   app_rating?: number; // 1-5 stars, optional
   is_premium?: boolean;
   subscription_id?: string | null;

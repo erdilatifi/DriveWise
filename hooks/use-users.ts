@@ -28,6 +28,7 @@ export function useUsers({ search, role = 'all', isPremium, page, pageSize }: Us
       let query = supabase
         .from('user_profiles')
         .select('*', { count: 'exact' })
+        .order('is_admin', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (search && search.trim()) {
@@ -73,6 +74,26 @@ export function useUpdateUser() {
 
       if (error) throw error;
       return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+}
+
+// Delete user
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+  const supabase = createClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
