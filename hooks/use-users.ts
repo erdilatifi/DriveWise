@@ -4,7 +4,7 @@ import { UserProfile } from '@/types/database';
 
 export interface UsersQueryParams {
   search?: string;
-  role?: 'all' | 'admin' | 'instructor' | 'user';
+  role?: 'all' | 'admin' | 'user';
   isPremium?: boolean;
   page: number;
   pageSize: number;
@@ -37,10 +37,8 @@ export function useUsers({ search, role = 'all', isPremium, page, pageSize }: Us
 
       if (role === 'admin') {
         query = query.eq('is_admin', true);
-      } else if (role === 'instructor') {
-        query = query.eq('is_instructor', true);
       } else if (role === 'user') {
-        query = query.eq('is_admin', false).eq('is_instructor', false);
+        query = query.eq('is_admin', false);
       }
 
       if (isPremium !== undefined) {

@@ -39,7 +39,7 @@ export default function UsersPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'instructor' | 'user'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all');
   const [premiumFilter, setPremiumFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20; // Larger page size for efficient user management
@@ -65,7 +65,7 @@ export default function UsersPage() {
     setCurrentPage(1);
   }, [searchQuery, roleFilter, premiumFilter]);
 
-  const handleRoleUpdate = async (userId: string, updates: { is_admin?: boolean; is_instructor?: boolean }) => {
+  const handleRoleUpdate = async (userId: string, updates: { is_admin?: boolean }) => {
     try {
       await updateUser.mutateAsync({ id: userId, ...updates });
       toast.success('User role updated successfully');
@@ -138,7 +138,6 @@ export default function UsersPage() {
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
                   <SelectItem value="user">Students</SelectItem>
-                  <SelectItem value="instructor">Instructors</SelectItem>
                   <SelectItem value="admin">Admins</SelectItem>
                 </SelectContent>
               </Select>
@@ -187,12 +186,7 @@ export default function UsersPage() {
                             <Shield className="w-3 h-3 mr-1" /> Admin
                           </span>
                         )}
-                        {user.is_instructor && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/20">
-                            <GraduationCap className="w-3 h-3 mr-1" /> Instructor
-                          </span>
-                        )}
-                        {!user.is_admin && !user.is_instructor && (
+                        {!user.is_admin && (
                           <span className="inline-flex items-center px-2 py-1 rounded-md bg-white/10 text-muted-foreground text-xs font-medium border border-white/20">
                             <User className="w-3 h-3 mr-1" /> Student
                           </span>
@@ -230,13 +224,6 @@ export default function UsersPage() {
                           >
                             <Shield className="w-4 h-4 mr-2" />
                             {user.is_admin ? 'Remove Admin' : 'Make Admin'}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-blue-400 focus:text-blue-300 focus:bg-blue-500/10 cursor-pointer"
-                            onClick={() => handleRoleUpdate(user.id, { is_instructor: !user.is_instructor })}
-                          >
-                            <GraduationCap className="w-4 h-4 mr-2" />
-                            {user.is_instructor ? 'Remove Instructor' : 'Make Instructor'}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
