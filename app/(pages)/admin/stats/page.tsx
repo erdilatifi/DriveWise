@@ -63,154 +63,68 @@ export default function StatsPage() {
     }
   }, [user, isAdmin, authLoading, router]);
 
-  // Fetch statistics
+  // Fetch statistics using scalable RPC
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      // Get total users
-      const { count: totalUsers } = await supabase
-        .from('user_profiles')
-        .select('*', { count: 'exact', head: true });
+    interface AdminStats {
+      totalUsers: number;
+      totalQuestions: number;
+      totalAttempts: number;
+      passedAttempts: number;
+      failedAttempts: number;
+      categoryCounts: Record<string, number>;
+      questionsPerTest: Record<string, number>;
+      scenarioCategoryCounts: Record<string, number>;
+      scenarioLevelCounts: Record<string, number>;
+      materialsByChapter: Record<string, { total: number; published: number }>;
+    }
 
-      // Get total questions
-      const { count: totalQuestions } = await supabase
-        .from('admin_questions')
-        .select('*', { count: 'exact', head: true });
+    const { data, error } = await supabase.rpc('get_admin_dashboard_stats');
+      
+      if (error) {
+        console.error('Error fetching admin stats:', error);
+        throw error;
+      }
 
-      // Get questions by category and test for coverage
-      const { data: questionsDetail } = await supabase
-        .from('admin_questions')
-        .select('category, test_number');
+      const statsData = data as AdminStats;
 
-      const categoryCounts = questionsDetail?.reduce((acc, q) => {
-        acc[q.category] = (acc[q.category] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
-
-      const questionsPerTest = questionsDetail?.reduce((acc, q) => {
-        const key = `${q.category}-${q.test_number}`;
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
-
-      // Get total test attempts
-      const { count: totalAttempts } = await supabase
-        .from('test_attempts')
-        .select('*', { count: 'exact', head: true });
-
-      // Get passed/failed attempts
-      const { data: attempts } = await supabase
-        .from('test_attempts')
-        .select('percentage');
-
-      const passedAttempts = attempts?.filter(a => a.percentage >= 80).length || 0;
-      const failedAttempts = (attempts?.length || 0) - passedAttempts;
-
-      // Decision Trainer coverage: scenarios by category and level
-      const { data: scenariosDetail } = await supabase
-        .from('decision_trainer_scenarios')
-        .select('category, level, is_active');
-
-      const scenarioCategoryCounts = scenariosDetail?.reduce((acc, s) => {
-        acc[s.category] = (acc[s.category] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
-
-      const scenarioLevelCounts = scenariosDetail?.reduce((acc, s) => {
-        acc[s.level] = (acc[s.level] || 0) + 1;
-        return acc;
-      }, {} as Record<number, number>) || {};
-
-      // Study materials coverage: materials per chapter
-      const { data: materialsDetail } = await supabase
-        .from('study_materials')
-        .select('chapter_id, is_published');
-
-      const materialsByChapter = materialsDetail?.reduce((acc, m) => {
-        const chapterId = m.chapter_id as number;
-        if (!acc[chapterId]) {
-          acc[chapterId] = { total: 0, published: 0 };
-        }
-        acc[chapterId].total += 1;
-        if (m.is_published) {
-          acc[chapterId].published += 1;
-        }
-        return acc;
-      }, {} as Record<number, { total: number; published: number }>) || {};
-
+      // Ensure all expected fields exist with defaults
       return {
-        totalUsers: totalUsers || 0,
-        totalQuestions: totalQuestions || 0,
-        totalAttempts: totalAttempts || 0,
-        passedAttempts,
-        failedAttempts,
-        categoryCounts,
-        questionsPerTest,
-        scenarioCategoryCounts,
-        scenarioLevelCounts,
-        materialsByChapter,
+        totalUsers: statsData?.totalUsers || 0,
+        totalQuestions: statsData?.totalQuestions || 0,
+        totalAttempts: statsData?.totalAttempts || 0,
+        passedAttempts: statsData?.passedAttempts || 0,
+        failedAttempts: statsData?.failedAttempts || 0,
+        categoryCounts: statsData?.categoryCounts || {},
+        questionsPerTest: statsData?.questionsPerTest || {},
+        scenarioCategoryCounts: statsData?.scenarioCategoryCounts || {},
+        scenarioLevelCounts: statsData?.scenarioLevelCounts || {},
+        materialsByChapter: statsData?.materialsByChapter || {},
       };
     },
   });
 
   // Fetch users with optimized query
+
+  // Fetch users with optimized query
   const { data: usersData, isLoading: usersLoading } = useQuery({
     queryKey: ['admin-users', debouncedSearch, page],
     queryFn: async () => {
-      const from = (page - 1) * usersPerPage;
-      const to = from + usersPerPage - 1;
-
-      // First, get user count for pagination (optimized with head: true)
-      let countQuery = supabase
-        .from('user_profiles')
-        .select('*', { count: 'exact', head: true });
-
-      if (debouncedSearch) {
-        countQuery = countQuery.or(`email.ilike.%${debouncedSearch}%,full_name.ilike.%${debouncedSearch}%`);
-      }
-
-      const { count } = await countQuery;
-
-      // Then fetch only the users we need without expensive joins
-      let dataQuery = supabase
-        .from('user_profiles')
-        .select('id, email, full_name, created_at, is_blocked, app_rating, is_admin')
-        .order('created_at', { ascending: false })
-        .range(from, to);
-
-      if (debouncedSearch) {
-        dataQuery = dataQuery.or(`email.ilike.%${debouncedSearch}%,full_name.ilike.%${debouncedSearch}%`);
-      }
-
-      const { data, error } = await dataQuery;
+      const { data, error } = await supabase.rpc('get_users_with_stats', {
+        page_number: page,
+        page_size: usersPerPage,
+        search_term: debouncedSearch || null,
+        role_filter: 'all',
+        premium_filter: 'all'
+      });
 
       if (error) throw error;
 
-      // Fetch test attempt counts separately for visible users only
-      if (data && data.length > 0) {
-        const userIds = data.map(u => u.id);
-        const { data: attemptCounts } = await supabase
-          .from('test_attempts')
-          .select('user_id')
-          .in('user_id', userIds);
-
-        // Count attempts per user
-        const countsByUser = attemptCounts?.reduce((acc, attempt) => {
-          acc[attempt.user_id] = (acc[attempt.user_id] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>) || {};
-
-        // Add counts to users
-        const usersWithCounts: UserData[] = data.map(user => ({
-          ...user,
-          test_attempts_count: countsByUser[user.id] || 0,
-          is_admin: user.is_admin || false,
-        }));
-
-        return { users: usersWithCounts, total: count || 0 };
-      }
-
-      return { users: [] as UserData[], total: count || 0 };
+      return { 
+        users: (data?.users || []) as UserData[], 
+        total: data?.total || 0 
+      };
     },
     staleTime: 30000, // Cache for 30 seconds
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
@@ -571,7 +485,7 @@ export default function StatsPage() {
         <GlassCard className="p-6 border border-border/80 bg-black/90">
           <h2 className="text-lg font-semibold mb-6">Questions by Category</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {Object.entries(stats?.categoryCounts || {}).map(([category, count]) => (
+            {Object.entries((stats?.categoryCounts || {}) as Record<string, number>).map(([category, count]) => (
               <div key={category} className="text-center p-4 rounded-xl bg-black/80 border border-border/80">
                 <p className="text-2xl font-bold text-primary mb-1">{count}</p>
                 <p className="text-sm text-muted-foreground">Category {category}</p>
@@ -590,7 +504,7 @@ export default function StatsPage() {
                 Questions per category/test. Cells with low counts help you see where more questions are needed.
               </p>
               <div className="space-y-1 text-xs">
-                {Object.entries(stats?.questionsPerTest || {})
+                {Object.entries((stats?.questionsPerTest || {}) as Record<string, number>)
                   .sort(([aKey], [bKey]) => aKey.localeCompare(bKey))
                   .map(([key, count]) => {
                     const [category, testNumber] = key.split('-');
@@ -625,7 +539,7 @@ export default function StatsPage() {
                 <div>
                   <p className="font-semibold mb-1">By Category</p>
                   <div className="space-y-1">
-                    {Object.entries(stats?.scenarioCategoryCounts || {}).map(([category, count]) => (
+                    {Object.entries((stats?.scenarioCategoryCounts || {}) as Record<string, number>).map(([category, count]) => (
                       <div key={category} className="flex items-center justify-between px-2 py-1 rounded bg-black/60 border border-border/70">
                         <span className="font-medium">Category {category}</span>
                         <span className="text-muted-foreground">{count} scenarios</span>
@@ -640,7 +554,7 @@ export default function StatsPage() {
                 <div>
                   <p className="font-semibold mb-1">By Level</p>
                   <div className="flex flex-wrap gap-2">
-                    {Object.entries(stats?.scenarioLevelCounts || {}).map(([level, count]) => (
+                    {Object.entries((stats?.scenarioLevelCounts || {}) as Record<string, number>).map(([level, count]) => (
                       <div key={level} className="px-2 py-1 rounded-full bg-black/60 border border-border/70">
                         <span className="font-medium mr-1">L{level}</span>
                         <span className="text-muted-foreground">{count}</span>
@@ -663,7 +577,8 @@ export default function StatsPage() {
               <div className="space-y-1 text-xs">
                 {Array.from({ length: 13 }).map((_, idx) => {
                   const chapterId = idx + 1;
-                  const chapterStats = stats?.materialsByChapter?.[chapterId] || { total: 0, published: 0 };
+                  const materialsMap = (stats?.materialsByChapter || {}) as Record<string, { total: number; published: number }>;
+                  const chapterStats = materialsMap[chapterId] || { total: 0, published: 0 };
                   const low = chapterStats.total === 0;
                   return (
                     <div

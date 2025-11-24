@@ -75,6 +75,32 @@ export default function AdminPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <GlassCard hover className="h-full flex flex-col p-6 border border-border/80 bg-black/80">
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+                <div className="flex -space-x-2">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 border-2 border-black flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-primary">U</span>
+                  </div>
+                  <div className="w-6 h-6 rounded-full bg-primary/20 border-2 border-black flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-primary">M</span>
+                  </div>
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Users</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Manage registered users and roles
+              </p>
+              <Button asChild className="w-full">
+                <Link href="/admin/users">Manage Users</Link>
+              </Button>
+            </GlassCard>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
             <GlassCard hover className="h-full flex flex-col p-6 border border-border/80 bg-black/80">

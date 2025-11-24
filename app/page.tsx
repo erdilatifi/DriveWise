@@ -254,35 +254,6 @@ export default function HomePage() {
                 </Button>
               </div>
 
-              {/* Beginner start strip */}
-              <div className="mt-3 space-y-2">
-                <p className="text-xs md:text-sm text-muted-foreground">
-                  {t("home.hero.newHereTitle")}
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    asChild
-                    className="h-9 px-4 rounded-xl border-border/70 bg-black/50 hover:bg-black/70 text-xs font-medium"
-                  >
-                    <Link href="/category/b">
-                      {t("home.hero.newHereCtaCategory")}
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    asChild
-                    className="h-9 px-4 rounded-xl border-border/70 bg-black/50 hover:bg-black/70 text-xs font-medium"
-                  >
-                    <Link href="/materials">
-                      {t("home.hero.newHereCtaMaterials")}
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-
               {/* Mobile apps coming soon */}
               <div className="mt-3 space-y-2">
                 <p className="text-xs md:text-sm text-muted-foreground">
@@ -325,27 +296,48 @@ export default function HomePage() {
               </div>
 
               {/* Hero quick stats */}
-              <div className="pt-6 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-xl text-sm relative">
-                <StatPill
-                  icon={<Target className="w-4 h-4" />}
-                  label="Mock tests"
-                  value="A · B · C · D"
-                />
-                <StatPill
-                  icon={<Activity className="w-4 h-4" />}
-                  label="Decision Trainer"
-                  value="XP · Streaks"
-                />
-                <StatPill
-                  icon={<BarChart3 className="w-4 h-4" />}
-                  label="Analytics"
-                  value={t("dashboard.testHistoryTitle")}
-                />
-                <StatPill
-                  icon={<Globe2 className="w-4 h-4" />}
-                  label="Languages"
-                  value="EN · SQ"
-                />
+              <div className="pt-4">
+                <GlassCard className="p-1.5 inline-flex flex-wrap gap-1.5 bg-black/40 border-white/10 backdrop-blur-xl">
+                  {[
+                    {
+                      icon: <Target className="w-3.5 h-3.5" />,
+                      label: "Mock Tests",
+                      value: "A · B · C · D",
+                    },
+                    {
+                      icon: <Activity className="w-3.5 h-3.5" />,
+                      label: "Decision Trainer",
+                      value: "XP · Streaks",
+                    },
+                    {
+                      icon: <BarChart3 className="w-3.5 h-3.5" />,
+                      label: "Analytics",
+                      value: "Test History",
+                    },
+                    {
+                      icon: <Globe2 className="w-3.5 h-3.5" />,
+                      label: "Languages",
+                      value: "EN · SQ",
+                    },
+                  ].map((stat, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
+                    >
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-500/10 text-orange-400 ring-1 ring-orange-500/20">
+                        {stat.icon}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">
+                          {stat.label}
+                        </span>
+                        <span className="text-xs font-bold text-foreground/90">
+                          {stat.value}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </GlassCard>
               </div>
             </div>
 
@@ -501,70 +493,7 @@ export default function HomePage() {
         </div>
       </motion.section>
 
-      {/* HERO BENEFIT BAND */}
-      <section className="relative border-b border-border/60 bg-gradient-to-b from-background/60 via-black/90 to-background py-12 md:py-16">
-        <div className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-orange-500/60 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-12 bottom-0 h-px bg-gradient-to-r from-transparent via-border/70 to-transparent" />
 
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="max-w-5xl mx-auto mb-10 text-center space-y-3 relative">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-black/60 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              <span className="h-1.5 w-7 rounded-full bg-gradient-to-r from-orange-500 to-orange-300" />
-              {t("home.benefit.badge")}
-            </div>
-            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-              {t("home.benefit.title")}
-            </h2>
-            <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
-              {t("home.benefit.body")}
-            </p>
-          </div>
-
-          <div className="max-w-5xl mx-auto grid gap-6 md:grid-cols-2">
-            <GlassCard className="relative h-full border border-border/80 bg-black/80 p-6 md:p-7 overflow-hidden">
-              <div className="pointer-events-none absolute inset-x-4 top-3 h-px bg-gradient-to-r from-transparent via-orange-500/40 to-transparent" />
-              <div className="flex items-start gap-3 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-orange-500/15 flex items-center justify-center text-orange-300">
-                  <Target className="w-4 h-4" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-sm font-semibold">Real exam rhythm from day one</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Mixed, personalized, and category tests mirror the real timing,
-                    difficulty, and structure of the Kosovo theory exam.
-                  </p>
-                </div>
-              </div>
-              <ul className="space-y-1.5 text-[11px] text-muted-foreground">
-                <li>• Choose between A, B, C, and D with exam-like question pools.</li>
-                <li>• Personalized sessions that lean into the questions you miss.</li>
-                <li>• Progress bars and XP so you always know if you are on track.</li>
-              </ul>
-            </GlassCard>
-
-            <GlassCard className="relative h-full border border-border/80 bg-black/80 p-6 md:p-7 overflow-hidden">
-              <div className="pointer-events-none absolute inset-x-4 top-3 h-px bg-gradient-to-r from-transparent via-orange-500/40 to-transparent" />
-              <div className="flex items-start gap-3 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-orange-500/15 flex items-center justify-center text-orange-300">
-                  <Shield className="w-4 h-4" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-sm font-semibold">Calm, guided review when it matters</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Detailed history, explanations, and Study Material are all
-                    framed around the same topics you are tested on.
-                  </p>
-                </div>
-              </div>
-              <ul className="space-y-1.5 text-[11px] text-muted-foreground">
-                <li>• See every answer, explanation, and weak topic in one place.</li>
-                <li>• Jump from a missed topic straight into the right materials.</li>
-                <li>• Keep your attempts, streaks, and XP safely stored for later.</li>
-              </ul>
-            </GlassCard>
-          </div>
-        </div>
-      </section>
 
       {/* HOW IT WORKS */}
       <section className="relative">
@@ -612,190 +541,44 @@ export default function HomePage() {
             </div>
 
             {/* Right column with animated line */}
-            <div className="relative pl-6 border-l border-border/60">
+            <div className="relative pl-8 border-l border-white/10">
               <motion.div
                 style={{ y: lineY }}
-                className="pointer-events-none absolute -left-px top-6 h-24 w-[2px] bg-gradient-to-b from-orange-400 via-orange-300 to-transparent"
+                className="pointer-events-none absolute -left-[1.5px] top-6 h-24 w-[3px] bg-gradient-to-b from-orange-500 via-orange-300 to-transparent rounded-full shadow-[0_0_15px_rgba(249,115,22,0.8)]"
               />
-              <div className="space-y-4">
-                <HowStep
-                  step="01"
-                  title="Create your account"
-                  body="Sign up in seconds with secure auth and get your own profile, history, and progress."
-                />
-                <HowStep
-                  step="02"
-                  title="Choose how to practice"
-                  body="Practice by category, run mixed tests, or let DriveWise build personalized sessions from your mistakes."
-                />
-                <HowStep
-                  step="03"
-                  title="Train decisions"
-                  body="Use the Decision Trainer to run through real-world scenarios with streaks and strict validation."
-                />
-                <HowStep
-                  step="04"
-                  title="Review & improve"
-                  body="Use your dashboard and detailed history to review every answer and close each knowledge gap."
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* TRUST & SAFETY */}
-      <section className="relative border-y border-border/60 bg-gradient-to-b from-black/80 via-black/90 to-background">
-        <div className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-orange-400/60 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
-        <div className="container mx-auto px-4 sm:px-6 py-12">
-          <div className="max-w-6xl mx-auto grid gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] items-center">
-            <div className="space-y-3 relative">
-              <div className="pointer-events-none hidden md:block absolute -left-8 top-4 h-10 w-px bg-gradient-to-b from-orange-500/50 via-orange-400/10 to-transparent" />
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground flex items-center gap-2">
-                <span className="h-1 w-6 bg-gradient-to-r from-orange-500 to-orange-300 rounded-full" />
-                {t("home.trust.badge")}
-              </p>
-              <h2 className="text-2xl md:text-3xl font-semibold">
-                {t("home.trust.title")}
-              </h2>
-              <p className="text-sm md:text-base text-muted-foreground max-w-xl">
-                {t("home.trust.body")}
-              </p>
-
-              <div className="grid sm:grid-cols-3 gap-3 pt-3 text-xs">
-                <TechStat
-                  icon={<Database className="w-4 h-4" />}
-                  label="Mock tests"
-                  value="Access to A, B, C and D categories you purchase"
-                />
-                <TechStat
-                  icon={<Lock className="w-4 h-4" />}
-                  label="Decision Trainer"
-                  value="Scenario training unlocked with paid plans"
-                />
-                <TechStat
-                  icon={<Cpu className="w-4 h-4" />}
-                  label="Study & review"
-                  value="Study Material and detailed answer review"
-                />
-              </div>
-            </div>
-
-            <GlassCard className="relative overflow-hidden border border-border/80 bg-black/80 p-6 md:p-7">
-              <div className="pointer-events-none absolute -right-20 top-0 h-48 w-48 bg-[conic-gradient(from_220deg_at_50%_50%,rgba(249,115,22,0.4),transparent_55%)] blur-3xl opacity-80" />
-              <div className="relative space-y-4 text-xs">
-                <div className="grid gap-2 text-[11px]">
-                  <InlineListItem
-                    label="Progress saved"
-                    value="Your history and scores stay linked to your account"
-                  />
-                  <InlineListItem
-                    label="Mock tests"
-                    value="Repeat tests as many times as you need during access"
-                  />
-                  <InlineListItem
-                    label="Study Material"
-                    value="Read the matching theory chapters after each test"
-                  />
-                  <InlineListItem
-                    label="Decision Trainer"
-                    value="Short scenarios to fix the mistakes you make in tests"
-                  />
-                  <InlineListItem
-                    label="Your data"
-                    value="Stored securely in your DriveWise account when you log in"
-                  />
+              <div className="space-y-8">
+                <div className="relative group">
+                  <div className="absolute -left-[41px] top-0 p-1.5 rounded-full bg-black border border-white/10 text-muted-foreground text-[10px] font-mono">01</div>
+                  <h3 className="text-xl font-bold text-white mb-2 group-hover:text-orange-300 transition-colors">Create your account</h3>
+                  <p className="text-muted-foreground leading-relaxed">Sign up in seconds. We immediately set up your analytics dashboard and personal learning profile.</p>
                 </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Everything is designed so you can focus on learning for the Kosovo theory exam without losing your progress.
-                </p>
-              </div>
-            </GlassCard>
-          </div>
-        </div>
-      </section>
 
-
-      {/* CORE FEATURES */}
-      <section className="relative">
-        <div className="container mx-auto px-4 sm:px-6 py-16">
-          <div className="max-w-5xl mx-auto">
-            <div className="flex flex-col gap-4 mb-10 md:mb-12 relative">
-              <div className="pointer-events-none hidden md:block absolute -left-4 top-2 h-10 w-px bg-gradient-to-b from-orange-500/40 via-orange-400/10 to-transparent" />
-              <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-black/60 px-3 py-1 text-[11px] text-muted-foreground">
-                <span className="h-1 w-6 rounded-full bg-gradient-to-r from-orange-500 to-orange-300" />
-                {t("home.pillars.badge")}
-              </div>
-              <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-                {t("home.pillars.title")}
-              </h2>
-              <p className="text-sm md:text-base text-muted-foreground max-w-2xl">
-                {t("home.pillars.body")}
-              </p>
-            </div>
-
-            <div className="grid gap-5 md:grid-cols-3">
-              {[
-                {
-                  icon: Target,
-                  title: t("features.comprehensive.title"),
-                  desc: t("features.comprehensive.desc"),
-                  bullets: [
-                    "Mixed, personalized, and category tests.",
-                    "Audio, images, and Kosovo-style phrasing.",
-                  ],
-                },
-                {
-                  icon: TrendingUp,
-                  title: t("features.progress.title"),
-                  desc: t("features.progress.desc"),
-                  bullets: [
-                    "XP, streaks, and weekly score curves.",
-                    "Weak topics highlighted automatically.",
-                  ],
-                },
-                {
-                  icon: Shield,
-                  title: t("features.guaranteed.title"),
-                  desc: t("features.guaranteed.desc"),
-                  bullets: [
-                    "Distraction-free interface for deep focus.",
-                    "Stable on slow networks and small phones.",
-                  ],
-                },
-              ].map((feature) => (
-                <div
-                  key={feature.title}
-                  className="relative rounded-2xl border border-border/70 bg-black/75 p-5 md:p-6 flex flex-col gap-3 overflow-hidden"
-                >
-                  <div className="pointer-events-none absolute inset-x-4 top-3 h-px bg-gradient-to-r from-transparent via-orange-500/30 to-transparent" />
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-orange-500/15 flex items-center justify-center text-orange-300 flex-shrink-0">
-                      <feature.icon className="w-4 h-4" />
-                    </div>
-                    <div className="space-y-1">
-                      <h3 className="text-sm font-semibold">{feature.title}</h3>
-                      <p className="text-xs text-muted-foreground">
-                        {feature.desc}
-                      </p>
-                    </div>
-                  </div>
-                  <ul className="space-y-1.5 text-[11px] text-muted-foreground/85">
-                    {feature.bullets.map((line) => (
-                      <li key={line} className="flex items-start gap-1.5">
-                        <span className="mt-[3px] h-1 w-3 rounded-full bg-gradient-to-r from-orange-500 to-orange-300" />
-                        <span className="flex-1 break-words">{line}</span>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="relative group">
+                  <div className="absolute -left-[41px] top-0 p-1.5 rounded-full bg-black border border-white/10 text-muted-foreground text-[10px] font-mono">02</div>
+                  <h3 className="text-xl font-bold text-white mb-2 group-hover:text-orange-300 transition-colors">Choose how to practice</h3>
+                  <p className="text-muted-foreground leading-relaxed">Jump into a specific category (A, B, C, D) or let our algorithm build a personalized mixed test for you.</p>
                 </div>
-              ))}
+
+                <div className="relative group">
+                  <div className="absolute -left-[41px] top-0 p-1.5 rounded-full bg-black border border-white/10 text-muted-foreground text-[10px] font-mono">03</div>
+                  <h3 className="text-xl font-bold text-white mb-2 group-hover:text-orange-300 transition-colors">Train decisions</h3>
+                  <p className="text-muted-foreground leading-relaxed">Use the specialized Decision Trainer to master right-of-way and hazard perception scenarios.</p>
+                </div>
+
+                <div className="relative group">
+                  <div className="absolute -left-[41px] top-0 p-1.5 rounded-full bg-black border border-white/10 text-muted-foreground text-[10px] font-mono">04</div>
+                  <h3 className="text-xl font-bold text-white mb-2 group-hover:text-orange-300 transition-colors">Review & Improve</h3>
+                  <p className="text-muted-foreground leading-relaxed">Check your analytics. If a topic is weak, we'll tell you. Fix it, then go pass the real exam.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
+
+
+
+
 
       {/* CATEGORIES */}
       <section id="categories" className="relative border-t border-border/60">
@@ -829,7 +612,11 @@ export default function HomePage() {
                 />
 
                 <Link href={`/category/${featured.toLowerCase()}`} className="flex-1">
-                  <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-black/80 h-full flex flex-col">
+                  <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-black/80 h-full flex flex-col hover:border-orange-400/70 transition-all duration-300">
+                    {/* Hover effects */}
+                    <div className="pointer-events-none absolute -right-20 -top-20 h-80 w-80 rounded-full border border-dashed border-orange-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="pointer-events-none absolute -bottom-8 left-6 h-40 w-40 rounded-full bg-orange-500/10 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
                     <div className="relative z-10 p-6 md:p-8 flex-1 flex flex-col justify-between">
                       <div>
                         <div className="inline-flex items-center gap-2 rounded-full border border-orange-400/60 bg-orange-500/10 px-3 py-1 text-xs font-semibold text-orange-300">
@@ -925,27 +712,11 @@ export default function HomePage() {
                       transition={{ duration: 0.45, delay: i * 0.08 }}
                       className="relative"
                     >
-                      {/* One clean horizontal line per category (except C), outside the card, into the vertical rail */}
-                      {category !== "C" && (
-                        <span
-                          aria-hidden
-                          className="
-                            hidden lg:block
-                            absolute
-                            -left-10
-                            top-1/2
-                            h-px
-                            w-10
-                            -translate-y-1/2
-                            bg-orange-500/35
-                          "
-                        />
-                      )}
-
                       <Link href={`/category/${category.toLowerCase()}`}>
                         <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-black/80 p-5 hover:border-orange-400/70 transition-all duration-300">
-                          <div className="pointer-events-none absolute inset-x-5 top-3 h-px bg-gradient-to-r from-transparent via-orange-500/30 to-transparent" />
-                          <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 translate-x-1/4 -translate-y-1/4 rounded-full bg-orange-500/15 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                          {/* Hover effects */}
+                          <div className="pointer-events-none absolute -right-10 top-8 h-40 w-40 rounded-full border border-dashed border-orange-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                          <div className="pointer-events-none absolute -bottom-8 left-6 h-24 w-24 rounded-full bg-orange-500/10 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                           <div className="relative flex items-start gap-4">
                             <div className="w-12 h-12 rounded-xl bg-orange-500/15 flex items-center justify-center text-orange-300 shrink-0">
@@ -999,7 +770,7 @@ export default function HomePage() {
   whileInView={{ opacity: 1, y: 0 }}
   viewport={{ once: true, amount: 0.3 }}
   transition={{ duration: 0.6 }}
-  className="relative border-t border-border/60 bg-gradient-to-b from-background via-black to-black py-20 md:py-24 overflow-hidden"
+  className="relative border-t border-border/60 bg-gradient-to-b from-background via-black to-black py-12 md:py-16 overflow-hidden"
 >
   {/* BACKGROUND GRID + GLOWS */}
   <div
@@ -1055,7 +826,7 @@ export default function HomePage() {
 
   <div className="container mx-auto px-4 sm:px-6 relative">
     {/* HEADER */}
-    <div className="max-w-3xl mx-auto text-center mb-14 md:mb-16 space-y-4 relative">
+    <div className="max-w-3xl mx-auto text-center mb-8 md:mb-10 space-y-3 relative">
       <div className="pointer-events-none absolute inset-x-10 -top-3 h-px bg-gradient-to-r from-transparent via-orange-500/50 to-transparent" />
       <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-black/60 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
         <span className="h-1.5 w-8 rounded-full bg-gradient-to-r from-orange-500 to-orange-300" />
@@ -1090,13 +861,10 @@ export default function HomePage() {
           className="relative group"
         >
           <div className="absolute -inset-px rounded-3xl bg-gradient-to-b from-orange-500/0 via-orange-500/12 to-transparent opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500" />
-          <div className="relative h-full rounded-3xl border border-border/70 bg-black/85 p-6 flex flex-col gap-4 transform lg:-rotate-1 group-hover:rotate-0 group-hover:-translate-y-1 transition-all duration-300">
+          <div className="relative h-full rounded-3xl border border-border/70 bg-black/85 p-5 flex flex-col gap-3 transform lg:-rotate-1 group-hover:rotate-0 group-hover:-translate-y-1 transition-all duration-300">
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                 1 Month
-              </span>
-              <span className="rounded-full border border-border/70 px-2.5 py-0.5 text-[10px] text-muted-foreground">
-                Tight deadline
               </span>
             </div>
 
@@ -1107,25 +875,23 @@ export default function HomePage() {
               </span>
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              Perfect when your exam is soon and you want a focused, last sprint
-              to get ready.
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Perfect for a focused last sprint.
             </p>
 
             <div className="h-px w-full bg-gradient-to-r from-transparent via-border/70 to-transparent my-1" />
 
-            <ul className="space-y-2 text-xs text-muted-foreground">
-              <li>• Unlimited mock tests in one category</li>
-              <li>• Decision Trainer fully unlocked</li>
-              <li>• Theory & study materials for that category</li>
-              <li>• Detailed explanations for every answer</li>
+            <ul className="space-y-1.5 text-xs text-muted-foreground">
+              <li>• Unlimited mock tests</li>
+              <li>• Full Decision Trainer</li>
+              <li>• Study materials</li>
             </ul>
 
             <Link
               href="/pricing?plan=PLAN_A&category=B"
-              className="mt-5 inline-flex w-full items-center justify-center rounded-2xl border border-border/80 bg-black/60 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground hover:border-orange-400 hover:text-orange-200 transition"
+              className="mt-3 inline-flex w-full items-center justify-center rounded-2xl border border-border/80 bg-black/60 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground hover:border-orange-400 hover:text-orange-200 transition"
             >
-              Choose 1 Month
+              Get 1 Month
             </Link>
           </div>
         </motion.div>
@@ -1149,10 +915,10 @@ export default function HomePage() {
           {/* Gradient border shell */}
           <div className="absolute -inset-[2px] rounded-[28px] bg-gradient-to-b from-orange-400 via-orange-500/70 to-orange-400 opacity-90 group-hover:opacity-100 transition-opacity duration-500" />
           <div className="relative h-full rounded-[26px] bg-black/95 p-[1px]">
-            <div className="relative h-full rounded-[24px] bg-gradient-to-b from-black via-zinc-950 to-black p-6 md:p-7 flex flex-col gap-4">
+            <div className="relative h-full rounded-[24px] bg-gradient-to-b from-black via-zinc-950 to-black p-5 md:p-6 flex flex-col gap-3">
               {/* Ribbon badge */}
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <div className="rounded-full border border-orange-300/80 bg-black px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-orange-100 shadow-[0_0_24px_rgba(249,115,22,0.65)]">
+                <div className="rounded-full border border-orange-300/80 bg-black px-3 py-0.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-orange-100 shadow-[0_0_24px_rgba(249,115,22,0.65)]">
                   Best value
                 </div>
               </div>
@@ -1161,9 +927,6 @@ export default function HomePage() {
                 <span className="text-[11px] uppercase tracking-[0.18em] text-orange-200">
                   3 Months
                 </span>
-                <span className="rounded-full bg-orange-500/15 px-3 py-1 text-[10px] text-orange-100 border border-orange-400/60">
-                  Recommended
-                </span>
               </div>
 
               <div className="flex flex-wrap items-end gap-2">
@@ -1171,35 +934,29 @@ export default function HomePage() {
                   8€
                 </span>
                 <span className="text-xs text-orange-100/80 mb-1">
-                  / category · ≈ 2.67€/month
+                  / category
                 </span>
               </div>
 
-              <p className="text-xs md:text-sm text-muted-foreground">
-                Ideal if you want real mastery, not just a pass. Enough time to
-                fail, review, and walk into the exam relaxed.
+              <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
+                Real mastery. Time to fail, review, and pass relaxed.
               </p>
 
               <div className="h-px w-full bg-gradient-to-r from-orange-500/0 via-orange-500/70 to-orange-500/0 my-1" />
 
-              <ul className="space-y-2 text-xs md:text-sm text-muted-foreground">
-                <li>• Unlimited mock tests in your chosen category</li>
-                <li>• Full Decision Trainer with streaks & strict mode</li>
-                <li>• Complete theory library & guided study flows</li>
-                <li>• Deep analytics & detailed review for every test</li>
-                <li>• Most savings and most popular among DriveWise learners</li>
+              <ul className="space-y-1.5 text-xs md:text-sm text-muted-foreground">
+                <li>• Unlimited mock tests</li>
+                <li>• Full Decision Trainer</li>
+                <li>• Complete theory library</li>
+                <li>• Deep analytics</li>
               </ul>
 
               <Link
                 href="/pricing?plan=PLAN_C&category=B"
-                className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 to-orange-300 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-black shadow-[0_0_35px_rgba(249,115,22,0.8)] hover:brightness-110 transition"
+                className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 to-orange-300 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-black shadow-[0_0_35px_rgba(249,115,22,0.8)] hover:brightness-110 transition"
               >
-                Choose 3 Months
+                Get 3 Months
               </Link>
-
-              <p className="mt-3 text-[11px] text-muted-foreground text-center">
-                Best balance of time, price, and exam confidence.
-              </p>
             </div>
           </div>
         </motion.div>
@@ -1213,13 +970,10 @@ export default function HomePage() {
           className="relative group"
         >
           <div className="absolute -inset-px rounded-3xl bg-gradient-to-b from-orange-500/0 via-orange-500/12 to-transparent opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500" />
-          <div className="relative h-full rounded-3xl border border-border/70 bg-black/85 p-6 flex flex-col gap-4 transform lg:rotate-1 group-hover:rotate-0 group-hover:-translate-y-1 transition-all duration-300">
+          <div className="relative h-full rounded-3xl border border-border/70 bg-black/85 p-5 flex flex-col gap-3 transform lg:rotate-1 group-hover:rotate-0 group-hover:-translate-y-1 transition-all duration-300">
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                 2 Months
-              </span>
-              <span className="rounded-full border border-border/70 px-2.5 py-0.5 text-[10px] text-muted-foreground">
-                Extra breathing room
               </span>
             </div>
 
@@ -1230,24 +984,23 @@ export default function HomePage() {
               </span>
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              Great if you want consistent practice without rushing or committing
-              long term.
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Consistent practice without rushing.
             </p>
 
             <div className="h-px w-full bg-gradient-to-r from-transparent via-border/70 to-transparent my-1" />
 
-            <ul className="space-y-2 text-xs text-muted-foreground">
-              <li>• Everything included in the 1 month plan</li>
-              <li>• Consistent value at 3.00€/month</li>
-              <li>• Perfect if your exam date might move</li>
+            <ul className="space-y-1.5 text-xs text-muted-foreground">
+              <li>• Everything in 1 Month</li>
+              <li>• Great value</li>
+              <li>• Flexible timeframe</li>
             </ul>
 
             <Link
               href="/pricing?plan=PLAN_B&category=B"
-              className="mt-5 inline-flex w-full items-center justify-center rounded-2xl border border-border/80 bg-black/60 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground hover:border-orange-400 hover:text-orange-200 transition"
+              className="mt-3 inline-flex w-full items-center justify-center rounded-2xl border border-border/80 bg-black/60 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground hover:border-orange-400 hover:text-orange-200 transition"
             >
-              Choose 2 Months
+              Get 2 Months
             </Link>
           </div>
         </motion.div>

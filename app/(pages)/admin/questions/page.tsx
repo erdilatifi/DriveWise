@@ -48,7 +48,8 @@ export default function QuestionsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState<{ id: string; text: string } | null>(null);
-  const itemsPerPage = 10;
+  const [jumpToPage, setJumpToPage] = useState('');
+  const itemsPerPage = 25;
 
   const { data, isLoading, error } = useQuestions({
     category: categoryFilter || undefined,
@@ -311,51 +312,101 @@ export default function QuestionsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-8 flex flex-col items-center gap-3">
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <div className="flex items-center gap-4 w-full justify-center">
+              <Pagination className="w-auto mx-0">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                  
+                  {/* Smart Pagination Range */}
+                  {(() => {
+                    const range = [];
+                    const delta = 1; // Pages to show around current
+                    
+                    for (let i = 1; i <= totalPages; i++) {
+                      if (
+                        i === 1 || 
+                        i === totalPages || 
+                        (i >= currentPage - delta && i <= currentPage + delta)
+                      ) {
+                        range.push(i);
+                      }
+                    }
+
+                    const renderRange = [];
+                    let l = null;
+
+                    for (const i of range) {
+                      if (l) {
+                        if (i - l === 2) {
+                          renderRange.push(l + 1);
+                        } else if (i - l !== 1) {
+                          renderRange.push('...');
+                        }
+                      }
+                      renderRange.push(i);
+                      l = i;
+                    }
+
+                    return renderRange.map((page, idx) => {
+                      if (page === '...') {
+                        return <PaginationEllipsis key={`ellipsis-${idx}`} />;
+                      }
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(Number(page))}
+                            isActive={currentPage === page}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    });
+                  })()}
+
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+
+              {/* Jump to Page Input */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">Go to</span>
+                <Input
+                  className="w-16 h-8 text-xs"
+                  type="number"
+                  min={1}
+                  max={totalPages}
+                  placeholder={String(currentPage)}
+                  value={jumpToPage}
+                  onChange={(e) => setJumpToPage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const page = parseInt(jumpToPage);
+                      if (page >= 1 && page <= totalPages) {
+                        setCurrentPage(page);
+                        setJumpToPage('');
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
+            
             <p className="text-xs text-muted-foreground">
-              Showing {(currentPage - 1) * itemsPerPage + 1}
-              {' '}
-              - {Math.min(currentPage * itemsPerPage, totalQuestions)} of {totalQuestions} questions
+              Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, totalQuestions)} of {totalQuestions} questions
             </p>
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                  />
-                </PaginationItem>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                  // Show first page, last page, current page, and pages around current
-                  if (
-                    page === 1 ||
-                    page === totalPages ||
-                    (page >= currentPage - 1 && page <= currentPage + 1)
-                  ) {
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => setCurrentPage(page)}
-                          isActive={currentPage === page}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  } else if (page === currentPage - 2 || page === currentPage + 2) {
-                    return <PaginationEllipsis key={page} />;
-                  }
-                  return null;
-                })}
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
           </div>
         )}
       </motion.div>
