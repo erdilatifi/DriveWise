@@ -56,6 +56,7 @@ export interface MaterialsQueryParams {
   page?: number;
   pageSize?: number;
   includeUnpublished?: boolean;
+  fields?: string; // New: Allow selecting specific columns
 }
 
 export interface MaterialsPageResult {
@@ -72,18 +73,20 @@ export function useMaterials(params: MaterialsQueryParams = {}) {
     page = 1,
     pageSize = 50,
     includeUnpublished = false,
+    fields = '*', // Default to all for backward compatibility
   } = params;
   const supabase = createClient();
 
   return useQuery<MaterialsPageResult>({
-    queryKey: ['materials', search, chapterId, category, page, pageSize, includeUnpublished],
+    queryKey: ['materials', search, chapterId, category, page, pageSize, includeUnpublished, fields],
     queryFn: async () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
+      // Select specific fields if provided, otherwise *
       let query = supabase
         .from('study_materials')
-        .select('*', { count: 'planned' })
+        .select(fields, { count: 'planned' })
         .order('order_index', { ascending: true });
 
       if (chapterId) {
@@ -107,7 +110,19 @@ export function useMaterials(params: MaterialsQueryParams = {}) {
 
       if (error) throw error;
 
-      const materials = (data || []) as Material[];
+      const materials = (data || []) as unknown as Material[];
+      
+      // Only fetch images if we are fetching full content or specifically requested
+      // If fields doesn't include 'id' we can't match images anyway
+      // Just simplify: if fields is '*', fetch images. If restricted, skip images unless logic added.
+      // For lightweight list, we don't need images.
+      if (fields !== '*') {
+         return {
+            materials,
+            total: count || 0,
+         };
+      }
+
       const materialIds = materials.map((m) => m.id);
 
       let images: MaterialImage[] = [];
@@ -133,6 +148,45 @@ export function useMaterials(params: MaterialsQueryParams = {}) {
         total: count || 0,
       };
     },
+  });
+}
+
+// Fetch a single material by Chapter ID (Optimized for reading view)
+export function useMaterialByChapterId(chapterId: number | undefined) {
+  const supabase = createClient();
+
+  return useQuery<Material | null>({
+    queryKey: ['material-by-chapter', chapterId],
+    queryFn: async () => {
+      if (chapterId === undefined) return null;
+
+      const { data, error } = await supabase
+        .from('study_materials')
+        .select('*')
+        .eq('chapter_id', chapterId)
+        .single();
+
+      if (error) throw error;
+
+      const material = data as Material;
+
+      // Fetch images for this material
+      const { data: imageData, error: imageError } = await supabase
+        .from('material_images')
+        .select('*')
+        .eq('material_id', material.id)
+        .order('order_index', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      if (imageError) throw imageError;
+
+      return {
+        ...material,
+        images: (imageData || []) as MaterialImage[],
+      };
+    },
+    enabled: !!chapterId,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 }
 

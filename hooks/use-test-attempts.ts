@@ -226,16 +226,13 @@ export function useTestAchievements(userId?: string) {
   });
 }
 
-// Get dashboard stats derived from test attempts
+// Get dashboard stats derived from test attempts (Optimized V2)
 export function useDashboardStats(userId?: string) {
   return useQuery({
     queryKey: ['dashboard-stats', userId],
     queryFn: async () => {
       const supabase = createClient();
 
-      // Default empty dashboard state used when there is no data
-      // or when we deliberately fall back after a timeout to avoid
-      // keeping the dashboard skeleton in an infinite loading state.
       const emptyResult = {
         stats: {
           totalTests: 0,
@@ -250,38 +247,31 @@ export function useDashboardStats(userId?: string) {
         recentTests: [] as RecentTest[],
       };
 
-      const fetchPromise = (async () => {
-        const { data: attempts, error } = await supabase
-          .from('test_attempts')
-          .select('*')
-          .eq('user_id', userId!)
-          .order('completed_at', { ascending: false });
+      try {
+        // Parallelize fetches
+        const [statsRes, progressRes, recentRes, streakRes] = await Promise.all([
+          supabase.rpc('get_dashboard_stats', { p_user_id: userId! }),
+          supabase.rpc('get_weekly_progress', { p_user_id: userId! }),
+          supabase.rpc('get_recent_tests', { p_user_id: userId!, p_limit: 4 }),
+          // We still need dates for streak, but we can select JUST dates
+          supabase.from('test_attempts').select('completed_at').eq('user_id', userId!).order('completed_at', { ascending: false })
+        ]);
 
-        if (error) throw error;
+        if (statsRes.error) throw statsRes.error;
+        if (progressRes.error) throw progressRes.error;
+        if (recentRes.error) throw recentRes.error;
 
-        const testAttempts = attempts || [];
+        const statsData = statsRes.data?.[0] || {
+          total_tests: 0,
+          average_score: 0,
+          best_score: 0,
+          tests_this_week: 0,
+          passed_tests: 0,
+          failed_tests: 0
+        };
 
-        if (testAttempts.length === 0) {
-          return emptyResult;
-        }
-
-        // Calculate stats
-        const totalTests = testAttempts.length;
-        const totalScore = testAttempts.reduce((sum, test) => sum + test.percentage, 0);
-        const averageScore = Math.round(totalScore / totalTests);
-        const bestScore = Math.max(...testAttempts.map(test => test.percentage));
-        const passedTests = testAttempts.filter(test => test.percentage >= 80).length;
-        const failedTests = totalTests - passedTests;
-
-        // Calculate tests this week
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        const testsThisWeek = testAttempts.filter(test =>
-          new Date(test.completed_at) >= oneWeekAgo
-        ).length;
-
-        // Calculate streak (consecutive days with tests)
-        const testDates = testAttempts.map(test => {
+        // Calculate streak
+        const testDates = (streakRes.data || []).map((test: any) => {
           const date = new Date(test.completed_at);
           return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
         });
@@ -307,62 +297,54 @@ export function useDashboardStats(userId?: string) {
           }
         }
 
-        // Prepare progress data (last 7 days)
-        const last7Days: ProgressData[] = [];
+        // Format progress data
+        // Map database rows to 7-day chart format
+        const progressData: ProgressData[] = [];
+        const dbProgress = progressRes.data || [];
+        
         for (let i = 6; i >= 0; i--) {
-          const date = new Date();
-          date.setDate(date.getDate() - i);
-          const dateStr = date.toDateString();
-          const dayTests = testAttempts.filter(test =>
-            new Date(test.completed_at).toDateString() === dateStr
-          );
-          const avgScore =
-            dayTests.length > 0
-              ? Math.round(
-                  dayTests.reduce((sum, test) => sum + test.percentage, 0) /
-                    dayTests.length,
-                )
-              : 0;
-
-          last7Days.push({
-            date: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
-            score: avgScore,
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD
+          const dayLabel = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()];
+          
+          const dayStat = dbProgress.find((p: any) => p.attempt_date === dateStr);
+          
+          progressData.push({
+            date: dayLabel,
+            score: dayStat ? dayStat.daily_avg_score : 0
           });
         }
 
-        // Prepare recent tests (last 4)
-        const recentTests: RecentTest[] = testAttempts.slice(0, 4).map(test => ({
+        // Format recent tests
+        const recentTests: RecentTest[] = (recentRes.data || []).map((test: any) => ({
           id: test.id,
           category: test.category,
           testNumber: test.test_number || '1',
-          score: test.percentage,
+          score: Number(test.percentage),
           date: new Date(test.completed_at).toLocaleDateString(),
-          passed: test.percentage >= 80,
+          passed: Number(test.percentage) >= 80,
         }));
 
         return {
           stats: {
-            totalTests,
-            averageScore,
-            bestScore,
-            testsThisWeek,
-            streak,
-            passedTests,
-            failedTests,
+            totalTests: statsData.total_tests,
+            averageScore: statsData.average_score,
+            bestScore: statsData.best_score,
+            testsThisWeek: statsData.tests_this_week,
+            streak: streak, // Calculated locally for now
+            passedTests: statsData.passed_tests,
+            failedTests: statsData.failed_tests,
           },
-          progressData: last7Days,
+          progressData,
           recentTests,
         };
-      })();
 
-      // Safety net: if Supabase is slow or misconfigured and the
-      // query takes too long, fall back to an "empty" dashboard
-      // state instead of keeping the UI in an endless skeleton.
-      const timeoutPromise = new Promise<typeof emptyResult>((resolve) => {
-        setTimeout(() => resolve(emptyResult), 10000);
-      });
-
-      return Promise.race([fetchPromise, timeoutPromise]);
+      } catch (error) {
+        console.error('Dashboard stats error:', error);
+        // Fallback to empty result if RPC fails (e.g. if migration not run)
+        return emptyResult;
+      }
     },
     enabled: !!userId,
     staleTime: 2 * 60 * 1000, // 2 minutes

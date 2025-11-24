@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { BookOpen, Search, ChevronRight, AlertCircle, Lock, Check } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
-import { useMaterials, type Material } from '@/hooks/use-materials';
+import { useMaterials, useMaterialByChapterId, type Material, type MaterialImage } from '@/hooks/use-materials';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/auth-context';
 import { useGlobalPremium, useUserPlans } from '@/hooks/use-subscriptions';
@@ -60,20 +60,21 @@ export default function MaterialsPage() {
 
   const [selectedCategory, setSelectedCategory] = useState<LicenseCategory | undefined>(undefined);
 
-  const { data, isLoading, error } = useMaterials({
-    pageSize: 50,
+  const { data: listData, isLoading: listLoading, error } = useMaterials({
+    pageSize: 100, // Fetch more items since they are lightweight
     category: selectedCategory,
+    fields: 'id,chapter_id,category,title_en,title_sq,order_index,is_published', // Explicitly exclude content
   });
 
-  const materials = (data?.materials ?? []) as Material[];
+  const materialsList = (listData?.materials ?? []) as Material[];
   const { hasAnyActivePlan, isLoading: premiumLoading } = useGlobalPremium(user?.id, isAdmin);
 
   const sectionOrder: SectionKey[] = useMemo(() => {
     const chapterIds = Array.from(
-      new Set(materials.map((m) => m.chapter_id as number))
+      new Set(materialsList.map((m) => m.chapter_id as number))
     ).sort((a, b) => a - b);
     return chapterIds.length > 0 ? chapterIds : SECTION_ORDER;
-  }, [materials]);
+  }, [materialsList]);
   
   const [selectedSection, setSelectedSection] = useState<SectionKey>(() => {
     const chapterParam = searchParams.get('chapter');
@@ -87,14 +88,13 @@ export default function MaterialsPage() {
     return fallback;
   });
 
+  // Fetch FULL content only for the selected chapter
+  const { data: currentMaterial, isLoading: contentLoading } = useMaterialByChapterId(selectedSection);
+
   const [search, setSearch] = useState<string>(() => {
     const searchParam = searchParams.get('search') || searchParams.get('q');
     return searchParam || '';
   });
-
-  const currentMaterial = useMemo(() => {
-    return materials.find((m) => m.chapter_id === selectedSection) ?? null;
-  }, [materials, selectedSection]);
 
   const baseContent = useMemo(() => {
     if (!currentMaterial) return null;
@@ -112,7 +112,7 @@ export default function MaterialsPage() {
       let label = t(key);
 
       if (!label || label === key) {
-        const materialForChapter = materials.find((m) => m.chapter_id === id);
+        const materialForChapter = materialsList.find((m) => m.chapter_id === id);
         label =
           language === 'sq'
             ? materialForChapter?.title_sq || `Chapter ${id}`
@@ -121,7 +121,7 @@ export default function MaterialsPage() {
 
       return label.toLowerCase().includes(query);
     });
-  }, [sectionOrder, search, materials, language, t]);
+  }, [sectionOrder, search, materialsList, language, t]);
 
   const renderValue = (value: unknown) => {
     if (typeof value === 'string') {
@@ -163,7 +163,7 @@ export default function MaterialsPage() {
   const sectionTitleKey = sectionIndex >= 0 ? `materials.section.${sectionIndex + 1}` : '';
   let sectionTitle = sectionTitleKey ? t(sectionTitleKey) : '';
   if (!sectionTitle || sectionTitle === sectionTitleKey) {
-    const materialForSelected = materials.find((m) => m.chapter_id === selectedSection);
+    const materialForSelected = materialsList.find((m) => m.chapter_id === selectedSection);
     sectionTitle =
       language === 'sq'
         ? materialForSelected?.title_sq || `Chapter ${selectedSection}`
@@ -186,7 +186,7 @@ export default function MaterialsPage() {
 
   const chapterSections = Array.isArray(chapter?.sections) ? chapter!.sections : [];
 
-  if (isLoading || premiumLoading) {
+  if (listLoading || premiumLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -312,7 +312,7 @@ export default function MaterialsPage() {
     );
   }
 
-  if (!materials.length) {
+  if (!materialsList.length) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -454,7 +454,7 @@ export default function MaterialsPage() {
                     const key = `materials.section.${sectionIndex + 1}`;
                     let label = t(key);
                     if (!label || label === key) {
-                      const materialForChapter = materials.find((m: Material) => m.chapter_id === id);
+                      const materialForChapter = materialsList.find((m: Material) => m.chapter_id === id);
                       label =
                         language === 'sq'
                           ? materialForChapter?.title_sq || `Chapter ${id}`
@@ -529,7 +529,7 @@ export default function MaterialsPage() {
                 {/* Images for this chapter */}
                 {currentImages.length > 0 && (
                   <div className="grid gap-6 mb-10 md:grid-cols-2">
-                    {currentImages.map((img) => (
+                    {currentImages.map((img: MaterialImage) => (
                       <figure
                         key={img.id}
                         className="overflow-hidden rounded-xl border border-border/60 bg-black/40 shadow-lg group"
