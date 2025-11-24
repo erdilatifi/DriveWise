@@ -58,22 +58,14 @@ export interface UserProfile {
   email?: string;
   full_name?: string;
   preferred_language: LanguageCode;
+  role?: 'student' | 'admin';
   is_admin: boolean;
-  is_instructor: boolean;
-  instructor_code?: string;
   app_rating?: number; // 1-5 stars, optional
   is_premium?: boolean;
   subscription_id?: string | null;
   subscription_end?: string | null;
   created_at: string;
   updated_at: string;
-}
-
-export interface StudentInstructorLink {
-  id: string;
-  student_id: string;
-  instructor_id: string;
-  linked_at: string;
 }
 
 export interface TestAttempt {
