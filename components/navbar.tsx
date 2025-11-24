@@ -109,8 +109,11 @@ export function Navbar() {
             {/* Home */}
             {renderDesktopLink('/', t('nav.home'), isActive('/'))}
 
-            {/* Tests (category index page) */}
-            {renderDesktopLink('/category', t('nav.tests'), pathname.startsWith('/category'))}
+            {/* Pricing page */}
+            {renderDesktopLink('/pricing', t('nav.pricing'), isActive('/pricing'))}
+
+            {/* Materials */}
+            {renderDesktopLink('/materials', t('nav.materials'), isActive('/materials'))}
 
             {/* Decision Trainer (logged-in users) */}
             {user &&
@@ -120,11 +123,8 @@ export function Navbar() {
                 pathname.startsWith('/decision-trainer'),
               )}
 
-            {/* Materials */}
-            {renderDesktopLink('/materials', t('nav.materials'), isActive('/materials'))}
-
-            {/* Pricing page */}
-            {renderDesktopLink('/pricing', t('nav.pricing'), isActive('/pricing'))}
+            {/* Tests (category index page) */}
+            {renderDesktopLink('/category', t('nav.tests'), pathname.startsWith('/category'))}
 
             {/* Dashboard */}
             {renderDesktopLink('/dashboard', t('nav.dashboard'), isActive('/dashboard'))}
@@ -243,17 +243,28 @@ export function Navbar() {
                 {t('nav.home')}
               </Link>
 
-              {/* Tests (category index page) */}
+              {/* Pricing */}
               <Link
-                href="/category"
+                href="/pricing"
                 className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                  pathname.startsWith('/category')
+                  isActive('/pricing')
                     ? 'bg-primary/10 text-primary border border-primary/20'
                     : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                {t('nav.tests')}
+                {t('nav.pricing')}
+              </Link>
+
+              {/* Materials */}
+              <Link
+                href="/materials"
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  isActive('/materials') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('nav.materials')}
               </Link>
 
               {/* Decision Trainer (logged-in users) */}
@@ -271,28 +282,17 @@ export function Navbar() {
                 </Link>
               )}
 
-              {/* Materials */}
+              {/* Tests (category index page) */}
               <Link
-                href="/materials"
+                href="/category"
                 className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                  isActive('/materials') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {t('nav.materials')}
-              </Link>
-
-              {/* Pricing */}
-              <Link
-                href="/pricing"
-                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                  isActive('/pricing')
+                  pathname.startsWith('/category')
                     ? 'bg-primary/10 text-primary border border-primary/20'
                     : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                {t('nav.pricing')}
+                {t('nav.tests')}
               </Link>
 
               {/* Dashboard */}
