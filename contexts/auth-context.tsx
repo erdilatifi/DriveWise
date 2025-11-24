@@ -122,6 +122,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (mounted) {
           setUser(session?.user ?? null);
           setAuthLoading(false);
+          if (session?.user) {
+            router.refresh();
+          }
         }
       } catch (error) {
         console.error('Error getting session:', error);
@@ -142,9 +145,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
         setAuthLoading(false);
         queryClient.clear();
+        router.refresh();
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setUser(currentUser);
         setAuthLoading(false);
+        router.refresh();
       } else if (event === 'INITIAL_SESSION') {
         // Handled by initializeAuth, but good as fallback
         setUser(currentUser);
@@ -156,7 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [supabase, queryClient]);
+  }, [supabase, queryClient, router]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -179,6 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.user) {
           queryClient.clear();
           setUser(data.user);
+          router.refresh();
           // Profile query will auto-run because of enabled: !!user.id
         }
 
@@ -187,7 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: err as Error };
       }
     },
-    [supabase, queryClient]
+    [supabase, queryClient, router]
   );
 
   const signUp = useCallback(
@@ -239,16 +245,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signOut = useCallback(async () => {
+    // Optimistic UI update & navigation
+    // Do this FIRST so the user sees immediate action
+    setUser(null);
+    queryClient.clear();
+    router.replace('/'); // Redirect to home page
+    router.refresh(); // Update server components/middleware
+    
     try {
       await supabase.auth.signOut();
     } catch (error) {
       console.error('Error during Supabase signOut:', error);
-    } finally {
-      // Optimistic UI update & navigation
-      setUser(null);
-      queryClient.clear();
-      router.replace('/'); // Redirect to home page
-      router.refresh(); // Update server components/middleware
     }
   }, [supabase, router, queryClient]);
 
