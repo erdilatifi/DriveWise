@@ -726,8 +726,7 @@ export default function HomePage() {
                 DriveWise adapts.
               </h2>
               <p className="text-sm md:text-base text-muted-foreground max-w-xl">
-                The same platform works for individual learners, instructors who
-                want structure, and driving schools that care about pass rates.
+                The same platform works for individual learners who want structure and care about pass rates.
               </p>
 
               <div className="grid sm:grid-cols-2 gap-4 pt-2">
@@ -736,12 +735,8 @@ export default function HomePage() {
                   body="Use streaks, XP and analytics to keep momentum without needing a private tutor."
                 />
                 <PersonaCard
-                  title="Driving instructor"
-                  body="Assign targeted mock tests, see where students struggle, and clean up weak topics fast."
-                />
-                <PersonaCard
-                  title="Driving school"
-                  body="Offer every student a consistent digital experience and track pass-rate improvements over time."
+                  title="Ambitious learner"
+                  body="Want to pass first time? Our strict mode and timed tests prepare you for the real pressure."
                 />
                 <PersonaCard
                   title="Busy worker / parent"
@@ -1333,9 +1328,9 @@ export default function HomePage() {
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <div>
                     <p className="font-semibold text-foreground">
-                      Besa · Driving instructor
+                      Besa · Passed Category B
                     </p>
-                    <p>15+ students · Category B &amp; C</p>
+                    <p>First attempt · Score 96%</p>
                   </div>
                 </div>
               </div>

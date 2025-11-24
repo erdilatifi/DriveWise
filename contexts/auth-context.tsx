@@ -20,7 +20,6 @@ interface UserProfile {
   email?: string;
   is_blocked?: boolean;
   is_admin?: boolean;
-  is_instructor?: boolean;
   subscription_id?: string | null;
 }
 
@@ -29,7 +28,6 @@ interface AuthContextType {
   loading: boolean; // True only during initial auth check
   profileLoading: boolean; // True while fetching profile
   isAdmin: boolean;
-  isInstructor: boolean;
   isBlocked: boolean;
   userProfile: UserProfile | null;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -72,14 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Derived state
   const isAdmin = !!profileData?.is_admin;
-  const isInstructor = !!profileData?.is_instructor;
   const isBlocked = !!profileData?.is_blocked;
   const userProfile = profileData ? {
     full_name: profileData.full_name,
     email: profileData.email,
     subscription_id: profileData.subscription_id,
     is_admin: isAdmin,
-    is_instructor: isInstructor,
     is_blocked: isBlocked
   } : null;
 
@@ -276,7 +272,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading: authLoading, // Only block on initial auth check
       profileLoading,       // Expose this for granular loading states if needed
       isAdmin,
-      isInstructor,
       isBlocked,
       userProfile,
       signIn,
@@ -284,7 +279,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut,
       refreshUser,
     }),
-    [user, authLoading, profileLoading, isAdmin, isInstructor, isBlocked, userProfile, signIn, signUp, signOut, refreshUser]
+    [user, authLoading, profileLoading, isAdmin, isBlocked, userProfile, signIn, signUp, signOut, refreshUser]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
