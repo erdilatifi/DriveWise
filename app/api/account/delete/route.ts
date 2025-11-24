@@ -31,6 +31,38 @@ export async function DELETE(_req: Request) {
       },
     });
 
+    // Parse optional feedback from body
+    let feedback = null;
+    try {
+      const body = await _req.json();
+      if (body && body.reason) {
+        feedback = body;
+      }
+    } catch {
+      // Body might be empty if no feedback provided
+    }
+
+    // If feedback exists, save it to user_feedback table
+    if (feedback) {
+      // Fetch profile for snapshot
+      const { data: profile } = await adminClient
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      // Insert into user_feedback (independent table, no FK constraint to auth.users)
+      await adminClient.from('user_feedback').insert({
+        user_id: user.id, // Stored for reference
+        display_name: profile?.full_name || user.user_metadata?.full_name || 'Deleted User',
+        avatar_url: profile?.avatar_url || user.user_metadata?.avatar_url,
+        email: user.email, // Stored privately for admin reference
+        reason: feedback.reason,
+        comment: feedback.comment || feedback.customReason, // Use comment or custom reason
+        is_public_allowed: feedback.allowPublic || false,
+      });
+    }
+
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id);
 
     if (deleteError) {

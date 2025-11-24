@@ -10,23 +10,15 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { DeleteAccountModal, DeleteAccountFeedback } from '@/components/delete-account-modal';
+import { BugReportModal, BugReportData } from '@/components/bug-report-modal';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import { useAuth } from '@/contexts/auth-context';
 import { useLanguage } from '@/contexts/language-context';
 import { useUserPlans, useGlobalPremium } from '@/hooks/use-subscriptions';
 import { BILLING_CONFIG, type PaidPlanTier } from '@/lib/subscriptions';
 import { createClient } from '@/utils/supabase/client';
-import { AlertTriangle, Trash2, User, Shield, CreditCard, Settings, LogOut, Check } from 'lucide-react';
+import { AlertTriangle, Trash2, User, Shield, CreditCard, Settings, LogOut, Check, Bug } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { SubscriptionManagement } from '@/components/subscription-management';
@@ -42,7 +34,7 @@ export default function ProfilePage() {
   const [savingName, setSavingName] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
-  const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
+  const [bugReportOpen, setBugReportOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -132,12 +124,16 @@ export default function ProfilePage() {
     }
   };
 
-  const handleConfirmDeleteAccount = async () => {
+  const handleConfirmDeleteAccount = async (feedback: DeleteAccountFeedback) => {
     if (!user) return;
     setDeletingAccount(true);
     try {
       const response = await fetch('/api/account/delete', {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(feedback),
       });
 
       if (!response.ok) {
@@ -165,6 +161,27 @@ export default function ProfilePage() {
       toast.error('Could not delete account.', { description });
     } finally {
       setDeletingAccount(false);
+    }
+  };
+
+  const handleBugReportSubmit = async (data: BugReportData) => {
+    try {
+      const response = await fetch('/api/reports/bug', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) throw new Error('Failed to submit report');
+
+      toast.success('Report submitted', {
+        description: 'Thanks! Your bug report has been sent.',
+      });
+      setBugReportOpen(false);
+    } catch {
+      toast.error('Submission failed', {
+        description: 'Please try again later.',
+      });
     }
   };
 
@@ -458,6 +475,36 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* Support & Feedback */}
+            <div className="mt-8 pt-8 border-t border-white/10">
+              <div className="flex items-center gap-2 mb-6">
+                <Bug className="w-4 h-4 text-primary" />
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  Support & Feedback
+                </h2>
+              </div>
+              
+              <GlassCard className="p-6 border border-primary/20 bg-primary/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium text-foreground">
+                    Report a bug
+                  </h3>
+                  <p className="text-xs text-muted-foreground max-w-md">
+                    Found something not working correctly? Tell us and we’ll look into it.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="inline-flex items-center gap-2 whitespace-nowrap border-primary/30 text-primary hover:bg-primary/10"
+                  onClick={() => setBugReportOpen(true)}
+                >
+                  <Bug className="w-4 h-4" />
+                  Report a bug
+                </Button>
+              </GlassCard>
+            </div>
+
             {/* Danger Zone */}
             <div className="mt-8 pt-8 border-t border-white/10">
               <div className="flex items-center gap-2 mb-6">
@@ -492,51 +539,18 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <AlertDialog
-        open={deleteDialogOpen}
-        onOpenChange={(open) => {
-          setDeleteDialogOpen(open);
-          if (!open) {
-            setDeleteConfirmInput('');
-          }
-        }}
-      >
-        <AlertDialogContent className="bg-zinc-950 border-border/80">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-red-500">
-              <AlertTriangle className="w-5 h-5" />
-              {t('profile.deleteDialogTitle')}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              {t('profile.deleteDialogDescription')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="mt-4 space-y-3">
-            <Label htmlFor="delete-confirm" className="text-xs uppercase tracking-wider text-muted-foreground">
-              {t('profile.deleteDialogConfirmLabel')}
-            </Label>
-            <Input
-              id="delete-confirm"
-              value={deleteConfirmInput}
-              onChange={(e) => setDeleteConfirmInput(e.target.value)}
-              placeholder="DELETE"
-              className="bg-black/50 border-red-500/20 focus:border-red-500/50 focus:ring-red-500/20"
-            />
-          </div>
-          <AlertDialogFooter className="mt-6">
-            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)} className="border-white/10 hover:bg-white/5 hover:text-foreground">
-              {t('profile.deleteDialogCancel')}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDeleteAccount}
-              disabled={deletingAccount || deleteConfirmInput !== 'DELETE'}
-              className="bg-red-600 hover:bg-red-700 text-white border-none"
-            >
-              {deletingAccount ? t('profile.deleteDialogConfirming') : t('profile.deleteDialogConfirm')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <BugReportModal
+        isOpen={bugReportOpen}
+        onClose={() => setBugReportOpen(false)}
+        onSubmit={handleBugReportSubmit}
+      />
+
+      <DeleteAccountModal
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDeleteAccount}
+        isDeleting={deletingAccount}
+      />
     </div>
   );
 }
