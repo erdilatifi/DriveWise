@@ -337,24 +337,7 @@ export default function HomePage() {
                 </GlassCard>
               </div>
 
-              {/* Secondary reassurance row */}
-              <div className="pt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px] text-muted-foreground">
-                <StatPill
-                  icon={<Shield className="w-3.5 h-3.5" />}
-                  label={t('home.benefit.badge')}
-                  value={t('home.benefit.body')}
-                />
-                <StatPill
-                  icon={<TrendingUp className="w-3.5 h-3.5" />}
-                  label={t('features.guaranteed.title')}
-                  value={t('features.guaranteed.desc')}
-                />
-                <StatPill
-                  icon={<Lock className="w-3.5 h-3.5" />}
-                  label={t('home.trust.badge')}
-                  value={t('home.trust.body')}
-                />
-              </div>
+              {/* Secondary reassurance row - REMOVED */}
             </div>
 
             {/* Right: hero preview card */}
