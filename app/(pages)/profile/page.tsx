@@ -79,7 +79,7 @@ export default function ProfilePage() {
   }
 
   const displayName =
-    userProfile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+    userProfile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || t('admin.user');
   const email = user.email || userProfile?.email || '';
 
   const supabase = createClient();
@@ -88,7 +88,7 @@ export default function ProfilePage() {
     if (!user) return;
     const trimmed = fullNameInput.trim();
     if (!trimmed) {
-      toast.error('Name cannot be empty');
+      toast.error(t('profile.nameEmpty'));
       return;
     }
 
@@ -113,12 +113,12 @@ export default function ProfilePage() {
 
       await refreshUser();
 
-      toast.success('Name updated', {
-        description: 'Your display name has been updated successfully.',
+      toast.success(t('profile.nameUpdatedTitle'), {
+        description: t('profile.nameUpdatedDesc'),
       });
     } catch (error: unknown) {
-      const description = error instanceof Error ? error.message : 'Please try again later.';
-      toast.error('Could not update name.', { description });
+      const description = error instanceof Error ? error.message : t('common.tryAgainLater');
+      toast.error(t('profile.nameUpdateError'), { description });
     } finally {
       setSavingName(false);
     }
@@ -137,7 +137,7 @@ export default function ProfilePage() {
       });
 
       if (!response.ok) {
-        let description = 'Please try again later.';
+        let description = t('common.tryAgainLater');
         try {
           const body = await response.json();
           if (body?.error) {
@@ -149,16 +149,16 @@ export default function ProfilePage() {
         throw new Error(description);
       }
 
-      toast.success('Account deleted', {
-        description: 'Your account and all associated data have been deleted.',
+      toast.success(t('profile.accountDeletedTitle'), {
+        description: t('profile.accountDeletedDesc'),
       });
 
       setDeleteDialogOpen(false);
 
       await signOut();
     } catch (error: unknown) {
-      const description = error instanceof Error ? error.message : 'Please try again later.';
-      toast.error('Could not delete account.', { description });
+      const description = error instanceof Error ? error.message : t('common.tryAgainLater');
+      toast.error(t('profile.accountDeleteError'), { description });
     } finally {
       setDeletingAccount(false);
     }
@@ -174,13 +174,13 @@ export default function ProfilePage() {
 
       if (!response.ok) throw new Error('Failed to submit report');
 
-      toast.success('Report submitted', {
-        description: 'Thanks! Your bug report has been sent.',
+      toast.success(t('profile.reportSubmittedTitle'), {
+        description: t('profile.reportSubmittedDesc'),
       });
       setBugReportOpen(false);
     } catch {
-      toast.error('Submission failed', {
-        description: 'Please try again later.',
+      toast.error(t('profile.reportFailedTitle'), {
+        description: t('common.tryAgainLater'),
       });
     }
   };
@@ -246,12 +246,12 @@ export default function ProfilePage() {
                         {hasAnyActivePlan ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-400">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                            {isSq ? 'Plan aktiv' : 'Active plan'}
+                            {t('profile.activePlan')}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-medium text-muted-foreground">
                             <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
-                            {isSq ? 'Plan falas' : 'Free plan'}
+                            {t('profile.freePlan')}
                           </span>
                         )}
                       </div>
@@ -270,7 +270,7 @@ export default function ProfilePage() {
                   onClick={() => signOut()}
                 >
                   <LogOut className="w-4 h-4 mr-2" />
-                  {isSq ? 'Dil nga llogaria' : 'Log out'}
+                  {t('nav.logout')}
                 </Button>
               </div>
             </GlassCard>
@@ -306,7 +306,7 @@ export default function ProfilePage() {
                           disabled={savingName || !fullNameInput.trim() || fullNameInput.trim() === displayName}
                           className="whitespace-nowrap bg-white/10 hover:bg-white/20 border-transparent text-foreground"
                         >
-                          {savingName ? 'Saving...' : isSq ? 'Ruaj' : 'Save'}
+                          {savingName ? t('common.saving') : t('common.save')}
                         </Button>
                       </div>
                     </div>
@@ -355,11 +355,9 @@ export default function ProfilePage() {
                         <CreditCard className="w-6 h-6 text-muted-foreground/50" />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm font-medium">{isSq ? 'Asnjë plan aktiv' : 'No active plans'}</p>
+                        <p className="text-sm font-medium">{t('profile.noActivePlans')}</p>
                         <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">
-                          {isSq 
-                            ? 'Fillo një plan për të hapur të gjitha veçoritë.'
-                            : 'Start a plan to unlock all premium features.'}
+                          {t('profile.startPlanDesc')}
                         </p>
                       </div>
                       <Button size="sm" asChild className="bg-orange-600 hover:bg-orange-500 text-white border-none">
@@ -415,8 +413,8 @@ export default function ProfilePage() {
                               {startDate && endDate && (
                                 <div className="space-y-1.5">
                                   <div className="flex justify-between text-[10px] text-muted-foreground">
-                                    <span>{isSq ? 'Progresi' : 'Usage'}</span>
-                                    <span>{remainingDays} {isSq ? 'ditë mbetura' : 'days left'}</span>
+                                    <span>{t('profile.usage')}</span>
+                                    <span>{remainingDays} {t('profile.daysLeft')}</span>
                                   </div>
                                   <div className="w-full bg-black/40 rounded-full h-1.5 overflow-hidden border border-white/5">
                                     <div
@@ -435,7 +433,7 @@ export default function ProfilePage() {
                                   asChild
                                 >
                                   <Link href={`/pricing?category=${category}`}>
-                                    {isSq ? 'Rinovoni tani' : 'Renew now'}
+                                    {t('profile.renewNow')}
                                   </Link>
                                 </Button>
                               )}
@@ -453,12 +451,10 @@ export default function ProfilePage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-medium text-emerald-100 mb-0.5">
-                                  {isSq ? 'Statusi i pagesës: Një herë' : 'Billing Status: One-time payment'}
+                                  {t('profile.billingOneTime')}
                                 </p>
                                 <p className="text-[10px] text-muted-foreground leading-relaxed">
-                                  {isSq 
-                                    ? 'Planet tuaja nuk kanë rinovim automatik. Nuk do të tarifoheni sërish.' 
-                                    : 'No auto-renewal. You will not be charged again automatically.'}
+                                  {t('profile.noAutoRenewDesc')}
                                 </p>
                               </div>
                            </div>
@@ -480,17 +476,17 @@ export default function ProfilePage() {
               <div className="flex items-center gap-2 mb-6">
                 <Bug className="w-4 h-4 text-primary" />
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                  Support & Feedback
+                  {t('profile.supportFeedback')}
                 </h2>
               </div>
               
               <GlassCard className="p-6 border border-primary/20 bg-primary/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="space-y-1">
                   <h3 className="text-sm font-medium text-foreground">
-                    Report a bug
+                    {t('profile.reportBug')}
                   </h3>
                   <p className="text-xs text-muted-foreground max-w-md">
-                    Found something not working correctly? Tell us and we’ll look into it.
+                    {t('profile.reportBugDesc')}
                   </p>
                 </div>
                 <Button
@@ -500,7 +496,7 @@ export default function ProfilePage() {
                   onClick={() => setBugReportOpen(true)}
                 >
                   <Bug className="w-4 h-4" />
-                  Report a bug
+                  {t('profile.reportBug')}
                 </Button>
               </GlassCard>
             </div>

@@ -154,9 +154,9 @@ export default function LeaderboardPage() {
                       <span className="text-xs bg-primary/15 text-primary px-2 py-1 rounded-full border border-primary/30">You</span>
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
-                      <span>{currentUserRank.total_scenarios} scenarios</span>
-                      <span>{currentUserRank.accuracy}% accuracy</span>
-                      <span>{currentUserRank.categories_completed} categories</span>
+                      <span>{currentUserRank.total_scenarios} {t('dashboard.trainerScenarios')}</span>
+                      <span>{currentUserRank.accuracy}% {t('dashboard.trainerAccuracy')}</span>
+                      <span>{currentUserRank.categories_completed} {t('dashboard.trainerCategoriesPracticed')}</span>
                       {currentUserRank.best_time_seconds && (
                         <span className="text-blue-500">⏱️ {formatTime(currentUserRank.best_time_seconds)}</span>
                       )}
@@ -168,7 +168,7 @@ export default function LeaderboardPage() {
                       <Zap className="w-5 h-5" />
                       {currentUserRank.total_xp}
                     </div>
-                    <div className="text-xs text-muted-foreground">XP</div>
+                    <div className="text-xs text-muted-foreground">{t('dashboard.trainerXp')}</div>
                   </div>
                   
                   <div className="text-center sm:text-right">
@@ -176,7 +176,7 @@ export default function LeaderboardPage() {
                       <Zap className="w-4 h-4" />
                       {currentUserRank.best_streak}
                     </div>
-                    <div className="text-xs text-muted-foreground">Best Streak</div>
+                    <div className="text-xs text-muted-foreground">{t('dashboard.trainerBestStreak')}</div>
                   </div>
                 </div>
               </div>
@@ -241,9 +241,9 @@ export default function LeaderboardPage() {
                             )}
                           </div>
                           <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs sm:text-sm text-muted-foreground">
-                            <span>{entry.total_scenarios} scenarios</span>
-                            <span>{entry.accuracy}% accuracy</span>
-                            <span>{entry.categories_completed} categories</span>
+                            <span>{entry.total_scenarios} {t('dashboard.trainerScenarios')}</span>
+                            <span>{entry.accuracy}% {t('dashboard.trainerAccuracy')}</span>
+                            <span>{entry.categories_completed} {t('dashboard.trainerCategoriesPracticed')}</span>
                             {entry.best_time_seconds && (
                               <span className="text-blue-500">
                                 ⏱️ {formatTime(entry.best_time_seconds)}
@@ -260,7 +260,7 @@ export default function LeaderboardPage() {
                             <Zap className="w-4 h-4" />
                             <span className="tabular-nums">{entry.total_xp}</span>
                           </div>
-                          <div className="text-[11px] text-muted-foreground uppercase tracking-wide">XP</div>
+                          <div className="text-[11px] text-muted-foreground uppercase tracking-wide">{t('dashboard.trainerXp')}</div>
                         </div>
 
                         <div className="text-center sm:text-right min-w-[90px]">
@@ -268,7 +268,7 @@ export default function LeaderboardPage() {
                             <Zap className="w-3 h-3" />
                             <span className="tabular-nums">{entry.best_streak}</span>
                           </div>
-                          <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Best Streak</div>
+                          <div className="text-[11px] text-muted-foreground uppercase tracking-wide">{t('dashboard.trainerBestStreak')}</div>
                         </div>
                       </div>
                     </div>

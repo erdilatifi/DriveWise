@@ -298,22 +298,22 @@ export default function HomePage() {
                   {[
                     {
                       icon: <Target className="w-3.5 h-3.5" />,
-                      label: "Mock Tests",
+                      label: t('nav.tests'),
                       value: "A · B · C · D",
                     },
                     {
                       icon: <Activity className="w-3.5 h-3.5" />,
-                      label: "Decision Trainer",
+                      label: t('nav.decisionTrainer'),
                       value: "XP · Streaks",
                     },
                     {
                       icon: <BarChart3 className="w-3.5 h-3.5" />,
-                      label: "Analytics",
-                      value: "Test History",
+                      label: t('features.progress.title'),
+                      value: t('dashboard.testHistoryTitle'),
                     },
                     {
                       icon: <Globe2 className="w-3.5 h-3.5" />,
-                      label: "Languages",
+                      label: t('nav.language'),
                       value: "EN · SQ",
                     },
                   ].map((stat, i) => (
@@ -341,18 +341,18 @@ export default function HomePage() {
               <div className="pt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px] text-muted-foreground">
                 <StatPill
                   icon={<Shield className="w-3.5 h-3.5" />}
-                  label="Real exam coverage"
-                  value="Updated question bank matched to Kosovo syllabus."
+                  label={t('home.benefit.badge')}
+                  value={t('home.benefit.body')}
                 />
                 <StatPill
                   icon={<TrendingUp className="w-3.5 h-3.5" />}
-                  label="First-time pass focus"
-                  value="Training designed to reach 90%+ consistency."
+                  label={t('features.guaranteed.title')}
+                  value={t('features.guaranteed.desc')}
                 />
                 <StatPill
                   icon={<Lock className="w-3.5 h-3.5" />}
-                  label="Secure & private"
-                  value="Supabase-auth, role-based access, encrypted data."
+                  label={t('home.trust.badge')}
+                  value={t('home.trust.body')}
                 />
               </div>
             </div>
@@ -522,33 +522,29 @@ export default function HomePage() {
             <div className="space-y-5">
               <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-black/70 px-3 py-1 text-[11px] text-muted-foreground">
                 <span className="h-1.5 w-8 bg-gradient-to-r from-orange-500 to-orange-300 rounded-full" />
-                Why DriveWise exists
+                {t('home.trust.badge')}
               </div>
               <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-                Built for Kosovo learners who don&apos;t want to gamble exam
-                day.
+                {t('home.trust.title')}
               </h2>
               <p className="text-sm md:text-base text-muted-foreground">
-                DriveWise combines question banks, realistic exam flows and
-                analytics into one focused place. No more PDFs, random apps or
-                half-translated material. Just a clear system designed to get
-                you across the line.
+                {t('home.trust.body')}
               </p>
 
               <div className="grid sm:grid-cols-3 gap-4 pt-2">
                 <TechStat
                   icon={<Database className="w-3.5 h-3.5" />}
-                  label="Question engine"
-                  value="Structured by topic, traffic signs, and priority rules."
+                  label={t('features.comprehensive.title')}
+                  value={t('features.comprehensive.desc')}
                 />
                 <TechStat
                   icon={<Cpu className="w-3.5 h-3.5" />}
-                  label="Smart practice"
-                  value="Weights questions you miss to accelerate learning."
+                  label={t('home.pillars.badge')}
+                  value={t('home.pillars.body')}
                 />
                 <TechStat
                   icon={<Globe2 className="w-3.5 h-3.5" />}
-                  label="Bilingual"
+                  label={t('nav.language')}
                   value="English and Albanian side-by-side phrasing."
                 />
               </div>
@@ -614,33 +610,31 @@ export default function HomePage() {
               <div className="pointer-events-none hidden lg:block absolute -left-6 top-4 bottom-0 w-px bg-gradient-to-b from-transparent via-orange-500/20 to-transparent" />
               <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-black/60 px-3 py-1 text-[11px] text-muted-foreground">
                 <span className="h-1.5 w-8 bg-gradient-to-r from-orange-500 to-orange-300 rounded-full" />
-                Guided learning path
+                {t('dashboard.onboardingTitle')}
               </div>
               <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-                A clear path from sign-up to “you passed”.
+                {t('home.benefit.title')}
               </h2>
               <p className="text-sm md:text-base text-muted-foreground max-w-xl">
-                DriveWise combines exam-style mock tests, decision training, and
-                analytics so you always know exactly what to practice next for
-                the Kosovo theory exam.
+                {t('home.benefit.body')}
               </p>
 
               <div className="grid sm:grid-cols-2 gap-4 pt-2">
                 <KeyPoint
-                  title="Exam-like structure"
-                  body="Same timing, flows, and difficulty as the real test to remove surprises on exam day."
+                  title={t('features.comprehensive.title')}
+                  body={t('features.comprehensive.desc')}
                 />
                 <KeyPoint
-                  title="Adaptive practice"
-                  body="Mixed and personalized tests focus on questions you miss, not ones you’ve already mastered."
+                  title={t('home.pillars.badge')}
+                  body={t('home.pillars.body')}
                 />
                 <KeyPoint
-                  title="Decision muscle"
-                  body="Scenario-based questions train instinct for complex, real-world driving situations."
+                  title={t('trainer.title')}
+                  body={t('trainer.heroExplainer')}
                 />
                 <KeyPoint
-                  title="Always tracked"
-                  body="Every attempt feeds into your dashboard so you always know if you're ready."
+                  title={t('features.progress.title')}
+                  body={t('features.progress.desc')}
                 />
               </div>
             </div>
@@ -657,11 +651,10 @@ export default function HomePage() {
                     01
                   </div>
                   <h3 className="text-xl font-bold text-white mb-2 group-hover:text-orange-300 transition-colors">
-                    Create your account
+                    {t('auth.createAccount')}
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    Sign up in seconds. We immediately set up your analytics
-                    dashboard and personal learning profile.
+                    {t('auth.createAccountDescription')}
                   </p>
                 </div>
 
@@ -670,11 +663,10 @@ export default function HomePage() {
                     02
                   </div>
                   <h3 className="text-xl font-bold text-white mb-2 group-hover:text-orange-300 transition-colors">
-                    Choose how to practice
+                    {t('categories.title')}
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    Jump into a specific category (A, B, C, D) or let our
-                    algorithm build a personalized mixed test for you.
+                    {t('categories.description')}
                   </p>
                 </div>
 
@@ -683,11 +675,10 @@ export default function HomePage() {
                     03
                   </div>
                   <h3 className="text-xl font-bold text-white mb-2 group-hover:text-orange-300 transition-colors">
-                    Train decisions
+                    {t('trainer.title')}
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    Use the specialized Decision Trainer to master right-of-way
-                    and hazard perception scenarios.
+                    {t('trainer.heroExplainer')}
                   </p>
                 </div>
 
@@ -696,11 +687,10 @@ export default function HomePage() {
                     04
                   </div>
                   <h3 className="text-xl font-bold text-white mb-2 group-hover:text-orange-300 transition-colors">
-                    Review &amp; improve
+                    {t('features.progress.title')}
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    Check your analytics. If a topic is weak, we&apos;ll tell
-                    you. Fix it, then go pass the real exam.
+                    {t('features.progress.desc')}
                   </p>
                 </div>
               </div>

@@ -125,7 +125,7 @@ export default function TestPage() {
         setQuestions(loadedQuestions);
       } catch (error) {
         console.error('Error loading questions:', error);
-        toast.error('Could not load test questions. Please try again.');
+        toast.error(t('test.loadError'));
       } finally {
         setLoading(false);
       }
@@ -223,12 +223,12 @@ export default function TestPage() {
             .single();
 
           if (profileError) {
-            toast.error('Failed to create user profile. Please try again.');
+            toast.error(t('test.createProfileError'));
             setShowResults(true);
             return;
           }
         } else {
-          toast.error('Please log in again');
+          toast.error(t('auth.loginAgain'));
           router.push('/login');
           return;
         }
@@ -253,7 +253,7 @@ export default function TestPage() {
         .single();
 
       if (attemptError) {
-        toast.error('Failed to save test results: ' + attemptError.message);
+        toast.error(t('test.saveError'));
         setShowResults(true);
         return;
       }
@@ -315,7 +315,7 @@ export default function TestPage() {
           .select();
 
         if (answersError) {
-          toast.error('Test saved, but details could not be stored.');
+          toast.error(t('test.saveDetailsError'));
         }
       }
 
@@ -332,7 +332,7 @@ export default function TestPage() {
       }
     } catch (error) {
       console.error('Error submitting test:', error);
-      toast.error('An unexpected error occurred. Results shown locally.');
+      toast.error(t('test.unexpectedError'));
       setShowResults(true);
     }
   };
@@ -447,9 +447,9 @@ export default function TestPage() {
               
               <div className="grid gap-4 text-left max-w-md mx-auto mb-8 w-full">
                 {[
-                  isSq ? 'Teste të pakufizuara në këtë kategori' : 'Unlimited tests in this category',
-                  isSq ? 'Rishikim i plotë me përgjigje të sakta' : 'Full review with correct answers',
-                  isSq ? 'Decision Trainer i hapur' : 'Decision Trainer unlocked'
+                  t('test.unlimitedTestsBenefit'),
+                  t('test.fullReviewBenefit'),
+                  t('test.trainerUnlockedBenefit')
                 ].map((benefit, i) => (
                   <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
                     <div className="mt-0.5 w-5 h-5 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
@@ -633,7 +633,7 @@ export default function TestPage() {
                   {lastTestAttemptId && (
                     <Button className="flex-1" variant="secondary" asChild>
                       <Link href={`/history/${lastTestAttemptId}`}>
-                        Review this test
+                        {t('test.reviewTest')}
                       </Link>
                     </Button>
                   )}

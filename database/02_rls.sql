@@ -3,7 +3,7 @@
 -- ===================================================================
 -- This file contains complete RLS policies for all tables and storage buckets
 -- Run this AFTER the main database setup to secure your application
--- This replaces previous RLS scripts and includes security fixes + optimizations.
+-- This replaces all previous RLS scripts.
 -- ===================================================================
 
 -- ===================================================================
@@ -24,6 +24,8 @@ ALTER TABLE decision_trainer_badges ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payment_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bug_reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_feedback ENABLE ROW LEVEL SECURITY;
 
 -- ===================================================================
 -- STEP 2: Drop ALL existing policies (clean slate)
@@ -117,6 +119,15 @@ DROP POLICY IF EXISTS "Users can view own plans" ON user_plans;
 DROP POLICY IF EXISTS "Users can insert own plans" ON user_plans;
 DROP POLICY IF EXISTS "Users can update own plans" ON user_plans;
 
+-- Bug Reports policies
+DROP POLICY IF EXISTS "Admins can view all bug reports" ON bug_reports;
+DROP POLICY IF EXISTS "Users can insert bug reports" ON bug_reports;
+DROP POLICY IF EXISTS "Anyone can insert bug reports" ON bug_reports;
+
+-- User Feedback policies
+DROP POLICY IF EXISTS "Admins can view all feedback" ON user_feedback;
+DROP POLICY IF EXISTS "Public can view testimonials" ON user_feedback;
+
 -- ===================================================================
 -- STEP 3: Create helper functions for RLS (SECURED)
 -- ===================================================================
@@ -131,20 +142,6 @@ BEGIN
   RETURN EXISTS (
     SELECT 1 FROM user_profiles 
     WHERE id = auth.uid() AND is_admin = true
-  );
-END;
-$$ LANGUAGE plpgsql;
-
--- Function to check if current user is instructor
-CREATE OR REPLACE FUNCTION public.is_instructor()
-RETURNS BOOLEAN 
-SECURITY DEFINER
-SET search_path = public, extensions
-AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM user_profiles 
-    WHERE id = auth.uid() AND is_instructor = true
   );
 END;
 $$ LANGUAGE plpgsql;
@@ -180,7 +177,6 @@ CREATE POLICY "Users can update own profile"
     (select auth.uid()) = id AND
     -- Prevent users from changing their admin/instructor status
     (is_admin = (SELECT is_admin FROM user_profiles WHERE id = (select auth.uid()))) AND
-    (is_instructor = (SELECT is_instructor FROM user_profiles WHERE id = (select auth.uid()))) AND
     (is_blocked = (SELECT is_blocked FROM user_profiles WHERE id = (select auth.uid())))
   );
 
@@ -280,33 +276,8 @@ CREATE POLICY "Admins can view all test answers"
   USING ((select public.is_admin()));
 
 -- ===================================================================
--- STEP 8: STUDENT INSTRUCTOR LINKS - Instructor system
+-- STEP 8: REMOVED - INSTRUCTOR SYSTEM
 -- ===================================================================
-
--- Students can view their own instructor links
-CREATE POLICY "Students can view own links"
-  ON student_instructor_links FOR SELECT
-  USING ((select auth.uid()) = student_id AND NOT (select public.is_blocked()));
-
--- Instructors can view their student links
-CREATE POLICY "Instructors can view their students"
-  ON student_instructor_links FOR SELECT
-  USING ((select auth.uid()) = instructor_id AND (select public.is_instructor()) AND NOT (select public.is_blocked()));
-
--- Instructors can create links to students
-CREATE POLICY "Instructors can create student links"
-  ON student_instructor_links FOR INSERT
-  WITH CHECK ((select auth.uid()) = instructor_id AND (select public.is_instructor()) AND NOT (select public.is_blocked()));
-
--- Instructors can remove their student links
-CREATE POLICY "Instructors can remove student links"
-  ON student_instructor_links FOR DELETE
-  USING ((select auth.uid()) = instructor_id AND (select public.is_instructor()) AND NOT (select public.is_blocked()));
-
--- Admins can manage all instructor-student links
-CREATE POLICY "Admins can manage all links"
-  ON student_instructor_links FOR ALL
-  USING ((select public.is_admin()));
 
 -- ===================================================================
 -- STEP 9: STUDY MATERIALS - Learning resources
@@ -467,7 +438,38 @@ CREATE POLICY "Users can update own plans" ON user_plans
   FOR UPDATE USING ((select auth.uid()) = user_id);
 
 -- ===================================================================
--- STEP 15: STORAGE BUCKET POLICIES
+-- STEP 15: BUG REPORTS & FEEDBACK
+-- ===================================================================
+
+-- Bug Reports
+CREATE POLICY "Admins can view all bug reports"
+  ON bug_reports FOR SELECT
+  TO authenticated
+  USING ((SELECT is_admin FROM user_profiles WHERE id = auth.uid()));
+
+CREATE POLICY "Users can insert bug reports"
+  ON bug_reports FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Anyone can insert bug reports"
+  ON bug_reports FOR INSERT
+  TO anon
+  WITH CHECK (true);
+
+-- User Feedback
+CREATE POLICY "Admins can view all feedback"
+  ON user_feedback FOR SELECT
+  TO authenticated
+  USING ((SELECT is_admin FROM user_profiles WHERE id = auth.uid()));
+
+CREATE POLICY "Public can view testimonials"
+  ON user_feedback FOR SELECT
+  TO anon, authenticated
+  USING (is_public_allowed = true);
+
+-- ===================================================================
+-- STEP 16: STORAGE BUCKET POLICIES
 -- ===================================================================
 
 -- Create storage buckets if they don't exist
@@ -579,7 +581,7 @@ CREATE POLICY "Admins can delete material images"
   );
 
 -- ===================================================================
--- STEP 16: Additional Security Functions (SECURED)
+-- STEP 17: Additional Security Functions (SECURED)
 -- ===================================================================
 
 -- Function to check if user can access another user's data (for instructor system)
@@ -599,14 +601,8 @@ BEGIN
     RETURN TRUE;
   END IF;
   
-  -- Instructor can access their students' data
-  IF (select public.is_instructor()) THEN
-    RETURN EXISTS (
-      SELECT 1 FROM student_instructor_links
-      WHERE instructor_id = (select auth.uid()) 
-      AND student_id = target_user_id
-    );
-  END IF;
+  -- Bug report special case: if a user submits a bug report, admin sees it, but regular user access is restricted
+  -- This function is mostly for profile/progress access
   
   RETURN FALSE;
 END;
@@ -652,7 +648,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ===================================================================
--- STEP 17: Create audit triggers for sensitive operations (SECURED)
+-- STEP 18: Create audit triggers for sensitive operations (SECURED)
 -- ===================================================================
 
 -- Create audit log table
@@ -684,8 +680,7 @@ BEGIN
   -- Log admin operations on user profiles
   IF TG_TABLE_NAME = 'user_profiles' AND (
     (OLD.is_admin != NEW.is_admin) OR 
-    (OLD.is_blocked != NEW.is_blocked) OR
-    (OLD.is_instructor != NEW.is_instructor)
+    (OLD.is_blocked != NEW.is_blocked)
   ) THEN
     INSERT INTO audit_log (table_name, operation, user_id, old_data, new_data)
     VALUES (
@@ -709,7 +704,7 @@ CREATE TRIGGER audit_user_profiles
   EXECUTE FUNCTION log_sensitive_operation();
 
 -- ===================================================================
--- STEP 18: Performance optimization for RLS
+-- STEP 19: Performance optimization for RLS
 -- ===================================================================
 
 -- Clean up duplicate indexes detected by linter
@@ -719,7 +714,6 @@ DROP INDEX IF EXISTS idx_user_profiles_is_blocked;
 -- Create additional indexes to optimize RLS queries
 CREATE INDEX IF NOT EXISTS idx_user_profiles_admin_status ON user_profiles(id, is_admin) WHERE is_admin = true;
 CREATE INDEX IF NOT EXISTS idx_user_profiles_blocked_status ON user_profiles(id, is_blocked) WHERE is_blocked = true;
-CREATE INDEX IF NOT EXISTS idx_user_profiles_instructor_status ON user_profiles(id, is_instructor) WHERE is_instructor = true;
 
 -- Optimize test attempts queries
 CREATE INDEX IF NOT EXISTS idx_test_attempts_user_category ON test_attempts(user_id, category);
@@ -730,7 +724,7 @@ CREATE INDEX IF NOT EXISTS idx_dt_progress_user_category ON decision_trainer_pro
 CREATE INDEX IF NOT EXISTS idx_dt_attempts_user_created ON decision_trainer_attempts(user_id, created_at DESC);
 
 -- ===================================================================
--- STEP 19: Verification and testing (SECURED)
+-- STEP 20: Verification and testing (SECURED)
 -- ===================================================================
 
 -- Create a test function to verify RLS is working
@@ -745,16 +739,17 @@ BEGIN
   SELECT 
     'RLS Enabled Check' as test_name,
     CASE 
-      WHEN COUNT(*) = 14 THEN 'PASS - All 14 tables have RLS enabled'
-      ELSE 'FAIL - Some tables missing RLS: ' || (14 - COUNT(*))::TEXT
+      WHEN COUNT(*) = 15 THEN 'PASS - All 15 tables have RLS enabled'
+      ELSE 'FAIL - Some tables missing RLS: ' || (15 - COUNT(*))::TEXT
     END as result
   FROM pg_class c
   JOIN pg_namespace n ON n.oid = c.relnamespace
   WHERE n.nspname = 'public'
   AND c.relname IN (
     'user_profiles', 'admin_questions', 'test_attempts', 'test_attempt_answers',
-    'student_instructor_links', 'study_materials', 'material_images', 'decision_trainer_scenarios',
-    'decision_trainer_progress', 'decision_trainer_attempts', 'decision_trainer_badges', 'orders', 'payment_transactions', 'user_plans'
+    'study_materials', 'material_images', 'decision_trainer_scenarios',
+    'decision_trainer_progress', 'decision_trainer_attempts', 'decision_trainer_badges', 'orders', 
+    'payment_transactions', 'user_plans', 'bug_reports', 'user_feedback'
   )
   AND c.relrowsecurity = true;
   
@@ -763,13 +758,13 @@ BEGIN
   SELECT 
     'Helper Functions Check' as test_name,
     CASE 
-      WHEN COUNT(*) >= 3 THEN 'PASS - Helper functions created'
+      WHEN COUNT(*) >= 2 THEN 'PASS - Helper functions created'
       ELSE 'FAIL - Missing helper functions'
     END as result
   FROM pg_proc p
   JOIN pg_namespace n ON n.oid = p.pronamespace
   WHERE n.nspname = 'public'
-  AND p.proname IN ('is_admin', 'is_instructor', 'is_blocked');
+  AND p.proname IN ('is_admin', 'is_blocked');
   
   -- Test 3: Check storage bucket policies
   RETURN QUERY
@@ -787,7 +782,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ===================================================================
--- COMPLETION STATUS
+-- STEP 21: COMPLETION STATUS
 -- ===================================================================
 
 SELECT 

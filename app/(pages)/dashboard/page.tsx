@@ -74,7 +74,7 @@ export default function DashboardPage() {
   const recentTests = dashboardData?.recentTests || [];
 
   const pieData = useMemo(() => {
-    if (stats.totalTests === 0) return [{ name: 'Empty', value: 1, color: '#27272a' }];
+    if (stats.totalTests === 0) return [{ name: t('dashboard.emptyChart'), value: 1, color: '#27272a' }];
     return [
       { name: t('dashboard.passed'), value: stats.passedTests, color: '#10b981' },
       { name: t('dashboard.failed'), value: stats.failedTests, color: '#ef4444' },
@@ -282,7 +282,7 @@ export default function DashboardPage() {
               <div className="space-y-2 max-w-xl">
                 <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/40 bg-orange-500/10 px-3 py-1 text-[11px] font-medium text-orange-300">
                   <Activity className="w-3.5 h-3.5" />
-                  <span>{isSq ? 'Paneli kryesor' : 'Dashboard'}</span>
+                  <span>{t('dashboard.panelTitle')}</span>
                 </div>
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight">
                   {isSq ? 'Progresi yt' : 'Your progress'}
@@ -395,9 +395,7 @@ export default function DashboardPage() {
                                 'B'
                               ).toLowerCase()}/personalized`}
                             >
-                              {isSq
-                                ? 'Ushtro pikat e dobëta'
-                                : 'Practice weak topics'}
+                              {t('dashboard.practiceWeakTopics')}
                             </Link>
                           </Button>
                         )}
@@ -463,11 +461,10 @@ export default function DashboardPage() {
                           </div>
                           <div className="z-10 max-w-[250px]">
                             <p className="text-sm font-medium text-foreground/80">
-                              No activity yet
+                              {t('dashboard.noActivity')}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              Complete tests to see your progress analytics
-                              here.
+                              {t('dashboard.completeTests')}
                             </p>
                           </div>
                         </div>
@@ -716,7 +713,7 @@ export default function DashboardPage() {
                           </div>
                           <div className="p-3 rounded-xl bg-white/5 border border-white/5">
                             <p className="text-xs text-muted-foreground mb-1">
-                              Best Streak
+                              {t('dashboard.trainerBestStreak')}
                             </p>
                             <p className="text-xl font-bold text-emerald-400">
                               {trainerStats.bestStreak}
@@ -724,7 +721,7 @@ export default function DashboardPage() {
                           </div>
                           <div className="p-3 rounded-xl bg-white/5 border border-white/5">
                             <p className="text-xs text-muted-foreground mb-1">
-                              Categories
+                              {t('dashboard.categories')}
                             </p>
                             <p className="text-xl font-bold text-blue-400">
                               {trainerStats.categoriesCompleted}

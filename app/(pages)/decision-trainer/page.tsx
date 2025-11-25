@@ -255,7 +255,7 @@ export default function DecisionTrainerPage() {
           });
           
           toast.success(
-            `${t('test.congratulations')} – ${result.sessionStats.accuracy}% ${t('test.accuracy')}, +${result.sessionStats.totalXpEarned} XP`,
+            `${t('trainer.toastCompleted')} – ${result.sessionStats.accuracy}% ${t('trainer.toastAccuracy')}, +${result.sessionStats.totalXpEarned} XP`,
             { ...toastStyles.success, duration: 5000 }
           );
 
@@ -442,17 +442,17 @@ export default function DecisionTrainerPage() {
                 </div>
                 
                 <h1 className="text-3xl font-semibold mb-3 tracking-tight">
-                  {t('trainer.premiumRequiredTitle') || 'Unlock Decision Trainer'}
+                  {t('trainer.premiumRequiredTitle')}
                 </h1>
                 <p className="text-base text-muted-foreground mb-8 max-w-lg mx-auto leading-relaxed">
-                  {t('trainer.premiumRequiredDescription') || 'Decision Trainer is part of the paid plan. With any active plan you get full access to all scenarios, smarter practice modes, and detailed reviews.'}
+                  {t('trainer.premiumRequiredDescription')}
                 </p>
                 
                 <div className="grid gap-4 text-left max-w-md mx-auto mb-8 w-full">
                   {[
-                    t('trainer.premiumBenefitUnlimited') || 'Unlimited Decision Trainer practice across all categories.',
-                    t('trainer.premiumBenefitStudy') || 'Connect scenarios with matching study chapters and test reviews.',
-                    t('trainer.premiumBenefitFocus') || 'Smart modes that focus on your weak points and timing.'
+                    t('trainer.premiumBenefitUnlimited'),
+                    t('trainer.premiumBenefitStudy'),
+                    t('trainer.premiumBenefitFocus')
                   ].map((benefit, i) => (
                     <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
                       <div className="mt-0.5 w-5 h-5 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
@@ -466,7 +466,7 @@ export default function DecisionTrainerPage() {
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
                   <Button asChild className="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-medium h-11">
                     <Link href="/pricing">
-                      {t('trainer.premiumUpgradeCta') || 'See plans'}
+                      {t('trainer.premiumUpgradeCta')}
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="flex-1 h-11 border-white/10 hover:bg-white/5">
@@ -660,10 +660,10 @@ export default function DecisionTrainerPage() {
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Check className="w-3 h-3 text-green-500" />
-                          {lastSessionSummary.stats.correctCount}/{lastSessionSummary.stats.totalCount} correct
+                          {lastSessionSummary.stats.correctCount}/{lastSessionSummary.stats.totalCount} {t('test.correctLabel')}
                         </span>
                         <span>•</span>
-                        <span>{lastSessionSummary.stats.accuracy}% accuracy</span>
+                        <span>{lastSessionSummary.stats.accuracy}% {t('test.accuracy')}</span>
                         <span>•</span>
                         <span className="text-orange-300">+{lastSessionSummary.stats.totalXpEarned} XP</span>
                       </div>
@@ -691,7 +691,7 @@ export default function DecisionTrainerPage() {
                               className="flex-shrink-0 h-8 text-xs border-white/10 hover:bg-white/5"
                               onClick={() => router.push(`/materials?chapter=${m.chapterId}`)}
                             >
-                              Review chapter {m.chapterId}
+                              {t('trainer.reviewChapterCta')} {m.chapterId}
                             </Button>
                           )}
                         </div>
@@ -811,7 +811,7 @@ export default function DecisionTrainerPage() {
                       <div className="flex items-center justify-between mb-6">
                         <h2 className="text-lg font-semibold flex items-center gap-2">
                           <Trophy className="w-5 h-5 text-orange-400" />
-                          {t('dashboard.testAchievementsTitle')}
+                          {t('dashboard.trainerAchievementsLabel')}
                         </h2>
                         <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-muted-foreground">
                           {unlockedCount}/{achievements.length} {t('trainer.achievementsUnlockedLabel')}
@@ -862,7 +862,7 @@ export default function DecisionTrainerPage() {
                     {t('trainer.practiceModes')}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    Choose your challenge level
+                    {t('category.selectTestDesc')}
                   </span>
                 </div>
               </div>

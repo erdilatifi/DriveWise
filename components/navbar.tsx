@@ -19,7 +19,7 @@ export function Navbar() {
   const pathname = usePathname();
 
   // Get display name from userProfile or fallback to email
-  const displayName = userProfile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const displayName = userProfile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || t('admin.user');
 
   // Handle scroll behavior
   useEffect(() => {
@@ -100,7 +100,7 @@ export function Navbar() {
               <span className="text-2xl font-bold text-white tracking-tight">
                 DriveWise
               </span>
-              <span className="text-xs text-primary font-medium -mt-1">Kosovo Theory Exam</span>
+              <span className="text-xs text-primary font-medium -mt-1">{t('nav.subtitle')}</span>
             </div>
           </Link>
 

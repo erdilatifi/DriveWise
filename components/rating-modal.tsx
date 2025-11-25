@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
 
+import { useLanguage } from '@/contexts/language-context';
+
 interface RatingModalProps {
   open: boolean;
   onClose: () => void;
@@ -20,6 +22,7 @@ interface RatingModalProps {
 }
 
 export function RatingModal({ open, onClose, userId }: RatingModalProps) {
+  const { t } = useLanguage();
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -27,7 +30,7 @@ export function RatingModal({ open, onClose, userId }: RatingModalProps) {
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      toast.error('Please select a rating');
+      toast.error(t('rating.selectRating'));
       return;
     }
 
@@ -40,11 +43,11 @@ export function RatingModal({ open, onClose, userId }: RatingModalProps) {
 
       if (error) throw error;
 
-      toast.success('Thank you for your rating!');
+      toast.success(t('rating.success'));
       onClose();
     } catch (error) {
       console.error('Error submitting rating:', error);
-      toast.error('Failed to submit rating');
+      toast.error(t('rating.error'));
     } finally {
       setSubmitting(false);
     }
@@ -58,9 +61,9 @@ export function RatingModal({ open, onClose, userId }: RatingModalProps) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-2xl text-center">Rate DriveWise</DialogTitle>
+          <DialogTitle className="text-2xl text-center">{t('rating.title')}</DialogTitle>
           <DialogDescription className="text-center pt-2">
-            How would you rate your experience with our app?
+            {t('rating.description')}
           </DialogDescription>
         </DialogHeader>
         
@@ -89,11 +92,11 @@ export function RatingModal({ open, onClose, userId }: RatingModalProps) {
 
           {rating > 0 && (
             <p className="text-sm text-muted-foreground">
-              {rating === 1 && 'We\'ll work harder to improve'}
-              {rating === 2 && 'Thanks for your feedback'}
-              {rating === 3 && 'Good to know!'}
-              {rating === 4 && 'Great! We\'re glad you like it'}
-              {rating === 5 && 'Awesome! Thank you so much!'}
+              {rating === 1 && t('rating.feedback.1')}
+              {rating === 2 && t('rating.feedback.2')}
+              {rating === 3 && t('rating.feedback.3')}
+              {rating === 4 && t('rating.feedback.4')}
+              {rating === 5 && t('rating.feedback.5')}
             </p>
           )}
 
@@ -105,14 +108,14 @@ export function RatingModal({ open, onClose, userId }: RatingModalProps) {
               className="flex-1"
               disabled={submitting}
             >
-              Skip
+              {t('rating.skip')}
             </Button>
             <Button
               onClick={handleSubmit}
               className="flex-1"
               disabled={rating === 0 || submitting}
             >
-              {submitting ? 'Submitting...' : 'Submit Rating'}
+              {submitting ? t('rating.submitting') : t('rating.submit')}
             </Button>
           </div>
         </div>

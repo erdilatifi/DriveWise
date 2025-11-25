@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
+import { useLanguage } from '@/contexts/language-context';
 import { Navbar } from '@/components/navbar';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { motion } from 'framer-motion';
 
 export default function AdminPage() {
   const { user, isAdmin, loading } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   useEffect(() => {
@@ -45,9 +47,9 @@ export default function AdminPage() {
       >
         {/* Header */}
         <div className="mb-8 space-y-2">
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold">{t('admin.dashboardTitle')}</h1>
           <p className="text-sm text-muted-foreground">
-            Manage questions, content, users, and subscriptions
+            {t('admin.dashboardSubtitle')}
           </p>
         </div>
 
@@ -62,12 +64,12 @@ export default function AdminPage() {
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                 <FileText className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">All Questions</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('admin.allQuestions')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                View and manage all quiz questions
+                {t('admin.allQuestionsDesc')}
               </p>
               <Button asChild className="w-full">
-                <Link href="/admin/questions">View Questions</Link>
+                <Link href="/admin/questions">{t('admin.viewQuestions')}</Link>
               </Button>
             </GlassCard>
           </motion.div>
@@ -88,12 +90,12 @@ export default function AdminPage() {
                   </div>
                 </div>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Users</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('admin.users')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Manage registered users and roles
+                {t('admin.usersDesc')}
               </p>
               <Button asChild className="w-full">
-                <Link href="/admin/users">Manage Users</Link>
+                <Link href="/admin/users">{t('admin.manageUsers')}</Link>
               </Button>
             </GlassCard>
           </motion.div>
@@ -107,12 +109,12 @@ export default function AdminPage() {
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                 <Plus className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Add Question</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('admin.addQuestion')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Create a new quiz question
+                {t('admin.addQuestionDesc')}
               </p>
               <Button asChild className="w-full">
-                <Link href="/admin/questions/new">Add New</Link>
+                <Link href="/admin/questions/new">{t('admin.addNew')}</Link>
               </Button>
             </GlassCard>
           </motion.div>
@@ -126,12 +128,12 @@ export default function AdminPage() {
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                 <BarChart3 className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Statistics</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('admin.stats')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                View users, questions, and test metrics
+                {t('admin.statsDesc')}
               </p>
               <Button asChild className="w-full">
-                <Link href="/admin/stats">View Stats</Link>
+                <Link href="/admin/stats">{t('admin.viewStats')}</Link>
               </Button>
             </GlassCard>
           </motion.div>
@@ -145,12 +147,12 @@ export default function AdminPage() {
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                 <BarChart3 className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Subscriptions</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('admin.subscriptions')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                View and manage user plans and billing status
+                {t('admin.subscriptionsDesc')}
               </p>
               <Button asChild className="w-full">
-                <Link href="/admin/subscriptions">Manage Subscriptions</Link>
+                <Link href="/admin/subscriptions">{t('admin.manageSubscriptions')}</Link>
               </Button>
             </GlassCard>
           </motion.div>
@@ -164,12 +166,12 @@ export default function AdminPage() {
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                 <BookOpen className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Decision Trainer</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('admin.decisionTrainer')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Manage Decision Trainer scenarios
+                {t('admin.decisionTrainerDesc')}
               </p>
               <Button asChild className="w-full">
-                <Link href="/admin/scenarios">Manage Scenarios</Link>
+                <Link href="/admin/scenarios">{t('admin.manageScenarios')}</Link>
               </Button>
             </GlassCard>
           </motion.div>
@@ -183,12 +185,12 @@ export default function AdminPage() {
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                 <BookOpen className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Study Materials</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('admin.studyMaterials')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Manage theory materials for each chapter
+                {t('admin.studyMaterialsDesc')}
               </p>
               <Button asChild className="w-full">
-                <Link href="/admin/materials">Manage Materials</Link>
+                <Link href="/admin/materials">{t('admin.manageMaterials')}</Link>
               </Button>
             </GlassCard>
           </motion.div>

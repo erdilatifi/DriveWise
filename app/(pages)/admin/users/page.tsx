@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
+import { useLanguage } from '@/contexts/language-context';
 import { Navbar } from '@/components/navbar';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,7 @@ import {
 
 export default function UsersPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all');
@@ -69,29 +71,29 @@ export default function UsersPage() {
   const handleRoleUpdate = async (userId: string, updates: { is_admin?: boolean }) => {
     try {
       await updateUser.mutateAsync({ id: userId, ...updates });
-      toast.success('User role updated successfully');
+      toast.success(t('admin.roleUpdated'));
     } catch (error) {
-      toast.error('Failed to update user role');
+      toast.error(t('admin.roleUpdateError'));
     }
   };
 
   const handleBlockUser = async (userId: string, isBlocked: boolean) => {
     try {
       await updateUser.mutateAsync({ id: userId, is_blocked: isBlocked });
-      toast.success(isBlocked ? 'User blocked successfully' : 'User unblocked successfully');
+      toast.success(isBlocked ? 'User blocked successfully' : t('admin.statusUpdated'));
     } catch (error) {
-      toast.error('Failed to update user status');
+      toast.error(t('admin.statusUpdateError'));
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+    if (!confirm(t('admin.deleteConfirm'))) return;
     
     try {
       await deleteUser.mutateAsync(userId);
-      toast.success('User deleted successfully');
+      toast.success(t('admin.userDeleted'));
     } catch (error) {
-      toast.error('Failed to delete user');
+      toast.error(t('admin.deleteUserError'));
     }
   };
 
@@ -125,16 +127,16 @@ export default function UsersPage() {
         <Button variant="ghost" asChild className="mb-4">
           <Link href="/admin">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Admin Dashboard
+            {t('admin.backToDashboard')}
           </Link>
         </Button>
 
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold">User Management</h1>
+            <h1 className="text-3xl font-bold">{t('admin.userManagement')}</h1>
             <p className="text-sm text-muted-foreground">
-              Manage {totalUsers.toLocaleString()} registered users
+              {t('admin.manageUsersDesc')} ({totalUsers.toLocaleString()})
             </p>
           </div>
         </div>
@@ -145,7 +147,7 @@ export default function UsersPage() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search by email or name..."
+                placeholder={t('admin.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -154,24 +156,24 @@ export default function UsersPage() {
             <div className="w-full md:w-48">
               <Select value={roleFilter} onValueChange={(value: any) => setRoleFilter(value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All Roles" />
+                  <SelectValue placeholder={t('admin.allRoles')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="user">Students</SelectItem>
-                  <SelectItem value="admin">Admins</SelectItem>
+                  <SelectItem value="all">{t('admin.allRoles')}</SelectItem>
+                  <SelectItem value="user">{t('admin.students')}</SelectItem>
+                  <SelectItem value="admin">{t('admin.admins')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="w-full md:w-48">
               <Select value={premiumFilter} onValueChange={setPremiumFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All Plans" />
+                  <SelectValue placeholder={t('admin.allPlans')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Plans</SelectItem>
-                  <SelectItem value="true">Premium</SelectItem>
-                  <SelectItem value="false">Free</SelectItem>
+                  <SelectItem value="all">{t('admin.allPlans')}</SelectItem>
+                  <SelectItem value="true">{t('admin.premium')}</SelectItem>
+                  <SelectItem value="false">{t('admin.free')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -184,12 +186,12 @@ export default function UsersPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/10 bg-white/5">
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">User</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rating</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Joined</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('admin.user')}</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('admin.role')}</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('admin.rating')}</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('admin.status')}</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('admin.joined')}</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('admin.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -210,7 +212,7 @@ export default function UsersPage() {
                         )}
                         {!user.is_admin && (
                           <span className="inline-flex items-center px-2 py-1 rounded-md bg-white/10 text-muted-foreground text-xs font-medium border border-white/20">
-                            <User className="w-3 h-3 mr-1" /> Student
+                            <User className="w-3 h-3 mr-1" /> {t('admin.students')}
                           </span>
                         )}
                       </div>
@@ -236,10 +238,10 @@ export default function UsersPage() {
                     <td className="px-6 py-4">
                       {user.is_premium ? (
                         <span className="inline-flex items-center px-2 py-1 rounded-md bg-amber-500/10 text-amber-400 text-xs font-medium border border-amber-500/20">
-                          <Crown className="w-3 h-3 mr-1" /> Premium
+                          <Crown className="w-3 h-3 mr-1" /> {t('admin.premium')}
                         </span>
                       ) : (
-                        <span className="text-sm text-muted-foreground">Free</span>
+                        <span className="text-sm text-muted-foreground">{t('admin.free')}</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">
@@ -263,21 +265,21 @@ export default function UsersPage() {
                             onClick={() => handleRoleUpdate(user.id, { is_admin: !user.is_admin })}
                           >
                             <Shield className="w-4 h-4 mr-2" />
-                            {user.is_admin ? 'Remove Admin' : 'Make Admin'}
+                            {user.is_admin ? t('admin.removeAdmin') : t('admin.makeAdmin')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className={`${user.is_blocked ? 'text-green-400 focus:text-green-300 focus:bg-green-500/10' : 'text-orange-400 focus:text-orange-300 focus:bg-orange-500/10'} cursor-pointer`}
                             onClick={() => handleBlockUser(user.id, !user.is_blocked)}
                           >
                             <Ban className="w-4 h-4 mr-2" />
-                            {user.is_blocked ? 'Unblock User' : 'Block User'}
+                            {user.is_blocked ? t('admin.unblockUser') : t('admin.blockUser')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-400 focus:text-red-300 focus:bg-red-500/10 cursor-pointer"
                             onClick={() => handleDeleteUser(user.id)}
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
-                            Delete User
+                            {t('admin.deleteUser')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -287,7 +289,7 @@ export default function UsersPage() {
                 {data?.users.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
-                      No users found matching your criteria.
+                      {t('admin.noUsersFound')}
                     </td>
                   </tr>
                 )}
