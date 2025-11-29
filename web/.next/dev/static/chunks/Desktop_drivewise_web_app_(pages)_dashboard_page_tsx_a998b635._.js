@@ -10,7 +10,7 @@
   "static/chunks/ce3c5_recharts_es6_ca0ad47b._.js",
   "static/chunks/ce3c5_motion-dom_dist_es_059d724e._.js",
   "static/chunks/ce3c5_framer-motion_dist_es_89cbb5a9._.js",
-  "static/chunks/ce3c5_731a517a._.js"
+  "static/chunks/ce3c5_716362d9._.js"
 ],
     source: "dynamic"
 });

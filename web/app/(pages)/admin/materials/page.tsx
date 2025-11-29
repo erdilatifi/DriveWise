@@ -225,10 +225,10 @@ export default function MaterialsPage() {
                   </span>
                 </div>
                 <h3 className="text-lg font-semibold mb-1">
-                  {material.title_en}
+                  {material.title}
                 </h3>
-                <p className="text-sm text-muted-foreground mb-2">
-                  {material.title_sq}
+                <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                  {/* Render a preview of content if needed, or just remove description */}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Last updated: {new Date(material.updated_at).toLocaleString()}
@@ -303,7 +303,7 @@ export default function MaterialsPage() {
               Are you sure you want to delete this material?
               <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-sm font-medium text-foreground line-clamp-2">
-                  Chapter {materialToDelete?.chapter_id}: {materialToDelete?.title_en}
+                  Chapter {materialToDelete?.chapter_id}: {materialToDelete?.title}
                 </p>
               </div>
               <p className="mt-3 text-destructive font-medium">

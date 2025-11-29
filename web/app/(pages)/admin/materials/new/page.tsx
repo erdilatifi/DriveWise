@@ -33,17 +33,14 @@ interface MaterialFormState {
   chapter_id: number;
   category: LicenseCategory;
   order_index: number;
-  title_en: string;
-  title_sq: string;
-  content_en_text: string;
-  content_sq_text: string;
+  title: string;
+  content_text: string;
   is_published: boolean;
 }
 
 interface PendingImage {
   file: File;
-  caption_en: string;
-  caption_sq: string;
+  caption: string;
   order_index?: number;
 }
 
@@ -59,17 +56,14 @@ export default function NewMaterialPage() {
     chapter_id: 1,
     category: 'B',
     order_index: 1,
-    title_en: '',
-    title_sq: '',
-    content_en_text: '{\n  \n}',
-    content_sq_text: '{\n  \n}',
+    title: '',
+    content_text: '{\n  \n}',
     is_published: true,
   });
 
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imageCaptionEn, setImageCaptionEn] = useState('');
-  const [imageCaptionSq, setImageCaptionSq] = useState('');
+  const [imageCaption, setImageCaption] = useState('');
   const [imageOrderIndex, setImageOrderIndex] = useState<number | ''>('');
 
   const usedChapterIds = new Set(
@@ -87,11 +81,8 @@ export default function NewMaterialPage() {
 
     const errors: string[] = [];
 
-    if (!formData.title_en.trim()) {
-      errors.push('English title is required');
-    }
-    if (!formData.title_sq.trim()) {
-      errors.push('Albanian title is required');
+    if (!formData.title.trim()) {
+      errors.push('Title is required');
     }
     if (!formData.chapter_id || formData.chapter_id < 1 || formData.chapter_id > 20) {
       errors.push('Chapter must be between 1 and 20');
@@ -104,19 +95,12 @@ export default function NewMaterialPage() {
       errors.push('A material for this chapter already exists. Please edit it instead.');
     }
 
-    let contentEn: Record<string, unknown> = {};
-    let contentSq: Record<string, unknown> = {};
+    let content: Record<string, unknown> = {};
 
     try {
-      contentEn = JSON.parse(formData.content_en_text || '{}');
+      content = JSON.parse(formData.content_text || '{}');
     } catch {
-      errors.push('English content must be valid JSON');
-    }
-
-    try {
-      contentSq = JSON.parse(formData.content_sq_text || '{}');
-    } catch {
-      errors.push('Albanian content must be valid JSON');
+      errors.push('Content must be valid JSON');
     }
 
     if (errors.length > 0) {
@@ -130,10 +114,8 @@ export default function NewMaterialPage() {
         chapter_id: formData.chapter_id,
         category: formData.category,
         order_index: formData.order_index,
-        title_en: formData.title_en.trim(),
-        title_sq: formData.title_sq.trim(),
-        content_en: contentEn,
-        content_sq: contentSq,
+        title: formData.title.trim(),
+        content: content,
         is_published: formData.is_published,
       });
       
@@ -145,8 +127,7 @@ export default function NewMaterialPage() {
           await createMaterialImage.mutateAsync({
             material_id: result.id,
             image_url: publicUrl,
-            caption_en: img.caption_en || undefined,
-            caption_sq: img.caption_sq || undefined,
+            caption: img.caption || undefined,
             order_index: img.order_index,
           });
         }
@@ -179,15 +160,13 @@ export default function NewMaterialPage() {
 
     const next: PendingImage = {
       file: imageFile,
-      caption_en: imageCaptionEn,
-      caption_sq: imageCaptionSq,
+      caption: imageCaption,
       order_index: order,
     };
 
     setPendingImages((prev) => [...prev, next]);
     setImageFile(null);
-    setImageCaptionEn('');
-    setImageCaptionSq('');
+    setImageCaption('');
     setImageOrderIndex('');
   };
 
@@ -312,39 +291,27 @@ export default function NewMaterialPage() {
               </div>
             </div>
 
-            {/* Titles */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="title_en">Title (English) *</Label>
-                <Input
-                  id="title_en"
-                  value={formData.title_en}
-                  onChange={(e) => setFormData({ ...formData, title_en: e.target.value })}
-                  placeholder="e.g. 1. Basic Traffic Rules"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="title_sq">Title (Albanian) *</Label>
-                <Input
-                  id="title_sq"
-                  value={formData.title_sq}
-                  onChange={(e) => setFormData({ ...formData, title_sq: e.target.value })}
-                  placeholder="p.sh. 1. Rregullat Bazike"
-                  required
-                />
-              </div>
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="e.g. 1. Basic Traffic Rules"
+                required
+              />
             </div>
 
             {/* Content JSON */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="content_en_text">Content (English JSON) *</Label>
+                <Label htmlFor="content_text">Content (JSON) *</Label>
                 <Textarea
-                  id="content_en_text"
+                  id="content_text"
                   rows={10}
-                  value={formData.content_en_text}
-                  onChange={(e) => setFormData({ ...formData, content_en_text: e.target.value })}
+                  value={formData.content_text}
+                  onChange={(e) => setFormData({ ...formData, content_text: e.target.value })}
                   placeholder="Paste or write the content as a JSON object (keys and arrays)."
                   className="font-mono text-xs"
                   required
@@ -352,19 +319,6 @@ export default function NewMaterialPage() {
                 <p className="text-xs text-muted-foreground">
                   Example: {'{"section_key": ["Point 1", "Point 2"]}'}
                 </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="content_sq_text">Content (Albanian JSON) *</Label>
-                <Textarea
-                  id="content_sq_text"
-                  rows={10}
-                  value={formData.content_sq_text}
-                  onChange={(e) => setFormData({ ...formData, content_sq_text: e.target.value })}
-                  placeholder="Përmbajtja në formë JSON për shqip."
-                  className="font-mono text-xs"
-                  required
-                />
               </div>
             </div>
 
@@ -402,26 +356,14 @@ export default function NewMaterialPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="image_caption_en">Caption (English)</Label>
-                      <Input
-                        id="image_caption_en"
-                        value={imageCaptionEn}
-                        onChange={(e) => setImageCaptionEn(e.target.value)}
-                        placeholder="Optional caption in English"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="image_caption_sq">Caption (Albanian)</Label>
-                      <Input
-                        id="image_caption_sq"
-                        value={imageCaptionSq}
-                        onChange={(e) => setImageCaptionSq(e.target.value)}
-                        placeholder="Përshkrim opsional në shqip"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="image_caption">Caption</Label>
+                    <Input
+                      id="image_caption"
+                      value={imageCaption}
+                      onChange={(e) => setImageCaption(e.target.value)}
+                      placeholder="Optional caption"
+                    />
                   </div>
 
                   <div className="space-y-2 max-w-xs">

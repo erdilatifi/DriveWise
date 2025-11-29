@@ -1,0 +1,3 @@
+{
+  "/api/paddle/subscription/[id]/route": "app/api/paddle/subscription/[id]/route.js"
+}

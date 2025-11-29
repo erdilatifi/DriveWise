@@ -8,11 +8,12 @@ import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Check, X, Lightbulb, Trophy, Zap, Timer, TrafficCone, Octagon, User, GitBranch, AlertTriangle, Car, Play, Lock } from 'lucide-react';
+import { ArrowLeft, Check, X, Lightbulb, Trophy, Zap, Timer, TrafficCone, Octagon, User, GitBranch, AlertTriangle, Car, Play, Lock, Target, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { CATEGORY_INFO, type Category } from '@/data/scenarios';
-import { useScenarios, type Scenario as TrainerScenario } from '@/hooks/use-scenarios';
+import { useScenarios, type Scenario as TrainerScenario, TOPIC_MAPPING } from '@/hooks/use-scenarios';
 import { useCompleteCategory, useDecisionTrainerProgress, useDecisionTrainerStats, useWeakScenarioIds } from '@/hooks/use-decision-trainer';
+import { useLeaderboard } from '@/hooks/use-leaderboard';
 import type { DecisionTrainerProgress } from '@/hooks/use-decision-trainer';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/language-context';
@@ -30,11 +31,11 @@ type SessionAttempt = {
 
 const CATEGORY_ICONS: Record<Category, React.ReactNode> = {
   'traffic-lights': <TrafficCone className="w-5 h-5" />,
-  signs: <Octagon className="w-5 h-5" />,
-  pedestrians: <User className="w-5 h-5" />,
+  'signs': <Octagon className="w-5 h-5" />,
+  'pedestrians': <User className="w-5 h-5" />,
   'right-of-way': <GitBranch className="w-5 h-5" />,
-  hazards: <AlertTriangle className="w-5 h-5" />,
-  parking: <Car className="w-5 h-5" />,
+  'hazards': <AlertTriangle className="w-5 h-5" />,
+  'parking': <Car className="w-5 h-5" />,
 };
 
 export default function DecisionTrainerPage() {
@@ -44,6 +45,7 @@ export default function DecisionTrainerPage() {
   const isSq = language === 'sq';
   const { data: categoryProgressData } = useDecisionTrainerProgress(user?.id);
   const { data: trainerStats } = useDecisionTrainerStats(user?.id);
+  const { data: leaderboardData } = useLeaderboard(user?.id);
   const { data: weakScenarioIds } = useWeakScenarioIds(user?.id);
   
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -335,7 +337,9 @@ export default function DecisionTrainerPage() {
   };
 
   const startCategory = (category: Category, specificIds: string[] | null = null) => {
-    const availableScenarios = (scenarios || []).filter((s) => s.category === category);
+    const dbTopic = TOPIC_MAPPING[category] || category;
+    const availableScenarios = (scenarios || []).filter((s) => s.topic === dbTopic);
+    
     if (!availableScenarios.length) {
       toast.error(t('trainer.noScenariosTitle'), toastStyles.error);
       return;
@@ -942,7 +946,8 @@ export default function DecisionTrainerPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Object.entries(CATEGORY_INFO).map(([key, info]) => {
-                const categoryCount = scenarios.filter((scenario) => scenario.category === key).length;
+                const dbTopic = TOPIC_MAPPING[key] || key;
+                const categoryCount = scenarios.filter((scenario) => scenario.topic === dbTopic).length;
                 const progressForCategory = (categoryProgressData || []).find((p) => p.category === key);
                 const totalAttempts = progressForCategory?.total_attempts ?? 0;
                 const correctAnswers = progressForCategory?.correct_answers ?? 0;

@@ -1,0 +1,4 @@
+User-Agent: *
+Allow: /
+
+Sitemap: https://drivewise.vercel.app/sitemap.xml

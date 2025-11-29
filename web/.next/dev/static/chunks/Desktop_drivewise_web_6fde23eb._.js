@@ -703,7 +703,7 @@ function useMaterials(params = {}) {
                 }
                 if (search && search.trim()) {
                     const term = search.trim();
-                    query = query.or(`title_en.ilike.%${term}%,title_sq.ilike.%${term}%`);
+                    query = query.ilike('title', `%${term}%`);
                 }
                 const { data, error, count } = await query.range(from, to);
                 if (error) throw error;

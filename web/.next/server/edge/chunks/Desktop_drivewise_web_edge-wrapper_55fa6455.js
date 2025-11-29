@@ -1,0 +1,3 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["chunks/Desktop_drivewise_web_edge-wrapper_55fa6455.js",18288,(e,t,h)=>{self._ENTRIES||={};let r=Promise.resolve().then(()=>e.i(15604));r.catch(()=>{}),self._ENTRIES.middleware_middleware=new Proxy(r,{get(e,t){if("then"===t)return(t,h)=>e.then(t,h);let h=(...h)=>e.then(e=>(0,e[t])(...h));return h.then=(h,r)=>e.then(e=>e[t]).then(h,r),h}})}]);
+
+//# sourceMappingURL=Desktop_drivewise_web_edge-wrapper_55fa6455.js.map

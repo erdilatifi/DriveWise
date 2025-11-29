@@ -11,6 +11,7 @@ export interface ScenarioOption {
 export interface Scenario {
   id: string;
   category: string;
+  topic: string;
   level: number;
   question: string;
   image_url: string | null;
@@ -23,7 +24,7 @@ export interface Scenario {
   is_published?: boolean;
 }
 
-const TOPIC_MAPPING: Record<string, string> = {
+export const TOPIC_MAPPING: Record<string, string> = {
   'traffic-lights': 'traffic_lights',
   'signs': 'road_signs',
   'pedestrians': 'pedestrian_safety',

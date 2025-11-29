@@ -41,6 +41,7 @@ export interface UserProfile {
   app_rating?: number;
   avatar_url?: string;
   subscription_id?: string | null;
+  is_premium?: boolean;
   created_at: string;
   updated_at: string;
 }

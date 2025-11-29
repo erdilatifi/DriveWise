@@ -23,16 +23,13 @@ interface Answer {
   question: {
     id: string;
     question_text: string;
-    question_text_en?: string | null;
-    question_text_sq?: string | null;
     option_a: string;
     option_b: string;
     option_c: string;
     correct_answer: string;
     correct_answers?: string[];
     image_url?: string;
-    explanation_en?: string | null;
-    explanation_sq?: string | null;
+    explanation?: string | null;
     topic?: string | null;
   } | null;
 }
@@ -304,13 +301,9 @@ export default function ReviewPage() {
     ? question.correct_answers
     : [question.correct_answer];
 
-  const localizedQuestionText = language === 'en'
-    ? (question.question_text_en || question.question_text)
-    : (question.question_text_sq || question.question_text);
+  const localizedQuestionText = question.question_text;
 
-  const explanationText = language === 'en'
-    ? (question.explanation_en || question.explanation_sq || '')
-    : (question.explanation_sq || question.explanation_en || '');
+  const explanationText = question.explanation || '';
 
   const topicQuery = question.topic ? encodeURIComponent(question.topic) : '';
 

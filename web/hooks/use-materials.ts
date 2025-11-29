@@ -8,10 +8,8 @@ export interface Material {
   id: string;
   chapter_id: number;
   category?: LicenseCategory | null;
-  title_en: string;
-  title_sq: string;
-  content_en: MaterialContent;
-  content_sq: MaterialContent;
+  title: string;
+  content: MaterialContent;
   order_index: number;
   is_published: boolean;
   created_at: string;
@@ -23,8 +21,7 @@ export interface MaterialImage {
   id: string;
   material_id: string;
   image_url: string;
-  caption_en?: string | null;
-  caption_sq?: string | null;
+  caption?: string | null;
   order_index?: number | null;
   created_at: string;
   updated_at: string;
@@ -33,10 +30,8 @@ export interface MaterialImage {
 export interface MaterialInput {
   chapter_id: number;
   category?: LicenseCategory;
-  title_en: string;
-  title_sq: string;
-  content_en: MaterialContent;
-  content_sq: MaterialContent;
+  title: string;
+  content: MaterialContent;
   order_index: number;
   is_published?: boolean;
 }
@@ -44,8 +39,7 @@ export interface MaterialInput {
 export interface MaterialImageInput {
   material_id: string;
   image_url: string;
-  caption_en?: string;
-  caption_sq?: string;
+  caption?: string;
   order_index?: number;
 }
 
@@ -103,7 +97,7 @@ export function useMaterials(params: MaterialsQueryParams = {}) {
 
       if (search && search.trim()) {
         const term = search.trim();
-        query = query.or(`title_en.ilike.%${term}%,title_sq.ilike.%${term}%`);
+        query = query.ilike('title', `%${term}%`);
       }
 
       const { data, error, count } = await query.range(from, to);

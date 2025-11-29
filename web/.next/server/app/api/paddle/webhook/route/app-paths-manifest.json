@@ -1,0 +1,3 @@
+{
+  "/api/paddle/webhook/route": "app/api/paddle/webhook/route.js"
+}
