@@ -1,0 +1,330 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { usePathname } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { LogOut, Menu, X } from 'lucide-react';
+import { useLanguage } from '@/contexts/language-context';
+import { useAuth } from '@/contexts/auth-context';
+import { toast } from 'sonner';
+
+export function Navbar() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const { t } = useLanguage();
+  const { user, signOut, isAdmin, userProfile, loading: authLoading } = useAuth();
+  const pathname = usePathname();
+
+  // Get display name from userProfile or fallback to email
+  const displayName = userProfile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || t('admin.user');
+
+  // Handle scroll behavior
+  useEffect(() => {
+    let rafId: number;
+    const handleScroll = () => {
+      rafId = requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 10);
+      });
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+
+  const handleLogout = async () => {
+    try {
+      setMobileMenuOpen(false);
+      await signOut();
+      toast.success(t('auth.logoutSuccess'));
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error(t('auth.logoutError'));
+    }
+  };
+
+  const isActive = (path: string) => pathname === path;
+
+  const desktopLinkBase =
+    'text-sm font-semibold transition-all duration-200 relative group/nav-link';
+  const desktopLinkActive = 'text-primary';
+  const desktopLinkInactive = 'text-foreground/80 hover:text-foreground';
+
+  const renderDesktopLink = (href: string, label: string, active: boolean) => (
+    <Link
+      href={href}
+      className={`${desktopLinkBase} ${active ? desktopLinkActive : desktopLinkInactive}`}
+    >
+      {label}
+      <span
+        className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-full transition-all duration-200 ${
+          active ? 'w-full' : 'w-0 group-hover/nav-link:w-full'
+        }`}
+      />
+    </Link>
+  );
+
+  return (
+    <nav className={`fixed left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${
+      scrolled ? 'top-0 w-full' : 'top-4 w-[90%]'
+    }`}>
+      <div className={`bg-card/95 backdrop-blur-xl border border-border/40 shadow-lg shadow-black/20 transition-all duration-300 ${
+        scrolled ? 'rounded-none border-t-0 border-x-0' : 'rounded-2xl'
+      }`}>
+      <div className="container mx-auto px-4">
+        <div className="flex h-20 items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full group-hover:bg-primary/40 transition-all duration-300"></div>
+              <div className="relative w-12 h-12 rounded-2xl overflow-hidden shadow-xl shadow-primary/20 group-hover:shadow-primary/30 transition-all duration-300 group-hover:scale-105 border-2 border-primary/30 group-hover:border-primary/50">
+                <Image 
+                  src="/logo-white.png" 
+                  alt="DriveWise Logo" 
+                  width={48} 
+                  height={48}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-2xl font-bold text-white tracking-tight">
+                DriveWise
+              </span>
+              <span className="text-xs text-primary font-medium -mt-1">{t('nav.subtitle')}</span>
+            </div>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-8">
+            {/* Home */}
+            {renderDesktopLink('/', t('nav.home'), isActive('/'))}
+
+            {/* Pricing page */}
+            {renderDesktopLink('/pricing', t('nav.pricing'), isActive('/pricing'))}
+
+            {/* Materials */}
+            {renderDesktopLink('/materials', t('nav.materials'), isActive('/materials'))}
+
+            {/* Decision Trainer (logged-in users) */}
+            {user &&
+              renderDesktopLink(
+                '/decision-trainer',
+                t('nav.decisionTrainer'),
+                pathname.startsWith('/decision-trainer'),
+              )}
+
+            {/* Tests (category index page) */}
+            {renderDesktopLink('/category', t('nav.tests'), pathname.startsWith('/category'))}
+
+            {/* Dashboard */}
+            {renderDesktopLink('/dashboard', t('nav.dashboard'), isActive('/dashboard'))}
+
+            {/* Account (logged-in users) */}
+            {user && renderDesktopLink('/profile', t('nav.account'), isActive('/profile'))}
+
+            {/* Admin (admins only) */}
+            {user &&
+              isAdmin &&
+              renderDesktopLink(
+                '/admin',
+                t('nav.admin'),
+                isActive('/admin') || pathname.startsWith('/admin'),
+              )}
+          </div>
+
+          {/* Desktop Auth Buttons */}
+          <div className="hidden md:flex items-center gap-3">
+            {authLoading ? (
+              <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-primary/5 border border-primary/10">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                <span className="text-sm text-muted-foreground">Loading...</span>
+              </div>
+            ) : user ? (
+              <>
+                <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                  <span className="text-sm font-medium text-primary">{displayName}</span>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleLogout} className="border-border/50 hover:border-primary/50">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  {t('nav.logout')}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild className="hover:bg-primary/10 hover:text-primary">
+                  <Link href="/login">{t('nav.login')}</Link>
+                </Button>
+                <Button size="sm" asChild className="shadow-lg shadow-primary/30 hover:shadow-primary/40 transition-all duration-300 font-semibold">
+                  <Link href="/register">{t('nav.getStarted')}</Link>
+                </Button>
+              </>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2 hover:bg-primary/10 rounded-lg transition-all duration-200 border border-border/50 hover:border-primary/30"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? (
+              <X className="w-5 h-5 text-primary" />
+            ) : (
+              <Menu className="w-5 h-5 text-foreground" />
+            )}
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden py-6 border-t border-border/40 bg-card/50 backdrop-blur-xl animate-in slide-in-from-top-2">
+            <div className="flex flex-col gap-2">
+              {user && (
+                <div className="flex items-center gap-3 px-4 py-3 mb-2 rounded-xl bg-primary/10 border border-primary/20">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                  <span className="text-sm font-medium text-primary">{displayName}</span>
+                </div>
+              )}
+              {/* Home */}
+              <Link
+                href="/"
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  isActive('/') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('nav.home')}
+              </Link>
+
+              {/* Pricing */}
+              <Link
+                href="/pricing"
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  isActive('/pricing')
+                    ? 'bg-primary/10 text-primary border border-primary/20'
+                    : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('nav.pricing')}
+              </Link>
+
+              {/* Materials */}
+              <Link
+                href="/materials"
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  isActive('/materials') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('nav.materials')}
+              </Link>
+
+              {/* Decision Trainer (logged-in users) */}
+              {user && (
+                <Link
+                  href="/decision-trainer"
+                  className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                    pathname.startsWith('/decision-trainer')
+                      ? 'bg-primary/10 text-primary border border-primary/20'
+                      : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('nav.decisionTrainer')}
+                </Link>
+              )}
+
+              {/* Tests (category index page) */}
+              <Link
+                href="/category"
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  pathname.startsWith('/category')
+                    ? 'bg-primary/10 text-primary border border-primary/20'
+                    : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('nav.tests')}
+              </Link>
+
+              {/* Dashboard */}
+              <Link
+                href="/dashboard"
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  isActive('/dashboard') ? 'bg-primary/10 text-primary border border-primary/20' : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('nav.dashboard')}
+              </Link>
+
+              {/* Account (logged-in users) */}
+              {user && (
+                <Link
+                  href="/profile"
+                  className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                    isActive('/profile')
+                      ? 'bg-primary/10 text-primary border border-primary/20'
+                      : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('nav.account')}
+                </Link>
+              )}
+
+              {/* Admin (admins only) */}
+              {user &&
+                isAdmin && (
+                  <Link
+                    href="/admin"
+                    className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                      isActive('/admin') || pathname.startsWith('/admin')
+                        ? 'bg-primary/10 text-primary border border-primary/20'
+                        : 'text-foreground/80 hover:bg-primary/5 hover:text-foreground'
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t('nav.admin')}
+                  </Link>
+                )}
+              
+              <div className="h-px bg-border/40 my-3"></div>
+              {authLoading ? (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/5 border border-primary/10">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                  <span className="text-sm text-muted-foreground">Loading...</span>
+                </div>
+              ) : user ? (
+                <Button variant="outline" size="sm" onClick={handleLogout} className="w-full justify-start border-border/50 hover:border-primary/50">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  {t('nav.logout')}
+                </Button>
+              ) : (
+                <>
+                  <Button variant="ghost" size="sm" asChild className="w-full justify-start hover:bg-primary/10 hover:text-primary">
+                    <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                      {t('nav.login')}
+                    </Link>
+                  </Button>
+                  <Button size="sm" asChild className="w-full justify-start shadow-lg shadow-primary/30">
+                    <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
+                      {t('nav.getStarted')}
+                    </Link>
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+      </div>
+    </nav>
+  );
+}

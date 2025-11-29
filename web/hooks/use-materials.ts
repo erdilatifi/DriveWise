@@ -1,0 +1,389 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createClient } from '@/utils/supabase/client';
+import type { LicenseCategory } from '@/types/database';
+
+type MaterialContent = Record<string, unknown>;
+
+export interface Material {
+  id: string;
+  chapter_id: number;
+  category?: LicenseCategory | null;
+  title_en: string;
+  title_sq: string;
+  content_en: MaterialContent;
+  content_sq: MaterialContent;
+  order_index: number;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+  images?: MaterialImage[];
+}
+
+export interface MaterialImage {
+  id: string;
+  material_id: string;
+  image_url: string;
+  caption_en?: string | null;
+  caption_sq?: string | null;
+  order_index?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MaterialInput {
+  chapter_id: number;
+  category?: LicenseCategory;
+  title_en: string;
+  title_sq: string;
+  content_en: MaterialContent;
+  content_sq: MaterialContent;
+  order_index: number;
+  is_published?: boolean;
+}
+
+export interface MaterialImageInput {
+  material_id: string;
+  image_url: string;
+  caption_en?: string;
+  caption_sq?: string;
+  order_index?: number;
+}
+
+export interface MaterialsQueryParams {
+  search?: string;
+  chapterId?: number;
+  category?: LicenseCategory;
+  page?: number;
+  pageSize?: number;
+  includeUnpublished?: boolean;
+  fields?: string; // New: Allow selecting specific columns
+}
+
+export interface MaterialsPageResult {
+  materials: Material[];
+  total: number;
+}
+
+// Fetch materials with optional pagination and filters, including related images
+export function useMaterials(params: MaterialsQueryParams = {}) {
+  const {
+    search,
+    chapterId,
+    category,
+    page = 1,
+    pageSize = 50,
+    includeUnpublished = false,
+    fields = '*', // Default to all for backward compatibility
+  } = params;
+  const supabase = createClient();
+
+  return useQuery<MaterialsPageResult>({
+    queryKey: ['materials', search, chapterId, category, page, pageSize, includeUnpublished, fields],
+    queryFn: async () => {
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      // Select specific fields if provided, otherwise *
+      let query = supabase
+        .from('study_materials')
+        .select(fields, { count: 'planned' })
+        .order('order_index', { ascending: true });
+
+      if (chapterId) {
+        query = query.eq('chapter_id', chapterId);
+      }
+
+      if (category) {
+        query = query.eq('category', category);
+      }
+
+      if (!includeUnpublished) {
+        query = query.eq('is_published', true);
+      }
+
+      if (search && search.trim()) {
+        const term = search.trim();
+        query = query.or(`title_en.ilike.%${term}%,title_sq.ilike.%${term}%`);
+      }
+
+      const { data, error, count } = await query.range(from, to);
+
+      if (error) throw error;
+
+      const materials = (data || []) as unknown as Material[];
+      
+      // Only fetch images if we are fetching full content or specifically requested
+      // If fields doesn't include 'id' we can't match images anyway
+      // Just simplify: if fields is '*', fetch images. If restricted, skip images unless logic added.
+      // For lightweight list, we don't need images.
+      if (fields !== '*') {
+         return {
+            materials,
+            total: count || 0,
+         };
+      }
+
+      const materialIds = materials.map((m) => m.id);
+
+      let images: MaterialImage[] = [];
+      if (materialIds.length > 0) {
+        const { data: imageData, error: imageError } = await supabase
+          .from('material_images')
+          .select('*')
+          .in('material_id', materialIds)
+          .order('order_index', { ascending: true })
+          .order('created_at', { ascending: true });
+
+        if (imageError) throw imageError;
+        images = (imageData || []) as MaterialImage[];
+      }
+
+      const materialsWithImages: Material[] = materials.map((material) => ({
+        ...material,
+        images: images.filter((img) => img.material_id === material.id),
+      }));
+
+      return {
+        materials: materialsWithImages,
+        total: count || 0,
+      };
+    },
+  });
+}
+
+// Fetch a single material by Chapter ID (Optimized for reading view)
+export function useMaterialByChapterId(chapterId: number | undefined) {
+  const supabase = createClient();
+
+  return useQuery<Material | null>({
+    queryKey: ['material-by-chapter', chapterId],
+    queryFn: async () => {
+      if (chapterId === undefined) return null;
+
+      const { data, error } = await supabase
+        .from('study_materials')
+        .select('*')
+        .eq('chapter_id', chapterId)
+        .single();
+
+      if (error) throw error;
+
+      const material = data as Material;
+
+      // Fetch images for this material
+      const { data: imageData, error: imageError } = await supabase
+        .from('material_images')
+        .select('*')
+        .eq('material_id', material.id)
+        .order('order_index', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      if (imageError) throw imageError;
+
+      return {
+        ...material,
+        images: (imageData || []) as MaterialImage[],
+      };
+    },
+    enabled: !!chapterId,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+}
+
+// Fetch a single material with its images
+export function useMaterial(id: string) {
+  const supabase = createClient();
+
+  return useQuery<Material | null>({
+    queryKey: ['material', id],
+    queryFn: async () => {
+      if (!id) return null;
+
+      const { data, error } = await supabase
+        .from('study_materials')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      const material = data as Material;
+
+      const { data: imageData, error: imageError } = await supabase
+        .from('material_images')
+        .select('*')
+        .eq('material_id', id)
+        .order('order_index', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      if (imageError) throw imageError;
+
+      return {
+        ...material,
+        images: (imageData || []) as MaterialImage[],
+      };
+    },
+    enabled: !!id,
+  });
+}
+
+// Create material (admin only via RLS)
+export function useCreateMaterial() {
+  const queryClient = useQueryClient();
+  const supabase = createClient();
+
+  return useMutation({
+    mutationFn: async (material: MaterialInput) => {
+      const { data, error } = await supabase
+        .from('study_materials')
+        .insert([material])
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(error.message || error.details || 'Failed to create material');
+      }
+
+      return data as Material;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['materials'] });
+    },
+  });
+}
+
+// Update material
+export function useUpdateMaterial() {
+  const queryClient = useQueryClient();
+  const supabase = createClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<MaterialInput> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('study_materials')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(error.message || error.details || 'Failed to update material');
+      }
+
+      return data as Material;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['materials'] });
+      queryClient.invalidateQueries({ queryKey: ['material', data.id] });
+    },
+  });
+}
+
+// Delete material
+export function useDeleteMaterial() {
+  const queryClient = useQueryClient();
+  const supabase = createClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('study_materials')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        throw new Error(error.message || 'Failed to delete material');
+      }
+
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['materials'] });
+    },
+  });
+}
+
+// Create material image record (DB only - upload to storage separately)
+export function useCreateMaterialImage() {
+  const queryClient = useQueryClient();
+  const supabase = createClient();
+
+  return useMutation({
+    mutationFn: async (image: MaterialImageInput) => {
+      const { data, error } = await supabase
+        .from('material_images')
+        .insert([image])
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(error.message || error.details || 'Failed to create material image');
+      }
+
+      return data as MaterialImage;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['material', data.material_id] });
+      queryClient.invalidateQueries({ queryKey: ['materials'] });
+    },
+  });
+}
+
+// Delete material image
+export function useDeleteMaterialImage() {
+  const queryClient = useQueryClient();
+  const supabase = createClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase
+        .from('material_images')
+        .delete()
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(error.message || 'Failed to delete material image');
+      }
+
+      return data as MaterialImage;
+    },
+    onSuccess: (data) => {
+      if (data?.material_id) {
+        queryClient.invalidateQueries({ queryKey: ['material', data.material_id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['materials'] });
+    },
+  });
+}
+
+// Upload a material image file to Supabase storage and return the public URL
+export function useUploadMaterialImage() {
+  const supabase = createClient();
+
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const filePath = `materials/${unique}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('material-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw new Error(uploadError.message || 'Failed to upload material image');
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('material-images').getPublicUrl(filePath);
+
+      return publicUrl as string;
+    },
+  });
+}

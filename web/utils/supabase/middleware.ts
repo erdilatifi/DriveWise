@@ -1,0 +1,85 @@
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
+
+export async function updateSession(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({
+    request,
+  })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
+  // Do not run code between createServerClient and
+  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
+  // issues with users being randomly logged out.
+
+  // IMPORTANT: DO NOT REMOVE auth.getUser()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // Define public routes that don't require authentication
+  const publicRoutes = [
+    '/',
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/reset-password',
+    '/pricing',
+    '/payment/success', // Should be public to check status
+  ]
+
+  // Check if the current path is exactly a public route
+  const isPublicRoute = publicRoutes.includes(request.nextUrl.pathname)
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api')
+
+  // If user is not authenticated and trying to access a protected route (anything not public and not an API)
+  if (!user && !isPublicRoute && !isApiRoute) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  // If user IS authenticated and tries to access auth routes (login/register), redirect to dashboard
+  // This prevents "double login" or accessing sign up while logged in.
+  const authRoutes = ['/login', '/register', '/forgot-password']
+  if (user && authRoutes.includes(request.nextUrl.pathname)) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard'
+    return NextResponse.redirect(url)
+  }
+
+  // IMPORTANT: You *must* return the supabaseResponse object as it is.
+  // If you're creating a new response object with NextResponse.next() make sure to:
+  // 1. Pass the request in it, like so:
+  //    const myNewResponse = NextResponse.next({ request })
+  // 2. Copy over the cookies, like so:
+  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
+  // 3. Change the myNewResponse object to fit your needs, but avoid changing
+  //    the cookies!
+  // 4. Finally:
+  //    return myNewResponse
+  // If this is not done, you may be causing the browser and server to go out
+  // of sync and terminate the user's session prematurely!
+
+  return supabaseResponse
+}
