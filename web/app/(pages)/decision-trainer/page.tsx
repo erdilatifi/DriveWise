@@ -337,8 +337,7 @@ export default function DecisionTrainerPage() {
   };
 
   const startCategory = (category: Category, specificIds: string[] | null = null) => {
-    const dbTopic = TOPIC_MAPPING[category] || category;
-    const availableScenarios = (scenarios || []).filter((s) => s.topic === dbTopic);
+    const availableScenarios = (scenarios || []).filter((s) => s.category === category);
     
     if (!availableScenarios.length) {
       toast.error(t('trainer.noScenariosTitle'), toastStyles.error);
@@ -946,8 +945,7 @@ export default function DecisionTrainerPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Object.entries(CATEGORY_INFO).map(([key, info]) => {
-                const dbTopic = TOPIC_MAPPING[key] || key;
-                const categoryCount = scenarios.filter((scenario) => scenario.topic === dbTopic).length;
+                const categoryCount = scenarios.filter((scenario) => scenario.category === key).length;
                 const progressForCategory = (categoryProgressData || []).find((p) => p.category === key);
                 const totalAttempts = progressForCategory?.total_attempts ?? 0;
                 const correctAnswers = progressForCategory?.correct_answers ?? 0;

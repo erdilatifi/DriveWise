@@ -43,14 +43,18 @@ export function useScenarios(category?: Category, licenseCategory: string = 'B')
         .from('decision_trainer_scenarios')
         .select('*')
         .eq('is_active', true)
-        .eq('category', licenseCategory) // Filter by license category (A, B, C, D)
         .order('level', { ascending: true });
 
+      // If a topic category is provided (e.g. 'traffic-lights'), filter by it.
+      // The DB column 'category' holds the topic string.
       if (category) {
-        const dbTopic = TOPIC_MAPPING[category] || category;
-        baseQuery = baseQuery.eq('topic', dbTopic);
+        baseQuery = baseQuery.eq('category', category);
       }
 
+      // Note: We are ignoring licenseCategory ('B') for now because the 
+      // decision_trainer_scenarios table uses the 'category' column for the Topic,
+      // and there is no separate column for license type in the current schema.
+      
       // Prefer published-only scenarios when the column exists
       const { data, error } = await baseQuery.eq('is_published', true);
 
