@@ -22,6 +22,7 @@ export const ProfileScreen = () => {
   
   const [showBugModal, setShowBugModal] = React.useState(false);
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+  const [isThemeExpanded, setIsThemeExpanded] = React.useState(false);
 
   if (authLoading || (user && plansLoading)) {
     return <ProfileSkeleton />;
@@ -77,14 +78,7 @@ export const ProfileScreen = () => {
       rightElement: <Text className="text-slate-400 text-xs font-medium capitalize">{theme}</Text>,
       color: 'text-slate-900 dark:text-white',
       bgColor: 'bg-slate-50 dark:bg-slate-800',
-      onPress: () => {
-        Alert.alert('Pamja', 'Zgjidhni preferencën tuaj', [
-          { text: 'Light', onPress: () => setTheme('light') },
-          { text: 'Dark', onPress: () => setTheme('dark') },
-          { text: 'System', onPress: () => setTheme('system') },
-          { text: 'Cancel', style: 'cancel' },
-        ]);
-      },
+      onPress: () => setIsThemeExpanded(!isThemeExpanded),
     },
     {
       icon: Bug,
@@ -130,7 +124,7 @@ export const ProfileScreen = () => {
   ];
 
   return (
-    <View className="flex-1 bg-[#F7F8FA] dark:bg-slate-950">
+    <View className="flex-1 bg-white dark:bg-slate-950">
       <SafeAreaView className="flex-1" edges={['top']}>
         <ScrollView contentContainerStyle={{ paddingBottom: 140 }} showsVerticalScrollIndicator={false}>
           
@@ -229,23 +223,48 @@ export const ProfileScreen = () => {
              <Text className="text-sm font-bold text-slate-900 dark:text-white mb-3 px-1">Cilësimet</Text>
              <View className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-sm">
                 {toolsItems.map((item, index) => (
-                   <TouchableOpacity
-                      key={index}
-                      onPress={item.onPress}
-                      activeOpacity={0.7}
-                      className={clsx(
-                         "flex-row items-center p-4 active:bg-slate-50 dark:active:bg-slate-800",
-                         index !== toolsItems.length - 1 && "border-b border-slate-50 dark:border-slate-800"
-                      )}
-                   >
-                      <View className={clsx("h-9 w-9 rounded-xl items-center justify-center mr-3", item.bgColor)}>
-                         <item.icon size={18} color={item.iconColor || (isDark ? "#e2e8f0" : "#334155")} />
-                      </View>
-                      <Text className={clsx("flex-1 text-[15px] font-medium", item.color)}>
-                         {item.title}
-                      </Text>
-                      {item.rightElement}
-                   </TouchableOpacity>
+                   <React.Fragment key={index}>
+                     <TouchableOpacity
+                        onPress={item.onPress}
+                        activeOpacity={0.7}
+                        className={clsx(
+                           "flex-row items-center p-4 active:bg-slate-50 dark:active:bg-slate-800",
+                           index !== toolsItems.length - 1 && "border-b border-slate-50 dark:border-slate-800"
+                        )}
+                     >
+                        <View className={clsx("h-9 w-9 rounded-xl items-center justify-center mr-3", item.bgColor)}>
+                           <item.icon size={18} color={item.iconColor || (isDark ? "#e2e8f0" : "#334155")} />
+                        </View>
+                        <Text className={clsx("flex-1 text-[15px] font-medium", item.color)}>
+                           {item.title}
+                        </Text>
+                        {item.rightElement}
+                     </TouchableOpacity>
+                     
+                     {item.title === 'Pamja' && isThemeExpanded && (
+                        <View className="bg-slate-50 dark:bg-slate-800/50 px-4 py-2 border-b border-slate-50 dark:border-slate-800">
+                           {['system', 'light', 'dark'].map((t) => (
+                              <TouchableOpacity 
+                                 key={t} 
+                                 onPress={() => {
+                                    setTheme(t as any);
+                                    // Optional: close after selection or keep open
+                                 }}
+                                 className={clsx(
+                                    "flex-row items-center justify-between py-3 px-3 rounded-xl mb-1",
+                                    theme === t ? "bg-white dark:bg-slate-700 shadow-sm" : ""
+                                 )}
+                              >
+                                 <Text className={clsx(
+                                    "text-sm font-medium capitalize",
+                                    theme === t ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 dark:text-slate-400"
+                                 )}>{t}</Text>
+                                 {theme === t && <View className="h-2 w-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />}
+                              </TouchableOpacity>
+                           ))}
+                        </View>
+                     )}
+                   </React.Fragment>
                 ))}
              </View>
           </View>

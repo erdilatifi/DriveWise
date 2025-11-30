@@ -1,6 +1,13 @@
 import React from 'react';
+import { LogBox } from 'react-native';
 import "../global.css";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Suppress Reanimated warning
+LogBox.ignoreLogs([
+  "[Reanimated] Reduced motion setting is enabled",
+]);
+
 import { AuthProvider } from './src/contexts/AuthContext';
 import { CategoryProvider } from './src/contexts/CategoryContext';
 import { ThemeProvider } from './src/contexts/ThemeContext';

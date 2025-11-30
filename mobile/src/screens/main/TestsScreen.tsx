@@ -86,14 +86,14 @@ export const TestsScreen: React.FC = () => {
   // ---------- SUBCOMPONENTS ----------
 
   const GuestHeader = () => (
-    <View className="px-6 pt-8 pb-8 bg-white border-b border-slate-100 rounded-b-[32px]">
-      <Text className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
+    <View className="px-6 pt-8 pb-8 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 rounded-b-[32px]">
+      <Text className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
         Mirësevini në DriveWise
       </Text>
-      <Text className="text-3xl font-extrabold text-slate-900 leading-tight">
+      <Text className="text-3xl font-extrabold text-slate-900 dark:text-white leading-tight">
         Fillo rrugën drejt lejes së vozitjes
       </Text>
-      <Text className="text-slate-500 mt-3 text-sm leading-5 max-w-[280px]">
+      <Text className="text-slate-500 dark:text-slate-400 mt-3 text-sm leading-5 max-w-[280px]">
         Tri seksione të thjeshta për të mësuar, ushtruar dhe provuar veten.
       </Text>
 
@@ -104,13 +104,13 @@ export const TestsScreen: React.FC = () => {
           onPress={() => navigation.navigate("Literatura" as any)}
           className="items-center w-1/3"
         >
-          <View className="h-12 w-12 rounded-2xl bg-slate-50 items-center justify-center border border-slate-100 mb-2">
+          <View className="h-12 w-12 rounded-2xl bg-slate-50 dark:bg-slate-800 items-center justify-center border border-slate-100 dark:border-slate-700 mb-2">
             <BookOpen size={20} color={PRIMARY} />
           </View>
-          <Text className="text-xs font-semibold text-slate-900">
+          <Text className="text-xs font-semibold text-slate-900 dark:text-slate-200">
             Literatura
           </Text>
-          <Text className="text-[10px] text-slate-500 mt-0.5 text-center">
+          <Text className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 text-center">
             Baza e rregullave
           </Text>
         </TouchableOpacity>
@@ -120,13 +120,13 @@ export const TestsScreen: React.FC = () => {
           onPress={() => navigation.navigate("Trajneri" as any)}
           className="items-center w-1/3"
         >
-          <View className="h-12 w-12 rounded-2xl bg-slate-50 items-center justify-center border border-slate-100 mb-2">
+          <View className="h-12 w-12 rounded-2xl bg-slate-50 dark:bg-slate-800 items-center justify-center border border-slate-100 dark:border-slate-700 mb-2">
             <BrainCircuit size={20} color={PRIMARY} />
           </View>
-          <Text className="text-xs font-semibold text-slate-900">
+          <Text className="text-xs font-semibold text-slate-900 dark:text-slate-200">
             Trajneri
           </Text>
-          <Text className="text-[10px] text-slate-500 mt-0.5 text-center">
+          <Text className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 text-center">
             Ushtroni temat
           </Text>
         </TouchableOpacity>
@@ -136,13 +136,13 @@ export const TestsScreen: React.FC = () => {
           onPress={() => navigation.navigate("Testet" as any)}
           className="items-center w-1/3"
         >
-          <View className="h-12 w-12 rounded-2xl bg-slate-50 items-center justify-center border border-slate-100 mb-2">
+          <View className="h-12 w-12 rounded-2xl bg-slate-50 dark:bg-slate-800 items-center justify-center border border-slate-100 dark:border-slate-700 mb-2">
             <FileText size={20} color={PRIMARY} />
           </View>
-          <Text className="text-xs font-semibold text-slate-900">
+          <Text className="text-xs font-semibold text-slate-900 dark:text-slate-200">
             Testet
           </Text>
-          <Text className="text-[10px] text-slate-500 mt-0.5 text-center">
+          <Text className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 text-center">
             Simuloni provimin
           </Text>
         </TouchableOpacity>
@@ -152,7 +152,7 @@ export const TestsScreen: React.FC = () => {
       <TouchableOpacity
         activeOpacity={0.9}
         onPress={() => navigation.getParent()?.navigate("Login")}
-        className="mt-8 bg-slate-900 py-4 rounded-full flex-row items-center justify-center shadow-sm shadow-slate-200"
+        className="mt-8 bg-slate-900 dark:bg-indigo-600 py-4 rounded-full flex-row items-center justify-center shadow-sm shadow-slate-200"
       >
         <LogIn size={18} color="white" />
         <Text className="text-white font-bold text-sm ml-2">
@@ -163,18 +163,18 @@ export const TestsScreen: React.FC = () => {
   );
 
   const LoggedInHeader = () => (
-    <View className="px-6 pt-8 pb-8 bg-white border-b border-slate-100 rounded-b-[32px]">
+    <View className="px-6 pt-8 pb-8 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 rounded-b-[32px]">
       <View className="flex-row items-center justify-between mb-6">
         <View>
-          <Text className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
+          <Text className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
             Mirësevini
           </Text>
-          <Text className="text-3xl font-extrabold text-slate-900">
+          <Text className="text-3xl font-extrabold text-slate-900 dark:text-white">
             {profile?.full_name || "Përdorues"}
           </Text>
         </View>
-        <View className="h-12 w-12 rounded-full bg-slate-50 border border-slate-100 items-center justify-center">
-          <Text className="text-lg font-bold text-slate-900">
+        <View className="h-12 w-12 rounded-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 items-center justify-center">
+          <Text className="text-lg font-bold text-slate-900 dark:text-white">
             {profile?.full_name?.charAt(0) || "U"}
           </Text>
         </View>
@@ -182,34 +182,34 @@ export const TestsScreen: React.FC = () => {
 
       {/* 3 small stat chips – all same style */}
       <View className="flex-row gap-3">
-        <View className="flex-1 bg-slate-50 p-4 rounded-3xl border border-slate-100">
-          <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+        <View className="flex-1 bg-slate-50 dark:bg-slate-800 p-4 rounded-3xl border border-slate-100 dark:border-slate-700">
+          <Text className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
             Mesatarja
           </Text>
           <View className="flex-row items-end justify-between">
-            <Text className="text-2xl font-bold text-slate-900">
+            <Text className="text-2xl font-bold text-slate-900 dark:text-white">
               {dashboardStats.averageScore}%
             </Text>
             <CheckCircle2 size={18} color={PRIMARY} />
           </View>
         </View>
-        <View className="flex-1 bg-slate-50 p-4 rounded-3xl border border-slate-100">
-          <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+        <View className="flex-1 bg-slate-50 dark:bg-slate-800 p-4 rounded-3xl border border-slate-100 dark:border-slate-700">
+          <Text className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
             Testet
           </Text>
           <View className="flex-row items-end justify-between">
-            <Text className="text-2xl font-bold text-slate-900">
+            <Text className="text-2xl font-bold text-slate-900 dark:text-white">
               {dashboardStats.totalTests}
             </Text>
             <FileText size={18} color="#0ea5e9" />
           </View>
         </View>
-        <View className="flex-1 bg-slate-50 p-4 rounded-3xl border border-slate-100">
-          <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+        <View className="flex-1 bg-slate-50 dark:bg-slate-800 p-4 rounded-3xl border border-slate-100 dark:border-slate-700">
+          <Text className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
             Seria
           </Text>
           <View className="flex-row items-end justify-between">
-            <Text className="text-2xl font-bold text-slate-900">
+            <Text className="text-2xl font-bold text-slate-900 dark:text-white">
               {globalStreak?.currentStreak || 0}
             </Text>
             <Zap size={18} color="#f97316" />
@@ -220,7 +220,7 @@ export const TestsScreen: React.FC = () => {
   );
 
   return (
-    <View className="flex-1 bg-[#F7F8FA]">
+    <View className="flex-1 bg-[#F7F8FA] dark:bg-slate-950">
       <SafeAreaView className="flex-1" edges={["top"]}>
         <ScrollView
           contentContainerStyle={{ paddingBottom: 120 }}
@@ -233,13 +233,13 @@ export const TestsScreen: React.FC = () => {
           {!isGuest && (
             <View className="px-6 mt-6">
               <View className="flex-row items-center justify-between mb-3">
-                <Text className="text-base font-semibold text-slate-900">
+                <Text className="text-base font-semibold text-slate-900 dark:text-white">
                   Progresi i javës
                 </Text>
                 <TrendingUp size={18} color="#9ca3af" />
               </View>
 
-              <View className="bg-white p-4 rounded-2xl border border-slate-100">
+              <View className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
                 <View className="flex-row items-end justify-between gap-3 h-28">
                   {progressData.length > 0 ? (
                     progressData.map((item, index) => {
@@ -257,7 +257,7 @@ export const TestsScreen: React.FC = () => {
                           ).springify()}
                           className="items-center flex-1"
                         >
-                          <View className="w-full h-20 bg-slate-50 rounded-xl overflow-hidden justify-end">
+                          <View className="w-full h-20 bg-slate-50 dark:bg-slate-800 rounded-xl overflow-hidden justify-end">
                             <LinearGradient
                               colors={
                                 isToday
@@ -271,8 +271,8 @@ export const TestsScreen: React.FC = () => {
                             className={clsx(
                               "mt-1 text-[9px] font-medium",
                               isToday
-                                ? "text-slate-900"
-                                : "text-slate-400"
+                                ? "text-slate-900 dark:text-white"
+                                : "text-slate-400 dark:text-slate-600"
                             )}
                             numberOfLines={1}
                           >
@@ -295,7 +295,7 @@ export const TestsScreen: React.FC = () => {
 
           {/* Quick actions */}
           <View className="px-6 mt-8">
-            <Text className="text-base font-semibold text-slate-900 mb-3">
+            <Text className="text-base font-semibold text-slate-900 dark:text-white mb-3">
               Fillo testim
             </Text>
 
@@ -350,20 +350,20 @@ export const TestsScreen: React.FC = () => {
                     });
                 }
               }}
-              className="w-full bg-white border border-slate-200 rounded-3xl py-4 px-6 flex-row items-center justify-between"
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl py-4 px-6 flex-row items-center justify-between"
             >
               <View>
-                <Text className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">
+                <Text className="text-slate-500 dark:text-slate-400 text-[11px] font-semibold uppercase tracking-wider">
                   Test i personalizuar
                 </Text>
-                <Text className="text-slate-900 font-semibold text-lg mt-1">
+                <Text className="text-slate-900 dark:text-white font-semibold text-lg mt-1">
                   Fokus te pikat e dobëta
                 </Text>
-                <Text className="text-slate-500 text-xs mt-1">
+                <Text className="text-slate-500 dark:text-slate-400 text-xs mt-1">
                   Gjenerohet nga gabimet dhe rezultatet tuaja.
                 </Text>
               </View>
-              <View className="h-11 w-11 bg-slate-50 rounded-full items-center justify-center border border-slate-200">
+              <View className="h-11 w-11 bg-slate-50 dark:bg-slate-800 rounded-full items-center justify-center border border-slate-200 dark:border-slate-700">
                 <Activity size={22} color={PRIMARY} />
               </View>
             </TouchableOpacity>
@@ -372,11 +372,11 @@ export const TestsScreen: React.FC = () => {
           {/* All tests grid */}
           <View className="px-6 mt-10 mb-4">
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-base font-semibold text-slate-900">
+              <Text className="text-base font-semibold text-slate-900 dark:text-white">
                 Të gjitha testet
               </Text>
-              <View className="bg-slate-50 px-3 py-1 rounded-full border border-slate-200">
-                <Text className="text-[11px] font-medium text-slate-600">
+              <View className="bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
+                <Text className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                   Kategoria {selectedCategory}
                 </Text>
               </View>
@@ -399,21 +399,21 @@ export const TestsScreen: React.FC = () => {
                         });
                     }
                   }}
-                  className="w-[48%] bg-white border border-slate-200 rounded-3xl p-4"
+                  className="w-[48%] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4"
                 >
                   <View className="flex-row justify-between items-start mb-6">
                     <View
                       className={clsx(
                         "h-8 w-8 rounded-xl items-center justify-center",
-                        test.isLocked ? "bg-slate-50" : "bg-indigo-50"
+                        test.isLocked ? "bg-slate-50 dark:bg-slate-800" : "bg-indigo-50 dark:bg-indigo-900/30"
                       )}
                     >
                       <Text
                         className={clsx(
                           "text-sm font-semibold",
                           test.isLocked
-                            ? "text-slate-400"
-                            : "text-indigo-600"
+                            ? "text-slate-400 dark:text-slate-500"
+                            : "text-indigo-600 dark:text-indigo-400"
                         )}
                       >
                         {test.id}
@@ -422,11 +422,11 @@ export const TestsScreen: React.FC = () => {
                     {test.isLocked && <Lock size={15} color="#9ca3af" />}
                   </View>
 
-                  <Text className="text-slate-900 font-semibold text-sm mb-1">
+                  <Text className="text-slate-900 dark:text-white font-semibold text-sm mb-1">
                     Testi {test.id}
                   </Text>
                   <View className="flex-row items-center justify-between">
-                    <Text className="text-[10px] text-slate-400 font-medium uppercase">
+                    <Text className="text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase">
                       2025
                     </Text>
                     <Text

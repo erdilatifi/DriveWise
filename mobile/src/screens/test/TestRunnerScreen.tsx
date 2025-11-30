@@ -167,7 +167,7 @@ export const TestRunnerScreen = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-slate-50">
+      <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-slate-950">
         <ActivityIndicator size="large" color={PRIMARY} />
         <Text className="mt-4 text-slate-400 font-medium">
           Duke ngarkuar pyetjet...
@@ -178,14 +178,15 @@ export const TestRunnerScreen = () => {
 
   if (error || !questions || questions.length === 0) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-slate-50 p-6">
+      <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-slate-950 p-6">
         <Text className="mb-6 text-center text-slate-500 font-medium">
           {error ? "Gabim gjatë ngarkimit të testit" : "Nuk u gjetën pyetje për këtë test."}
         </Text>
         <Button 
           label="Kthehu mbrapa" 
           onPress={() => navigation.goBack()}
-          className="bg-slate-900 px-8" 
+          className="bg-slate-900 dark:bg-white px-8"
+          textClassName="text-white dark:text-slate-900"
         />
       </SafeAreaView>
     );
@@ -197,24 +198,24 @@ export const TestRunnerScreen = () => {
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
 
   return (
-    <View className="flex-1 bg-[#F7F8FA]">
+    <View className="flex-1 bg-white dark:bg-slate-950">
       <SafeAreaView className="flex-1" edges={["top"]}>
         {/* Header */}
-        <View className="bg-white px-5 py-3 flex-row items-center justify-between shadow-sm shadow-slate-100 z-10">
+        <View className="bg-white dark:bg-slate-900 px-5 py-3 flex-row items-center justify-between shadow-sm shadow-slate-100 dark:shadow-none border-b border-transparent dark:border-slate-800 z-10">
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            className="h-10 w-10 items-center justify-center rounded-full bg-slate-50 border border-slate-100"
+            className="h-10 w-10 items-center justify-center rounded-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700"
           >
             <X size={20} color="#64748b" />
           </TouchableOpacity>
 
           {/* Timer */}
-          <View className="flex-row items-center space-x-2 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
+          <View className="flex-row items-center space-x-2 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-100 dark:border-slate-700">
             <Clock size={14} color={isTimeLow ? "#ef4444" : "#94a3b8"} />
             <Text
               className={clsx(
                 "font-mono text-sm font-bold tabular-nums",
-                isTimeLow ? "text-red-500" : "text-slate-600"
+                isTimeLow ? "text-red-500" : "text-slate-600 dark:text-slate-300"
               )}
             >
               {formatTime(timeLeft)}
@@ -222,15 +223,15 @@ export const TestRunnerScreen = () => {
           </View>
 
           <View className="items-end">
-             <Text className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Pyetja</Text>
-             <Text className="text-sm font-extrabold text-slate-900">
+             <Text className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Pyetja</Text>
+             <Text className="text-sm font-extrabold text-slate-900 dark:text-white">
                 {currentQuestionIndex + 1}/{questions.length}
              </Text>
           </View>
         </View>
 
         {/* Progress Line */}
-        <View className="h-1 w-full bg-slate-100">
+        <View className="h-1 w-full bg-slate-100 dark:bg-slate-800">
           <View
              className="h-full bg-indigo-600 rounded-r-full"
              style={{ width: `${progress}%` }}
@@ -242,32 +243,32 @@ export const TestRunnerScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           {/* Question Card */}
-          <View className="bg-white p-1 rounded-3xl shadow-sm shadow-slate-200 mb-6 border border-slate-100">
+          <View className="bg-white dark:bg-slate-900 p-1 rounded-3xl shadow-sm shadow-slate-200 dark:shadow-none mb-6 border border-slate-100 dark:border-slate-800">
              {currentQuestion.image_url && (
                <Image
                  source={{ uri: currentQuestion.image_url }}
-                 className="h-56 w-full rounded-2xl bg-slate-50 mb-4"
+                 className="h-56 w-full rounded-2xl bg-slate-50 dark:bg-slate-800 mb-4"
                  resizeMode="contain"
                />
              )}
              
              <View className="px-4 pb-4 pt-2">
                <View className="flex-row items-center mb-3 space-x-2">
-                  <View className="bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">
-                    <Text className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
+                  <View className="bg-indigo-50 dark:bg-indigo-900/20 px-2.5 py-1 rounded-lg border border-indigo-100 dark:border-indigo-500/30">
+                    <Text className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
                        4 Pikë
                     </Text>
                   </View>
                   {category && (
-                    <View className="bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
-                      <Text className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    <View className="bg-slate-50 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-100 dark:border-slate-700">
+                      <Text className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         Kategoria {category}
                       </Text>
                     </View>
                   )}
                </View>
 
-               <Text className="text-lg font-bold text-slate-900 leading-7">
+               <Text className="text-lg font-bold text-slate-900 dark:text-white leading-7">
                  {currentQuestion.question_text}
                </Text>
              </View>
@@ -291,8 +292,8 @@ export const TestRunnerScreen = () => {
                   className={clsx(
                     "flex-row items-center p-4 rounded-2xl border-2 transition-all",
                     isSelected
-                      ? "border-indigo-600 bg-indigo-50/50"
-                      : "border-slate-100 bg-white"
+                      ? "border-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/20"
+                      : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900"
                   )}
                 >
                   <View
@@ -300,13 +301,13 @@ export const TestRunnerScreen = () => {
                       "h-8 w-8 items-center justify-center rounded-full border mr-4",
                       isSelected
                         ? "bg-indigo-600 border-indigo-600"
-                        : "bg-slate-50 border-slate-200"
+                        : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
                     )}
                   >
                     <Text
                       className={clsx(
                         "text-xs font-bold",
-                        isSelected ? "text-white" : "text-slate-500"
+                        isSelected ? "text-white" : "text-slate-500 dark:text-slate-400"
                       )}
                     >
                       {option.id}
@@ -316,7 +317,7 @@ export const TestRunnerScreen = () => {
                   <Text
                     className={clsx(
                       "flex-1 text-[15px] leading-6",
-                      isSelected ? "text-slate-900 font-semibold" : "text-slate-600 font-medium"
+                      isSelected ? "text-slate-900 dark:text-white font-semibold" : "text-slate-600 dark:text-slate-300 font-medium"
                     )}
                   >
                     {option.text}
@@ -328,7 +329,7 @@ export const TestRunnerScreen = () => {
         </ScrollView>
 
         {/* Footer Controls */}
-        <View className="absolute bottom-0 left-0 right-0 bg-white px-6 py-5 border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+        <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-900 px-6 py-5 border-t border-slate-100 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] dark:shadow-none">
           <View className="flex-row items-center justify-between gap-4">
             <TouchableOpacity
               onPress={() => setCurrentQuestionIndex((prev) => Math.max(prev - 1, 0))}
@@ -336,8 +337,8 @@ export const TestRunnerScreen = () => {
               className={clsx(
                 "h-12 w-12 items-center justify-center rounded-full border",
                 currentQuestionIndex === 0
-                  ? "border-slate-100 bg-slate-50"
-                  : "border-slate-200 bg-white active:bg-slate-50"
+                  ? "border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800"
+                  : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 active:bg-slate-50 dark:active:bg-slate-800"
               )}
             >
                <ChevronLeft size={24} color={currentQuestionIndex === 0 ? "#cbd5e1" : "#64748b"} />
@@ -347,7 +348,7 @@ export const TestRunnerScreen = () => {
               <TouchableOpacity
                 onPress={handleSubmit}
                 disabled={isSubmitting}
-                className="flex-1 bg-indigo-600 h-12 rounded-full items-center justify-center shadow-lg shadow-indigo-200 active:scale-95"
+                className="flex-1 bg-indigo-600 h-12 rounded-full items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-none active:scale-95"
               >
                  {isSubmitting ? (
                     <ActivityIndicator color="white" />
@@ -358,10 +359,10 @@ export const TestRunnerScreen = () => {
             ) : (
               <TouchableOpacity
                 onPress={() => setCurrentQuestionIndex((prev) => Math.min(prev + 1, questions.length - 1))}
-                className="flex-1 bg-slate-900 h-12 rounded-full flex-row items-center justify-center shadow-lg shadow-slate-200 active:scale-95"
+                className="flex-1 bg-slate-900 dark:bg-white h-12 rounded-full flex-row items-center justify-center shadow-lg shadow-slate-200 dark:shadow-none active:scale-95"
               >
-                 <Text className="text-white font-bold text-base mr-2">Vazhdo</Text>
-                 <ChevronRight size={20} color="white" />
+                 <Text className="text-white dark:text-slate-900 font-bold text-base mr-2">Vazhdo</Text>
+                 <ChevronRight size={20} color={PRIMARY ? "white" : "black"} /> 
               </TouchableOpacity>
             )}
           </View>

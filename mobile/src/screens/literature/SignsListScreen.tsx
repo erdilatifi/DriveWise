@@ -36,7 +36,7 @@ export const SignsListScreen = () => {
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => setSelectedSign(item)}
-        style={styles.itemCard}
+        className="bg-white dark:bg-slate-800 rounded-3xl p-2 aspect-square items-center justify-center shadow-sm shadow-slate-200 dark:shadow-none border border-transparent dark:border-slate-700"
       >
         <View style={styles.imageContainer}>
           <Image 
@@ -50,10 +50,10 @@ export const SignsListScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <View className="flex-1 bg-white dark:bg-slate-950">
+      <SafeAreaView edges={['top']} className="flex-1">
         {/* Header */}
-        <View style={styles.headerContainer}>
+        <View className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 rounded-b-[32px] mb-4 overflow-hidden">
           <View style={styles.header}>
             <TouchableOpacity 
               onPress={() => navigation.goBack()}
@@ -62,8 +62,8 @@ export const SignsListScreen = () => {
               <ChevronLeft size={24} color="#334155" />
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
-              <Text style={styles.headerTitle}>{title}</Text>
-              <Text style={styles.headerSubtitle}>{signs.length} shenja</Text>
+              <Text style={styles.headerTitle} className="text-slate-900 dark:text-white">{title}</Text>
+              <Text style={styles.headerSubtitle} className="text-slate-500 dark:text-slate-400">{signs.length} shenja</Text>
             </View>
           </View>
         </View>
@@ -97,7 +97,7 @@ export const SignsListScreen = () => {
             
             <Animated.View 
               entering={FadeIn.duration(200)}
-              style={styles.modalContent}
+              className="bg-white dark:bg-slate-900 w-full max-w-[340px] rounded-[32px] p-8 items-center shadow-xl shadow-black/20"
             >
               <TouchableOpacity 
                 style={styles.closeButton}
@@ -115,8 +115,8 @@ export const SignsListScreen = () => {
               </View>
 
               <View style={styles.modalTextContainer}>
-                <Text style={styles.modalTitle}>{selectedSign.name}</Text>
-                <Text style={styles.modalDescription}>{selectedSign.description}</Text>
+                <Text style={styles.modalTitle} className="text-slate-900 dark:text-white">{selectedSign.name}</Text>
+                <Text style={styles.modalDescription} className="text-slate-500 dark:text-slate-400">{selectedSign.description}</Text>
               </View>
             </Animated.View>
           </View>

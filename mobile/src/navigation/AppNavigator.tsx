@@ -33,6 +33,11 @@ import { MainTabParamList } from "./types";
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
+// Default Theme Constants (Light Mode)
+const BAR_BG_DEFAULT = "#f9fafb";
+const BAR_BORDER_DEFAULT = "#e5e7eb";
+const ICON_ACTIVE_BG_DEFAULT = "#4f46e5";
+
 type IconKey = keyof MainTabParamList;
 type IconMap = Record<IconKey, LucideIcon>;
 
@@ -54,6 +59,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
   const BAR_BORDER = isDark ? "#334155" : "#e5e7eb";
   const ICON_INACTIVE = isDark ? "#94a3b8" : "#9ca3af";
   const ICON_ACTIVE = "#ffffff";
+  const ICON_ACTIVE_BG = isDark ? "#4f46e5" : "#4f46e5"; // Can vary if needed
   const LABEL_INACTIVE = isDark ? "#94a3b8" : "#9ca3af";
   const LABEL_ACTIVE = isDark ? "#f8fafc" : "#111827";
 
@@ -144,7 +150,6 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
             navigation.emit({
               type: "tabLongPress",
               target: route.key,
-              canPreventDefault: true,
             });
           };
 
@@ -154,7 +159,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
               accessibilityRole="button"
               accessibilityState={isFocused ? { selected: true } : {}}
               accessibilityLabel={options.tabBarAccessibilityLabel}
-              testID={options.tabBarTestID}
+              testID={options.tabBarButtonTestID}
               onPress={onPress}
               onLongPress={onLongPress}
               activeOpacity={0.9}
@@ -174,6 +179,8 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
                   style={[
                     styles.activeCircle,
                     {
+                      backgroundColor: ICON_ACTIVE_BG,
+                      shadowColor: ICON_ACTIVE_BG,
                       opacity: circleOpacity,
                       transform: [{ scale: circleScale }],
                     },
@@ -270,10 +277,10 @@ const styles = StyleSheet.create({
   tabBarInner: {
     width: "86%",
     maxWidth: 420,
-    backgroundColor: BAR_BG,
+    backgroundColor: BAR_BG_DEFAULT,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: BAR_BORDER,
+    borderColor: BAR_BORDER_DEFAULT,
 
     flexDirection: "row",
     alignItems: "flex-end",
@@ -309,8 +316,8 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: ICON_ACTIVE_BG,
-    shadowColor: ICON_ACTIVE_BG,
+    backgroundColor: ICON_ACTIVE_BG_DEFAULT,
+    shadowColor: ICON_ACTIVE_BG_DEFAULT,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,

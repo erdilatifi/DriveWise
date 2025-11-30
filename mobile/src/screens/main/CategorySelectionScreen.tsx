@@ -82,18 +82,18 @@ export const CategorySelectionScreen = () => {
   };
 
   return (
-    <View className="flex-1 bg-[#F7F8FA]">
+    <View className="flex-1 bg-white dark:bg-slate-950">
       <SafeAreaView className="flex-1" edges={['top']}>
         <ScrollView 
           contentContainerStyle={{ paddingBottom: 120 }} 
           showsVerticalScrollIndicator={false}
         >
           {/* Header */}
-          <View className="px-6 pt-8 pb-8 bg-white border-b border-slate-100 rounded-b-[32px] mb-6">
-            <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+          <View className="px-6 pt-8 pb-8 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 rounded-b-[32px] mb-6">
+            <Text className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
               Mirësevini në DriveWise
             </Text>
-            <Text className="text-3xl font-extrabold text-slate-900 leading-tight">
+            <Text className="text-3xl font-extrabold text-slate-900 dark:text-white leading-tight">
               Zgjidhni
               <Text style={{ color: PRIMARY }}> Kategorinë</Text>
             </Text>
@@ -112,7 +112,9 @@ export const CategorySelectionScreen = () => {
                     activeOpacity={0.9}
                     className={clsx(
                       "rounded-3xl overflow-hidden border transition-all",
-                      isSelected ? "border-indigo-600 shadow-md shadow-indigo-100" : "border-slate-100 shadow-sm shadow-slate-100 bg-white"
+                      isSelected 
+                        ? "border-indigo-600 shadow-md shadow-indigo-100 dark:shadow-none" 
+                        : "border-slate-100 dark:border-slate-800 shadow-sm shadow-slate-100 dark:shadow-none bg-white dark:bg-slate-900"
                     )}
                   >
                     {/* Gradient Header Bar if selected */}
@@ -125,24 +127,27 @@ export const CategorySelectionScreen = () => {
                       />
                     )}
                     
-                    <View className={clsx("p-5 flex-row items-start", isSelected ? "bg-indigo-50/30" : "bg-white")}>
+                    <View className={clsx(
+                      "p-5 flex-row items-start", 
+                      isSelected ? "bg-indigo-50/30 dark:bg-indigo-900/10" : "bg-white dark:bg-slate-900"
+                    )}>
                       <View className="flex-1 pr-4">
                         <View className="flex-row items-center mb-2">
                           <View className={clsx(
                              "px-2.5 py-1 rounded-lg mr-2",
-                             isSelected ? "bg-indigo-100" : "bg-slate-100"
+                             isSelected ? "bg-indigo-100 dark:bg-indigo-900/30" : "bg-slate-100 dark:bg-slate-800"
                           )}>
                             <Text className={clsx(
                                "text-xs font-bold",
-                               isSelected ? "text-indigo-700" : "text-slate-600"
+                               isSelected ? "text-indigo-700 dark:text-indigo-400" : "text-slate-600 dark:text-slate-400"
                             )}>{cat.id}</Text>
                           </View>
-                          <Text className="text-lg font-bold text-slate-900">
+                          <Text className="text-lg font-bold text-slate-900 dark:text-white">
                             {cat.subtitle}
                           </Text>
                         </View>
                         
-                        <Text className="text-slate-500 text-sm leading-5 mb-4">
+                        <Text className="text-slate-500 dark:text-slate-400 text-sm leading-5 mb-4">
                           {cat.description}
                         </Text>
 
@@ -156,7 +161,7 @@ export const CategorySelectionScreen = () => {
                              </View>
                           ) : (
                              <View className="flex-row items-center">
-                                <Text className="text-sm font-bold text-slate-400 mr-1">
+                                <Text className="text-sm font-bold text-slate-400 dark:text-slate-500 mr-1">
                                   Zgjidh
                                 </Text>
                                 <ChevronRight size={14} color="#94a3b8" />
@@ -180,9 +185,9 @@ export const CategorySelectionScreen = () => {
               );
             })}
 
-            <View className="mt-2 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex-row items-start">
+            <View className="mt-2 p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 flex-row items-start">
               <Info size={20} color="#64748b" className="mt-0.5" />
-              <Text className="ml-3 text-slate-500 text-xs flex-1 leading-5">
+              <Text className="ml-3 text-slate-500 dark:text-slate-400 text-xs flex-1 leading-5">
                 Kategoritë përcaktojnë llojin e pyetjeve dhe simulimeve që do të shihni. Mund ta ndryshoni kategorinë në çdo kohë.
               </Text>
             </View>

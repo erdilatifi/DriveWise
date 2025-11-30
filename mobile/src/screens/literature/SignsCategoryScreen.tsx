@@ -72,10 +72,10 @@ export const SignsCategoryScreen = () => {
   const navigation = useNavigation<NavigationProp>();
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <View className="flex-1 bg-white dark:bg-slate-950">
+      <SafeAreaView edges={['top']} className="flex-1">
         {/* Header */}
-        <View style={styles.headerContainer}>
+        <View className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 rounded-b-[32px] mb-6 overflow-hidden">
           <View style={styles.header}>
             <TouchableOpacity 
               onPress={() => navigation.goBack()}
@@ -84,8 +84,8 @@ export const SignsCategoryScreen = () => {
               <ChevronLeft size={24} color="#334155" />
             </TouchableOpacity>
             <View>
-              <Text style={styles.headerTitle}>Sinjalizimi Rrugor</Text>
-              <Text style={styles.headerSubtitle}>Zgjidhni kategorinë</Text>
+              <Text style={styles.headerTitle} className="text-slate-900 dark:text-white">Sinjalizimi Rrugor</Text>
+              <Text style={styles.headerSubtitle} className="text-slate-500 dark:text-slate-400">Zgjidhni kategorinë</Text>
             </View>
           </View>
         </View>
@@ -175,13 +175,13 @@ export const SignsCategoryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BG_COLOR,
+    backgroundColor: '#ffffff', // bg-white
   },
   safeArea: {
     flex: 1,
   },
   headerContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff', // bg-white
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
     borderBottomLeftRadius: 32,

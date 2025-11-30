@@ -89,9 +89,9 @@ export const TestResultScreen = () => {
 
   if (isLoading || !attempt) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+      <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-slate-950">
         <ActivityIndicator size="large" color={PRIMARY} />
-        <Text className="mt-4 text-sm text-slate-500 font-medium">
+        <Text className="mt-4 text-sm text-slate-500 dark:text-slate-400 font-medium">
           Duke llogaritur rezultatet...
         </Text>
       </SafeAreaView>
@@ -100,12 +100,12 @@ export const TestResultScreen = () => {
 
   if (isError) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white p-6">
-        <View className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
+      <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-slate-950 p-6">
+        <View className="mb-4 rounded-2xl border border-red-100 bg-red-50 dark:bg-red-900/20 dark:border-red-900/30 px-4 py-3">
           <View className="flex-row items-center gap-2">
             {/* @ts-ignore */}
             <AlertCircle size={18} color="#EF4444" />
-            <Text className="text-sm font-semibold text-red-600">
+            <Text className="text-sm font-semibold text-red-600 dark:text-red-400">
               Gabim gjatë ngarkimit të rezultatit
             </Text>
           </View>
@@ -113,8 +113,8 @@ export const TestResultScreen = () => {
         <Button
           label="Kthehu mbrapa"
           onPress={() => navigation.goBack()}
-          className="w-full bg-white border border-slate-200"
-          textClassName="text-slate-700"
+          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
+          textClassName="text-slate-700 dark:text-slate-200"
         />
       </SafeAreaView>
     );
@@ -124,7 +124,7 @@ export const TestResultScreen = () => {
   const answers = attempt.answers || [];
 
   return (
-    <View className="flex-1 bg-[#F7F8FA]">
+    <View className="flex-1 bg-white dark:bg-slate-950">
       <SafeAreaView className="flex-1">
         <ScrollView
           contentContainerStyle={{
@@ -137,10 +137,10 @@ export const TestResultScreen = () => {
             {/* Result Icon */}
             <View
               className={clsx(
-                "mb-6 h-24 w-24 items-center justify-center rounded-full shadow-lg shadow-slate-200",
+                "mb-6 h-24 w-24 items-center justify-center rounded-full shadow-lg shadow-slate-200 dark:shadow-none",
                 isPassed
-                  ? "bg-green-500 shadow-green-200"
-                  : "bg-red-500 shadow-red-200"
+                  ? "bg-green-500 shadow-green-200 dark:shadow-none"
+                  : "bg-red-500 shadow-red-200 dark:shadow-none"
               )}
             >
               {isPassed ? (
@@ -153,17 +153,17 @@ export const TestResultScreen = () => {
             </View>
 
             {/* Title & subtitle */}
-            <Text className="mb-2 text-3xl font-extrabold text-slate-900 text-center">
+            <Text className="mb-2 text-3xl font-extrabold text-slate-900 dark:text-white text-center">
               {isPassed ? "Urime, Kaluat!" : "Nuk e kaluat"}
             </Text>
-            <Text className="mb-8 max-w-xs text-center text-sm text-slate-500 leading-5">
+            <Text className="mb-8 max-w-xs text-center text-sm text-slate-500 dark:text-slate-400 leading-5">
               {isPassed
                 ? "Keni arritur rezultatin e kërkuar. Vazhdoni kështu!"
                 : "Mos u dorëzoni. Rishikoni gabimet dhe provoni përsëri."}
             </Text>
 
             {/* Score Card */}
-            <View className="mb-10 w-full rounded-[32px] bg-white p-8 shadow-sm shadow-slate-200 border border-slate-100">
+            <View className="mb-10 w-full rounded-[32px] bg-white dark:bg-slate-900 p-8 shadow-sm shadow-slate-200 dark:shadow-none border border-slate-100 dark:border-slate-800">
               {/* Percentage */}
               <View className="items-center">
                 <Text className={clsx(
@@ -172,29 +172,29 @@ export const TestResultScreen = () => {
                 )}>
                   {attempt.percentage}%
                 </Text>
-                <Text className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                <Text className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                   Saktësia Totale
                 </Text>
               </View>
 
               {/* Divider */}
-              <View className="h-px w-full bg-slate-100 my-6" />
+              <View className="h-px w-full bg-slate-100 dark:bg-slate-800 my-6" />
 
               {/* Details */}
               <View className="flex-row justify-between">
                  <View className="items-center flex-1">
-                    <Text className="text-2xl font-bold text-slate-900">{attempt.score}</Text>
-                    <Text className="text-xs text-slate-400 font-semibold">Të Sakta</Text>
+                    <Text className="text-2xl font-bold text-slate-900 dark:text-white">{attempt.score}</Text>
+                    <Text className="text-xs text-slate-400 dark:text-slate-500 font-semibold">Të Sakta</Text>
                  </View>
-                 <View className="w-px bg-slate-100 h-full mx-4" />
+                 <View className="w-px bg-slate-100 dark:bg-slate-800 h-full mx-4" />
                  <View className="items-center flex-1">
-                    <Text className="text-2xl font-bold text-slate-900">{attempt.total_questions}</Text>
-                    <Text className="text-xs text-slate-400 font-semibold">Pyetje</Text>
+                    <Text className="text-2xl font-bold text-slate-900 dark:text-white">{attempt.total_questions}</Text>
+                    <Text className="text-xs text-slate-400 dark:text-slate-500 font-semibold">Pyetje</Text>
                  </View>
-                 <View className="w-px bg-slate-100 h-full mx-4" />
+                 <View className="w-px bg-slate-100 dark:bg-slate-800 h-full mx-4" />
                  <View className="items-center flex-1">
-                    <Text className="text-2xl font-bold text-slate-900">{attempt.category}</Text>
-                    <Text className="text-xs text-slate-400 font-semibold">Kategoria</Text>
+                    <Text className="text-2xl font-bold text-slate-900 dark:text-white">{attempt.category}</Text>
+                    <Text className="text-xs text-slate-400 dark:text-slate-500 font-semibold">Kategoria</Text>
                  </View>
               </View>
             </View>
@@ -203,8 +203,8 @@ export const TestResultScreen = () => {
           {/* Question Review */}
           <View className="w-full mb-8">
             <View className="flex-row items-center justify-between mb-4 px-1">
-               <Text className="text-lg font-bold text-slate-900">Rishikimi</Text>
-               <Text className="text-xs font-semibold text-slate-400">Prek numrin për detaje</Text>
+               <Text className="text-lg font-bold text-slate-900 dark:text-white">Rishikimi</Text>
+               <Text className="text-xs font-semibold text-slate-400 dark:text-slate-500">Prek numrin për detaje</Text>
             </View>
             
             {/* Grid of Numbers */}
@@ -219,12 +219,12 @@ export const TestResultScreen = () => {
                       "w-[13.5%] aspect-square items-center justify-center rounded-xl border transition-all",
                       isSelected 
                         ? (ans.is_correct ? "border-green-500 bg-green-500" : "border-red-500 bg-red-500")
-                        : (ans.is_correct ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50")
+                        : (ans.is_correct ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-900/20" : "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-900/20")
                     )}
                   >
                     <Text className={clsx(
                       "font-bold text-sm", 
-                      isSelected ? "text-white" : (ans.is_correct ? "text-green-700" : "text-red-700")
+                      isSelected ? "text-white" : (ans.is_correct ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400")
                     )}>
                       {index + 1}
                     </Text>
@@ -238,30 +238,30 @@ export const TestResultScreen = () => {
               (() => {
                 const ans = answers[selectedQuestionIndex];
                 return (
-                  <View className="border border-slate-200 rounded-3xl p-5 bg-white shadow-sm">
+                  <View className="border border-slate-200 dark:border-slate-800 rounded-3xl p-5 bg-white dark:bg-slate-900 shadow-sm dark:shadow-none">
                     <View className="flex-row justify-between items-start mb-4">
-                        <View className="bg-slate-100 px-3 py-1 rounded-lg">
-                           <Text className="font-bold text-slate-500 text-[10px] uppercase tracking-wider">Pyetja {selectedQuestionIndex + 1}</Text>
+                        <View className="bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg">
+                           <Text className="font-bold text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-wider">Pyetja {selectedQuestionIndex + 1}</Text>
                         </View>
                         {ans.is_correct ? (
                             <View className="flex-row items-center">
                                 <CheckCircle2 size={16} color="#15803d" />
-                                <Text className="text-green-700 text-xs font-bold ml-1.5 uppercase">Saktë</Text>
+                                <Text className="text-green-700 dark:text-green-400 text-xs font-bold ml-1.5 uppercase">Saktë</Text>
                             </View>
                         ) : (
                             <View className="flex-row items-center">
                                 <XCircle size={16} color="#b91c1c" />
-                                <Text className="text-red-700 text-xs font-bold ml-1.5 uppercase">Gabim</Text>
+                                <Text className="text-red-700 dark:text-red-400 text-xs font-bold ml-1.5 uppercase">Gabim</Text>
                             </View>
                         )}
                     </View>
 
-                    <Text className="text-slate-900 font-bold text-lg mb-4 leading-7">
+                    <Text className="text-slate-900 dark:text-white font-bold text-lg mb-4 leading-7">
                       {ans.question?.question_text || "Pyetje e panjohur"}
                     </Text>
                     
                     {ans.question?.image_url && (
-                        <View className="mb-5 rounded-2xl overflow-hidden border border-slate-100 bg-slate-50">
+                        <View className="mb-5 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800">
                           <Image 
                             source={{ uri: ans.question.image_url }} 
                             className="w-full h-48"
@@ -273,18 +273,18 @@ export const TestResultScreen = () => {
                     <View className="space-y-3">
                         {/* User Answer (if wrong) */}
                         {!ans.is_correct && (
-                            <View className="bg-red-50 p-4 rounded-2xl border border-red-100">
-                                <Text className="text-[10px] text-red-500 font-bold mb-1 uppercase tracking-wider">Zgjedhja juaj</Text>
-                                <Text className="text-red-900 font-medium">
+                            <View className="bg-red-50 dark:bg-red-900/20 p-4 rounded-2xl border border-red-100 dark:border-red-900/30">
+                                <Text className="text-[10px] text-red-500 dark:text-red-400 font-bold mb-1 uppercase tracking-wider">Zgjedhja juaj</Text>
+                                <Text className="text-red-900 dark:text-red-300 font-medium">
                                   {ans.question?.[`option_${ans.selected_answer.toLowerCase()}`] || ans.selected_answer}
                                 </Text>
                             </View>
                         )}
                         
                         {/* Correct Answer */}
-                        <View className="bg-green-50 p-4 rounded-2xl border border-green-100">
-                            <Text className="text-[10px] text-green-600 font-bold mb-1 uppercase tracking-wider">Përgjigja e saktë</Text>
-                            <Text className="text-green-900 font-medium">
+                        <View className="bg-green-50 dark:bg-green-900/20 p-4 rounded-2xl border border-green-100 dark:border-green-900/30">
+                            <Text className="text-[10px] text-green-600 dark:text-green-400 font-bold mb-1 uppercase tracking-wider">Përgjigja e saktë</Text>
+                            <Text className="text-green-900 dark:text-green-300 font-medium">
                               {ans.question?.[`option_${ans.question?.correct_answer.toLowerCase()}`] || ans.question?.correct_answer}
                             </Text>
                         </View>
@@ -312,7 +312,7 @@ export const TestResultScreen = () => {
                   });
                 }
               }}
-              className="w-full bg-indigo-600 rounded-full py-4 flex-row items-center justify-center shadow-lg shadow-indigo-200"
+              className="w-full bg-indigo-600 rounded-full py-4 flex-row items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-none"
             >
               <RotateCw size={20} color="white" className="mr-2" />
               <Text className="text-white font-bold text-base">{isPassed ? "Riprovo Testin" : "Provo Përsëri"}</Text>
@@ -325,9 +325,9 @@ export const TestResultScreen = () => {
                   screen: "Testet",
                 })
               }
-              className="w-full bg-white border border-slate-200 rounded-full py-4 flex-row items-center justify-center"
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full py-4 flex-row items-center justify-center"
             >
-              <Text className="text-slate-700 font-bold text-base mr-2">Kthehu te Testet</Text>
+              <Text className="text-slate-700 dark:text-slate-200 font-bold text-base mr-2">Kthehu te Testet</Text>
               <ArrowRight size={20} color="#334155" />
             </TouchableOpacity>
           </View>
