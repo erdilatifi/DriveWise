@@ -8,14 +8,14 @@ LogBox.ignoreLogs([
   "[Reanimated] Reduced motion setting is enabled",
 ]);
 
-import { AuthProvider } from './src/contexts/AuthContext';
-import { CategoryProvider } from './src/contexts/CategoryContext';
-import { ThemeProvider } from './src/contexts/ThemeContext';
-import { RootNavigator } from './src/navigation/RootNavigator';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { CategoryProvider } from '@/contexts/CategoryContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import { RootNavigator } from '@/navigation/RootNavigator';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SupabaseProvider } from '@drivewise/core';
-import { supabase } from './src/lib/supabase';
-import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { supabase } from '@/lib/supabase';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const queryClient = new QueryClient({
   defaultOptions: {

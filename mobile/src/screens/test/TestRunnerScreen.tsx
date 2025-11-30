@@ -21,7 +21,7 @@ import {
 import { Button } from "../../components/ui/Button";
 import { Clock, X, ChevronRight, ChevronLeft } from "lucide-react-native";
 import { clsx } from "clsx";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { LinearGradient } from "expo-linear-gradient";
 
 type NavigationProp = NativeStackNavigationProp<
