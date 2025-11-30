@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { UserProfile } from '@drivewise/core';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 type AuthContextType = {
   session: Session | null;
@@ -26,78 +27,76 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Get initial session
         const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
         setUser(session?.user ?? null);
-
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        }
       } catch (error) {
         console.error('Auth initialization error:', error);
       } finally {
-        setLoading(false);
+        setAuthLoading(false);
       }
     };
 
     initializeAuth();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
+        setAuthLoading(false);
+        
+        if (!session) {
+          queryClient.setQueryData(['profile'], null);
+          queryClient.clear();
         }
-        setLoading(false);
       }
     );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [queryClient]);
 
-  const fetchProfile = async (userId: string) => {
-    try {
+  const { data: profile = null, isLoading: profileLoading } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('id', user.id)
         .single();
 
       if (error) {
         console.error('Error fetching profile:', error);
-      } else {
-        setProfile(data as UserProfile);
+        return null;
       }
-    } catch (error) {
-      console.error('Error in fetchProfile:', error);
-    }
-  };
+      return data as UserProfile;
+    },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
 
   const signOut = async () => {
     try {
+      // Optimistic update
+      setSession(null);
+      setUser(null);
+      queryClient.clear();
+      
       await supabase.auth.signOut();
     } catch (error) {
       console.error('Error signing out from Supabase:', error);
-    } finally {
-      setSession(null);
-      setUser(null);
-      setProfile(null);
     }
   };
+
+  const loading = authLoading || (!!user && profileLoading);
 
   const value = {
     session,

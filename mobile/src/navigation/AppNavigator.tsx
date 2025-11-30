@@ -12,10 +12,9 @@ import {
   BottomTabBarProps,
 } from "@react-navigation/bottom-tabs";
 
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { TestsScreen } from "../screens/main/TestsScreen";
 import { DecisionTrainerScreen } from "../screens/main/DecisionTrainerScreen";
-import { MaterialsScreen } from "../screens/main/MaterialsScreen";
 import { ProfileScreen } from "../screens/main/ProfileScreen";
 import { AdminDashboardScreen } from "../screens/admin/AdminDashboardScreen";
 import { LiteratureNavigator } from "./LiteratureNavigator";
@@ -33,15 +32,21 @@ import { MainTabParamList } from "./types";
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-// COLORS
-const TAB_BG = "#1e1b4b";            // bar background (dark blue)
-const TAB_ACTIVE_BG = "#312e81";     // active pill background (indigo-900/lighter)
-const TAB_INACTIVE_ICON = "#94a3b8"; // slate-400
-const TAB_ACTIVE_ICON = "#ffffff";   // white
+// ---------- THEME ----------
+const BAR_BG = "#ffffff";          // white card
+const BAR_BORDER = "#e5e7eb";
+const PAGE_BG = "#020617";         // example dark page background; adjust to your app
 
-type IconMap = Record<keyof MainTabParamList, LucideIcon>;
+const ICON_INACTIVE = "#9ca3af";   // gray-400
+const ICON_ACTIVE_BG = "#4f46e5";  // indigo circle
+const ICON_ACTIVE = "#ffffff";
+const LABEL_INACTIVE = "#6b7280";  // gray-500
+const LABEL_ACTIVE = "#111827";    // gray-900
 
-const icons: IconMap = {
+type IconKey = keyof MainTabParamList;
+type IconMap = Record<IconKey, LucideIcon>;
+
+const icons: Partial<IconMap> = {
   Testet: FileText,
   Trajneri: BrainCircuit,
   Literatura: BookOpen,
@@ -50,41 +55,28 @@ const icons: IconMap = {
 };
 
 // ---------- CUSTOM TAB BAR ----------
-const CustomTabBar: React.FC<BottomTabBarProps> = ({
-  state,
-  descriptors,
-  navigation,
-}) => {
-  // One Animated.Value per tab
-  const animatedValues = useRef(
-    state.routes.map(
-      (_, index) => new Animated.Value(state.index === index ? 1 : 0)
-    )
-  ).current;
+const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
+  // Single animated value for current index
+  const position = useRef(new Animated.Value(state.index)).current;
 
   useEffect(() => {
-    animatedValues.forEach((val, index) => {
-      Animated.timing(val, {
-        toValue: state.index === index ? 1 : 0,
-        duration: 260,
-        useNativeDriver: false, // width animation needs false
-      }).start();
-    });
-  }, [state.index, animatedValues]);
+    Animated.spring(position, {
+      toValue: state.index,
+      stiffness: 220,
+      damping: 26,
+      mass: 0.7,
+      useNativeDriver: false,
+    }).start();
+  }, [state.index, position]);
 
   return (
-    <View
-      style={[
-        styles.tabBarContainer,
-        { bottom: Platform.OS === "ios" ? 24 : 16 },
-      ]}
-    >
+    <View style={styles.tabBarContainer}>
       <View style={styles.tabBarInner}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
 
           const label =
-            typeof options.tabBarLabel === 'string'
+            typeof options.tabBarLabel === "string"
               ? options.tabBarLabel
               : options.title !== undefined
               ? options.title
@@ -92,33 +84,50 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
 
           const isFocused = state.index === index;
           const IconComponent =
-            icons[route.name as keyof MainTabParamList] ?? FileText;
+            icons[route.name as IconKey] ?? FileText;
 
-          const anim = animatedValues[index];
+          const inputRange = [index - 1, index, index + 1];
 
-          // pill width: icon-only -> expanded (but clamped by maxWidth)
-          const pillWidth = anim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [40, 96],
-          });
-
-          // label "opening" width + opacity (delayed a bit)
-          const labelWidth = anim.interpolate({
-            inputRange: [0, 0.4, 1],
-            outputRange: [0, 0, 60],
+          // Circle scaling (appears only on active)
+          const circleScale = position.interpolate({
+            inputRange,
+            outputRange: [0, 1, 0],
             extrapolate: "clamp",
           });
 
-          const labelOpacity = anim.interpolate({
-            inputRange: [0.4, 1],
-            outputRange: [0, 1],
+          const circleOpacity = position.interpolate({
+            inputRange,
+            outputRange: [0, 1, 0],
             extrapolate: "clamp",
           });
 
-          const pillBgColor = anim.interpolate({
-            inputRange: [0, 1],
-            outputRange: ["rgba(255,255,255,0)", TAB_ACTIVE_BG],
+          // Lift the circle+icon a bit when active
+          const iconTranslateY = position.interpolate({
+            inputRange,
+            outputRange: [0, -10, 0],
+            extrapolate: "clamp",
           });
+
+          const iconScale = position.interpolate({
+            inputRange,
+            outputRange: [1, 1.05, 1],
+            extrapolate: "clamp",
+          });
+
+          const labelOpacity = position.interpolate({
+            inputRange,
+            outputRange: [0.6, 1, 0.6],
+            extrapolate: "clamp",
+          });
+
+          const labelTranslateY = position.interpolate({
+            inputRange,
+            outputRange: [2, 0, 2],
+            extrapolate: "clamp",
+          });
+
+          const iconColor = isFocused ? ICON_ACTIVE : ICON_INACTIVE;
+          const labelColor = isFocused ? LABEL_ACTIVE : LABEL_INACTIVE;
 
           const onPress = () => {
             const event = navigation.emit({
@@ -127,9 +136,16 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
               canPreventDefault: true,
             });
 
-          if (!isFocused && !event.defaultPrevented) {
+            if (!isFocused && !event.defaultPrevented) {
               navigation.navigate(route.name);
             }
+          };
+
+          const onLongPress = () => {
+            navigation.emit({
+              type: "tabLongPress",
+              target: route.key,
+            });
           };
 
           return (
@@ -137,41 +153,56 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
               key={route.key}
               accessibilityRole="button"
               accessibilityState={isFocused ? { selected: true } : {}}
+              accessibilityLabel={options.tabBarAccessibilityLabel}
+              testID={options.tabBarTestID}
               onPress={onPress}
+              onLongPress={onLongPress}
               activeOpacity={0.9}
               style={styles.tabItem}
+              hitSlop={{ top: 8, bottom: 8, left: 10, right: 10 }}
             >
+              {/* ICON + CIRCLE (overlapping top of bar) */}
               <Animated.View
                 style={[
-                  styles.pill,
+                  styles.iconWrapper,
                   {
-                    width: pillWidth,
-                    backgroundColor: pillBgColor as any,
+                    transform: [{ translateY: iconTranslateY }],
                   },
                 ]}
               >
-                {/* ICON – always visible, on the left of the text */}
-                <IconComponent
-                  size={18}
-                  color={isFocused ? TAB_ACTIVE_ICON : TAB_INACTIVE_ICON}
-                />
-
-                {/* TEXT – expands in when active */}
                 <Animated.View
                   style={[
-                    styles.labelWrapper,
-                    { width: labelWidth, opacity: labelOpacity },
+                    styles.activeCircle,
+                    {
+                      opacity: circleOpacity,
+                      transform: [{ scale: circleScale }],
+                    },
                   ]}
+                />
+                <Animated.View
+                  style={{
+                    transform: [{ scale: iconScale }],
+                  }}
                 >
-                  <Text
-                    numberOfLines={1}
-                    ellipsizeMode="clip"
-                    style={styles.label}
-                  >
-                    {label}
-                  </Text>
+                  <IconComponent size={22} color={iconColor} />
                 </Animated.View>
               </Animated.View>
+
+              {/* LABEL (inside bar) */}
+              <Animated.Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[
+                  styles.label,
+                  {
+                    color: labelColor,
+                    opacity: labelOpacity,
+                    transform: [{ translateY: labelTranslateY }],
+                  },
+                ]}
+              >
+                {label}
+              </Animated.Text>
             </TouchableOpacity>
           );
         })}
@@ -181,7 +212,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
 };
 
 // ---------- NAVIGATOR ----------
-export const AppNavigator = () => {
+export const AppNavigator: React.FC = () => {
   const { isAdmin } = useAuth();
 
   return (
@@ -223,50 +254,71 @@ export const AppNavigator = () => {
   );
 };
 
+export default AppNavigator;
+
 // ---------- STYLES ----------
 const styles = StyleSheet.create({
+  // Floating bar, centered horizontally, not attached to sides
   tabBarContainer: {
     position: "absolute",
-    left: 16,
-    right: 16,
+    left: 0,
+    right: 0,
+    bottom: Platform.OS === "ios" ? 30 : 24,
+    alignItems: "center",
+    backgroundColor: "transparent", // your screen background shows behind
   },
   tabBarInner: {
-    flexDirection: "row",
-    backgroundColor: TAB_BG,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    width: "86%",
+    maxWidth: 420,
+    backgroundColor: BAR_BG,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#020617",
-    elevation: 12,
+    borderColor: BAR_BORDER,
+
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+
+    paddingHorizontal: 22,
+    paddingTop: 26, // more top space so circle can sit nicely in the middle of the top edge
+    paddingBottom: 12,
+
+    overflow: "visible",
+    elevation: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
   },
   tabItem: {
     flex: 1,
     alignItems: "center",
+    justifyContent: "flex-end",
   },
-  pill: {
-    flexDirection: "row",          // icon then text = left → right
+  // This wrapper is positioned so its center is on the top edge of the bar
+  iconWrapper: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    maxWidth: "100%",              // no overflow
+    marginTop: -25, // half of height -> center at the top edge of the card
   },
-  labelWrapper: {
-    marginLeft: 6,
-    overflow: "hidden",            // so label reveals as width grows
-    justifyContent: "center",
+  activeCircle: {
+    position: "absolute",
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: ICON_ACTIVE_BG,
+    shadowColor: ICON_ACTIVE_BG,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
   },
   label: {
+    marginTop: 4,
     fontSize: 12,
     fontWeight: "600",
-    color: TAB_ACTIVE_ICON,
   },
 });
-
-export default AppNavigator;

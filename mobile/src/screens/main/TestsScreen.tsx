@@ -1,17 +1,18 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useCategory } from '../../contexts/CategoryContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { useCategory } from '@/contexts/CategoryContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardStats, useTestCount, useUserPlans, useWeakTopics, useGlobalDailyStreak } from '@drivewise/core';
 import { Lock, Star, ChevronLeft, Bike, Car, Truck, Target, Trophy, Zap, Activity, AlertCircle, TrendingUp, PlayCircle, CheckCircle2, BookOpen, BrainCircuit, FileText, LogIn } from 'lucide-react-native';
 import { clsx } from 'clsx';
 import { useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from '../../navigation/types';
+import { RootStackParamList } from '@/navigation/types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'App'>;
 
@@ -22,7 +23,7 @@ export const TestsScreen = () => {
   const { selectedCategory, setCategory } = useCategory();
   const { user, profile } = useAuth();
   
-  const { data: stats } = useDashboardStats(user?.id);
+  const { data: stats, isLoading: statsLoading } = useDashboardStats(user?.id);
   const { data: weakTopicsData } = useWeakTopics(user?.id);
   const { data: globalStreak } = useGlobalDailyStreak(user?.id);
   const { data: testCount = 30 } = useTestCount(selectedCategory || 'B');
@@ -50,6 +51,10 @@ export const TestsScreen = () => {
       };
     });
   }, [validTestCount, hasCategoryAccess]);
+
+  if (user && statsLoading) {
+    return <DashboardSkeleton />;
+  }
 
   const dashboardStats = stats?.stats || {
     totalTests: 0,
@@ -154,7 +159,7 @@ export const TestsScreen = () => {
   return (
     <View className="flex-1 bg-slate-50">
       <SafeAreaView className="flex-1" edges={['top']}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
           
           {/* Header & Greeting OR Guest Guide */}
           {isGuest ? (

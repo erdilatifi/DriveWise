@@ -1,24 +1,29 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, Image, Alert, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useUserPlans } from '@drivewise/core';
-import { Button } from '../../components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import { User, Bell, Moon, Smartphone, Key, RefreshCcw, LogOut, ChevronRight, MessageCircle, Instagram, Facebook, AlertCircle, CreditCard, Volume2, Sun, Monitor, Clock, Bug, Trash2 } from 'lucide-react-native';
 import { clsx } from 'clsx';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useNavigation } from '@react-navigation/native';
-import { ReportBugModal } from '../../components/modals/ReportBugModal';
-import { DeleteAccountModal } from '../../components/modals/DeleteAccountModal';
+import { ReportBugModal } from '@/components/modals/ReportBugModal';
+import { DeleteAccountModal } from '@/components/modals/DeleteAccountModal';
+import { ProfileSkeleton } from '@/components/skeletons/ProfileSkeleton';
 
 export const ProfileScreen = () => {
-  const { user, profile, signOut } = useAuth();
-  const { data: plans } = useUserPlans(user?.id);
+  const { user, profile, signOut, loading: authLoading } = useAuth();
+  const { data: plans, isLoading: plansLoading } = useUserPlans(user?.id);
   const navigation = useNavigation<any>();
   const [isDark, setIsDark] = React.useState(false); // Mock state for now
   const [showBugModal, setShowBugModal] = React.useState(false);
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+
+  if (authLoading || (user && plansLoading)) {
+    return <ProfileSkeleton />;
+  }
 
   const activePlan = plans?.find(p => p.status === 'active');
 
@@ -137,7 +142,7 @@ export const ProfileScreen = () => {
   return (
     <View className="flex-1 bg-slate-50">
       <SafeAreaView className="flex-1" edges={['top']}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
           <View className="px-6 pt-4 pb-8">
             <View className="flex-row justify-between items-center mb-6">
                <Text className="text-4xl font-extrabold text-slate-900">Profili</Text>

@@ -9,6 +9,7 @@ import { CategorySelectionScreen } from '../screens/main/CategorySelectionScreen
 import { AppNavigator } from './AppNavigator';
 import { ActivityIndicator, View } from 'react-native';
 import { RootStackParamList, AuthStackParamList } from './types';
+import { LoadingScreen } from '../components/ui/LoadingScreen';
 
 import { TestInstructionsScreen } from '../screens/test/TestInstructionsScreen';
 import { TestRunnerScreen } from '../screens/test/TestRunnerScreen';
@@ -35,14 +36,10 @@ const AuthNavigator = () => {
 
 export const RootNavigator = () => {
   const { user, loading } = useAuth();
-  const { selectedCategory } = useCategory();
+  const { selectedCategory, loading: categoryLoading } = useCategory();
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#ce76c9" />
-      </View>
-    );
+  if (loading || categoryLoading) {
+    return <LoadingScreen />;
   }
 
   return (

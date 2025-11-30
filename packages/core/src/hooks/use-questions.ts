@@ -114,7 +114,6 @@ export function useCreateQuestion() {
 
   return useMutation({
     mutationFn: async (question: QuestionInput) => {
-      console.log('Creating question with data:', question);
       
       const { data, error } = await supabase
         .from('admin_questions')
@@ -123,12 +122,6 @@ export function useCreateQuestion() {
         .single();
 
       if (error) {
-        console.error('Supabase create error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-        });
         throw new Error(error.message || error.details || 'Failed to create question');
       }
       
@@ -136,14 +129,10 @@ export function useCreateQuestion() {
         throw new Error('No data returned from insert operation');
       }
       
-      console.log('Question created successfully:', data);
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['questions'] });
-    },
-    onError: (error) => {
-      console.error('Mutation error:', error);
     },
   });
 }
@@ -155,7 +144,6 @@ export function useUpdateQuestion() {
 
   return useMutation({
     mutationFn: async ({ id, ...question }: Partial<AdminQuestion> & { id: string }) => {
-      console.log('Updating question:', id, question);
       
       const { data, error } = await (supabase
         .from('admin_questions') as any)
@@ -165,12 +153,6 @@ export function useUpdateQuestion() {
         .single();
 
       if (error) {
-        console.error('Supabase update error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-        });
         throw new Error(error.message || error.details || 'Failed to update question');
       }
       
@@ -178,15 +160,11 @@ export function useUpdateQuestion() {
         throw new Error('No data returned from update operation');
       }
       
-      console.log('Question updated successfully:', data);
       return data as any;
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['questions'] });
       queryClient.invalidateQueries({ queryKey: ['question', data.id] });
-    },
-    onError: (error) => {
-      console.error('Update mutation error:', error);
     },
   });
 }

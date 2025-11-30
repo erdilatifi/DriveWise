@@ -3,14 +3,15 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../navigation/types';
-import { useAuth } from '../../contexts/AuthContext';
-import { useCategory } from '../../contexts/CategoryContext';
+import { RootStackParamList } from '@/navigation/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCategory } from '@/contexts/CategoryContext';
 import { useDecisionTrainerStats, useLeaderboard, useUserPlans } from '@drivewise/core';
-import { Button } from '../../components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import { Play, Trophy, Target, Zap, Flame } from 'lucide-react-native';
 import { clsx } from 'clsx';
 import { LinearGradient } from 'expo-linear-gradient';
+import { DecisionTrainerSkeleton } from '@/components/skeletons/DecisionTrainerSkeleton';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -18,7 +19,7 @@ export const DecisionTrainerScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const { user, profile } = useAuth();
   const { selectedCategory } = useCategory();
-  const { data: stats } = useDecisionTrainerStats(user?.id);
+  const { data: stats, isLoading: statsLoading } = useDecisionTrainerStats(user?.id);
   const { data: leaderboardData } = useLeaderboard(user?.id);
   const { data: plans } = useUserPlans(user?.id);
 
@@ -27,10 +28,14 @@ export const DecisionTrainerScreen = () => {
     return (plans || []).some(p => p.category === (selectedCategory || 'B') && p.status === 'active');
   }, [plans, selectedCategory, profile]);
 
+  if (user && statsLoading) {
+    return <DecisionTrainerSkeleton />;
+  }
+
   return (
     <View className="flex-1 bg-slate-50">
       <SafeAreaView className="flex-1" edges={['top']}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
           {/* Header */}
           <View className="px-6 pt-4 pb-8">
             <View className="mb-6 flex-row items-center justify-between">

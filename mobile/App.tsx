@@ -7,21 +7,32 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SupabaseProvider } from '@drivewise/core';
 import { supabase } from './src/lib/supabase';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes
+    },
+  },
+});
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <SupabaseProvider client={supabase}>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <CategoryProvider>
-              <RootNavigator />
-            </CategoryProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </SupabaseProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <SupabaseProvider client={supabase}>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <CategoryProvider>
+                <RootNavigator />
+              </CategoryProvider>
+            </AuthProvider>
+          </QueryClientProvider>
+        </SupabaseProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }

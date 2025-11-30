@@ -112,17 +112,13 @@ export const TestRunnerScreen = () => {
   };
 
   const handleSubmit = async () => {
-    console.log('handleSubmit called');
     if (!questions) {
-        console.log('handleSubmit: no questions');
         return;
     }
     if (isSubmitting) {
-        console.log('handleSubmit: isSubmitting true');
         return;
     }
     if (!user) {
-        console.log('handleSubmit: no user');
         Alert.alert("Gabim", "Ju duhet të jeni i kyçur për të dorëzuar testin.");
         return;
     }
@@ -147,8 +143,6 @@ export const TestRunnerScreen = () => {
         answersPayload[k] = answers[k][0]; // first selected answer
       });
 
-      console.log('Submitting test payload:', { userId: user.id, score, percentage });
-
       const result = await submitTest.mutateAsync({
         userId: user.id,
         category,
@@ -159,7 +153,6 @@ export const TestRunnerScreen = () => {
         percentage,
       });
 
-      console.log('Test submitted successfully:', result.testAttempt.id);
       navigation.replace("TestResult", { attemptId: result.testAttempt.id });
     } catch (error: any) {
       console.error('Submit test error:', error);
@@ -300,7 +293,9 @@ export const TestRunnerScreen = () => {
               { id: "A", text: currentQuestion.option_a },
               { id: "B", text: currentQuestion.option_b },
               { id: "C", text: currentQuestion.option_c },
-            ].map((option) => {
+            ]
+              .filter((option) => option.text && option.text.trim().length > 0)
+              .map((option) => {
               const isSelected = currentAnswers.includes(option.id);
               return (
                 <TouchableOpacity

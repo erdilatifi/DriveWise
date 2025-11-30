@@ -9,6 +9,7 @@ import { useTestHistory, useDeleteTestAttempt } from '@drivewise/core';
 import { ChevronLeft, Calendar, CheckCircle2, XCircle, Trash2 } from 'lucide-react-native';
 import { clsx } from 'clsx';
 import { Button } from '../../components/ui/Button';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -20,11 +21,7 @@ export const TestHistoryScreen = () => {
   const deleteMutation = useDeleteTestAttempt();
 
   if (isLoading && limit === 20) {
-    return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#ce76c9" />
-      </SafeAreaView>
-    );
+    return <LoadingScreen />;
   }
 
   const history = ((data?.tests || []) as any[]).filter((t: any) => !t.test_number?.toString().startsWith('personalized'));
