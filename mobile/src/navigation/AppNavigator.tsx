@@ -13,6 +13,7 @@ import {
 } from "@react-navigation/bottom-tabs";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { TestsScreen } from "../screens/main/TestsScreen";
 import { DecisionTrainerScreen } from "../screens/main/DecisionTrainerScreen";
 import { ProfileScreen } from "../screens/main/ProfileScreen";
@@ -32,17 +33,6 @@ import { MainTabParamList } from "./types";
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-// ---------- THEME ----------
-const BAR_BG = "#f9fafb";          // bar background
-const BAR_BORDER = "#e5e7eb";      // top border of the bar
-const PAGE_BG = "#f3f4f6";         // behind the bar
-
-const ICON_INACTIVE = "#9ca3af";   // gray-400
-const ICON_ACTIVE_BG = "#4f46e5";  // indigo-600
-const ICON_ACTIVE = "#ffffff";
-const LABEL_INACTIVE = "#9ca3af";
-const LABEL_ACTIVE = "#111827";    // gray-900
-
 type IconKey = keyof MainTabParamList;
 type IconMap = Record<IconKey, LucideIcon>;
 
@@ -56,8 +46,16 @@ const icons: Partial<IconMap> = {
 
 // ---------- CUSTOM TAB BAR ----------
 const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
+  const { isDark } = useTheme();
   // Single animated value for current index
   const position = useRef(new Animated.Value(state.index)).current;
+
+  const BAR_BG = isDark ? "#1e293b" : "#f9fafb";
+  const BAR_BORDER = isDark ? "#334155" : "#e5e7eb";
+  const ICON_INACTIVE = isDark ? "#94a3b8" : "#9ca3af";
+  const ICON_ACTIVE = "#ffffff";
+  const LABEL_INACTIVE = isDark ? "#94a3b8" : "#9ca3af";
+  const LABEL_ACTIVE = isDark ? "#f8fafc" : "#111827";
 
   useEffect(() => {
     Animated.spring(position, {
@@ -71,7 +69,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
 
   return (
     <View style={styles.tabBarContainer}>
-      <View style={styles.tabBarInner}>
+      <View style={[styles.tabBarInner, { backgroundColor: BAR_BG, borderColor: BAR_BORDER }]}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
 

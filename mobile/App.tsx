@@ -3,6 +3,7 @@ import "../global.css";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { CategoryProvider } from './src/contexts/CategoryContext';
+import { ThemeProvider } from './src/contexts/ThemeContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SupabaseProvider } from '@drivewise/core';
@@ -25,11 +26,13 @@ export default function App() {
       <SafeAreaProvider>
         <SupabaseProvider client={supabase}>
           <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-              <CategoryProvider>
-                <RootNavigator />
-              </CategoryProvider>
-            </AuthProvider>
+            <ThemeProvider>
+              <AuthProvider>
+                <CategoryProvider>
+                  <RootNavigator />
+                </CategoryProvider>
+              </AuthProvider>
+            </ThemeProvider>
           </QueryClientProvider>
         </SupabaseProvider>
       </SafeAreaProvider>
