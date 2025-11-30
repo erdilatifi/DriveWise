@@ -23,122 +23,111 @@ export const MaterialDetailScreen = () => {
     );
   }
 
-  // specific renderer for the "Chapter" JSON structure found in the web app
-  const renderChapterContent = (content: any) => {
-    const chapter = content?.chapter;
-    if (!chapter) return null;
+  // Generic JSON Renderer (mirrors web implementation)
+  const renderContentValue = (value: any, depth: number = 0): React.ReactNode => {
+    if (!value) return null;
 
-    return (
-      <View className="space-y-6">
-        {/* Chapter Title & Description */}
-        <View className="mb-6">
-           {chapter.title && (
-             <Text className="text-2xl font-bold text-slate-900 mb-2 leading-tight">
-               {chapter.title}
-             </Text>
-           )}
-           {chapter.description && (
-             <Text className="text-base text-slate-600 leading-7">
-               {chapter.description}
-             </Text>
-           )}
+    // 1. String -> Paragraph
+    if (typeof value === 'string') {
+      return (
+        <Text key={Math.random()} className="text-base text-slate-700 leading-7 mb-4">
+          {value}
+        </Text>
+      );
+    }
+
+    // 2. Array -> List
+    if (Array.isArray(value)) {
+      return (
+        <View key={Math.random()} className="mb-4 space-y-2 pl-2">
+          {value.map((item, idx) => (
+            <View key={idx} className="flex-row items-start">
+              <View className="h-1.5 w-1.5 rounded-full bg-indigo-400 mt-2.5 mr-3" />
+              <View className="flex-1">
+                {renderContentValue(item, depth + 1)}
+              </View>
+            </View>
+          ))}
         </View>
+      );
+    }
 
-        {/* Sections */}
-        {chapter.sections?.map((section: any, index: number) => {
-           const points = Array.isArray(section.points) 
-             ? section.points 
-             : typeof section.points === 'string' 
-               ? [section.points] 
-               : [];
-
-           return (
-             <View key={index} className="mb-6 bg-slate-50 p-5 rounded-2xl border border-slate-100">
-               {/* Section Title */}
-               {section.title && (
-                 <View className="flex-row items-center mb-3">
-                   <View className="h-2 w-2 rounded-full bg-orange-500 mr-2" />
-                   <Text className="text-lg font-bold text-slate-800 flex-1">
-                     {section.title}
-                   </Text>
-                 </View>
-               )}
-
-               {/* Points List */}
-               <View className="space-y-3">
-                 {points.map((point: any, pIndex: number) => (
-                   <View key={pIndex} className="flex-row items-start pl-1">
-                     <View className="h-1.5 w-1.5 rounded-full bg-slate-300 mt-2 mr-3" />
-                     <Text className="text-base text-slate-600 flex-1 leading-7">
-                       {point}
-                     </Text>
-                   </View>
-                 ))}
-               </View>
-             </View>
-           );
-        })}
-      </View>
-    );
-  };
-
-  // Recursive Rich Text Renderer (Fallback for ProseMirror/TipTap)
-  const renderRichText = (node: any, index: number = 0): React.ReactNode => {
-    // ... (existing ProseMirror logic kept as fallback)
-    if (!node) return null;
-    if (typeof node === 'string') return <Text key={index} className="text-base text-slate-700 leading-7 mb-4">{node}</Text>;
-    if (Array.isArray(node)) return node.map((child, i) => renderRichText(child, i));
-    
-    // ... (rest of existing renderRichText logic)
-    if (node.type === 'text') { /* ... */ return <Text key={index} className="text-slate-700">{node.text}</Text>; }
-    if (node.type === 'doc' && node.content) return node.content.map((c:any, i:number) => renderRichText(c, i));
-    if (node.type === 'paragraph') return <Text key={index} className="mb-4 text-base text-slate-700 leading-7">{node.content?.map((c:any, i:number) => renderRichText(c, i))}</Text>;
-    
-    return null; 
-  };
-
-  const renderContent = (content: any) => {
-      if (!content) return null;
-      
-      // Priority 1: Check for "Chapter" structure
-      if (content.chapter) {
-          return renderChapterContent(content);
+    // 3. Object -> Sections (Chapter structure or generic keys)
+    if (typeof value === 'object') {
+      // Handle specific "Chapter" structure if present at root
+      if (depth === 0 && value.chapter) {
+        return renderContentValue(value.chapter, depth + 1);
       }
 
-      // Priority 2: Check for ProseMirror "doc" structure
-      if (content.type === 'doc' || Array.isArray(content)) {
-          return renderRichText(content);
+      // Specific Chapter fields
+      if (value.title || value.description || value.sections) {
+         return (
+           <View key={Math.random()} className="mb-6">
+             {value.title && (
+               <Text className="text-2xl font-bold text-slate-900 mb-3 leading-tight">
+                 {value.title}
+               </Text>
+             )}
+             {value.description && (
+               <Text className="text-base text-slate-600 leading-7 mb-6">
+                 {value.description}
+               </Text>
+             )}
+             {value.sections && renderContentValue(value.sections, depth + 1)}
+           </View>
+         );
       }
 
-      // Priority 3: Plain string or unknown object
-      if (typeof content === 'string') {
-          return <Text className="text-base text-slate-700 leading-7">{content}</Text>;
-      }
+      // Generic Object iteration (fallback for other structures)
+      return (
+        <View key={Math.random()} className="space-y-4">
+          {Object.entries(value).map(([key, subValue]) => {
+            // Skip internal keys or IDs if needed, but usually show content
+            if (key === 'id' || key === 'order') return null;
+            
+            return (
+              <View key={key} className="mb-4">
+                {/* Check if key is a meaningful title (not numeric index) */}
+                {isNaN(Number(key)) && (
+                  <View className="flex-row items-center mb-2">
+                    <View className="h-1 w-1 rounded-full bg-orange-500 mr-2" />
+                    <Text className="text-lg font-bold text-slate-800 capitalize">
+                      {key.replace(/_/g, ' ')}
+                    </Text>
+                  </View>
+                )}
+                {renderContentValue(subValue, depth + 1)}
+              </View>
+            );
+          })}
+        </View>
+      );
+    }
 
-      return <Text className="text-red-500">Format i panjohur</Text>;
+    return null;
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
-      {/* ... Header ... */}
-      <View className="px-6 py-4 bg-white border-b border-slate-100 flex-row items-center shadow-sm z-10">
-        <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4 p-2 -ml-2 rounded-full active:bg-slate-100">
+    <SafeAreaView className="flex-1 bg-[#F7F8FA]" edges={['top']}>
+      {/* Header */}
+      <View className="px-6 py-4 bg-white border-b border-slate-100 flex-row items-center shadow-sm z-10 rounded-b-[32px]">
+        <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4 p-2 -ml-2 rounded-full active:bg-slate-50">
            {/* @ts-ignore */}
            <ArrowLeft size={24} color="#1e293b" />
         </TouchableOpacity>
         <Text className="text-lg font-bold text-slate-900 flex-1" numberOfLines={1}>{title}</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }} showsVerticalScrollIndicator={false} className="bg-white">
+      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
         {/* Hero Images */}
         {material?.images && material.images.length > 0 && (
           <View className="mb-8">
              {material.images.map((img) => (
-               <View key={img.id} className="mb-6 rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 shadow-sm">
+               <View key={img.id} className="mb-6 rounded-3xl overflow-hidden bg-white border border-slate-100 shadow-sm">
                  <Image source={{ uri: img.image_url }} style={{ width: '100%', height: 220, resizeMode: 'cover' }} />
-                 {img.caption_sq && (
-                   <View className="bg-white/95 p-3 border-t border-slate-100">
-                     <Text className="text-xs text-slate-500 font-medium text-center">{img.caption_sq}</Text>
+                 {img.caption && (
+                   <View className="bg-white p-4 border-t border-slate-100">
+                     <Text className="text-sm text-slate-500 font-medium text-center">{img.caption}</Text>
                    </View>
                  )}
                </View>
@@ -147,8 +136,14 @@ export const MaterialDetailScreen = () => {
         )}
 
         {/* Content */}
-        <View className="mb-8">
-           {renderContent(material?.content_sq)}
+        <View className="mb-8 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+           {material?.content ? (
+             renderContentValue(material.content)
+           ) : (
+             <Text className="text-slate-400 italic text-center py-10">
+               Përmbajtja nuk është e disponueshme.
+             </Text>
+           )}
         </View>
       </ScrollView>
     </SafeAreaView>

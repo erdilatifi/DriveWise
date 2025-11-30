@@ -4,12 +4,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LiteratureStackParamList } from '../../navigation/LiteratureNavigator';
-import { AlertTriangle, Octagon, Info, ArrowUpCircle, Ban, ChevronRight, BookOpen } from 'lucide-react-native';
+import { AlertTriangle, Octagon, Info, ArrowUpCircle, Ban, ChevronRight, BookOpen, ChevronLeft } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 
 type NavigationProp = NativeStackNavigationProp<LiteratureStackParamList>;
+
+// DESIGN TOKENS
+const PRIMARY = "#4f46e5";
+const BG_COLOR = "#F7F8FA";
 
 const SIGN_CATEGORIES = [
   {
@@ -71,16 +75,18 @@ export const SignsCategoryScreen = () => {
     <View style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Text style={styles.backButtonArrow}>←</Text>
-          </TouchableOpacity>
-          <View>
-            <Text style={styles.headerTitle}>Sinjalizimi Rrugor</Text>
-            <Text style={styles.headerSubtitle}>Zgjidhni kategorinë për të mësuar</Text>
+        <View style={styles.headerContainer}>
+          <View style={styles.header}>
+            <TouchableOpacity 
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <ChevronLeft size={24} color="#334155" />
+            </TouchableOpacity>
+            <View>
+              <Text style={styles.headerTitle}>Sinjalizimi Rrugor</Text>
+              <Text style={styles.headerSubtitle}>Zgjidhni kategorinë</Text>
+            </View>
           </View>
         </View>
 
@@ -99,7 +105,7 @@ export const SignsCategoryScreen = () => {
             >
               <View style={styles.heroContent}>
                 <View style={styles.heroIconContainer}>
-                  <BookOpen color="#60a5fa" size={32} />
+                  <BookOpen color="#60a5fa" size={28} />
                 </View>
                 <View style={{flex: 1}}>
                   <Text style={styles.heroTitle}>Katalogu i plotë</Text>
@@ -169,10 +175,19 @@ export const SignsCategoryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc', // slate-50
+    backgroundColor: BG_COLOR,
   },
   safeArea: {
     flex: 1,
+  },
+  headerContainer: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
+    marginBottom: 24,
   },
   header: {
     paddingHorizontal: 24,
@@ -180,22 +195,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#f1f5f9',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#f8fafc',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  backButtonArrow: {
-    fontSize: 20,
-    color: '#334155',
-    marginTop: -2,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   headerTitle: {
     fontSize: 20,
@@ -206,20 +215,22 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 13,
     color: '#64748b',
+    fontWeight: '500',
   },
   scrollContent: {
     padding: 24,
-    paddingBottom: 40,
+    paddingTop: 0, 
+    paddingBottom: 120,
   },
   heroCard: {
-    borderRadius: 24,
+    borderRadius: 28,
     marginBottom: 32,
     overflow: 'hidden',
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 10 },
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
-    elevation: 10,
+    elevation: 8,
   },
   heroGradient: {
     padding: 24,
@@ -230,12 +241,12 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   heroIconContainer: {
-    width: 56,
-    height: 56,
+    width: 52,
+    height: 52,
     borderRadius: 16,
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -247,8 +258,8 @@ const styles = StyleSheet.create({
   },
   heroText: {
     fontSize: 13,
-    color: '#94a3b8',
-    lineHeight: 20,
+    color: '#cbd5e1',
+    lineHeight: 18,
   },
   sectionTitle: {
     fontSize: 18,
@@ -261,7 +272,6 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 24,
-    borderWidth: 1,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -269,6 +279,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 3,
     backgroundColor: '#fff',
+    borderWidth: 1,
   },
   cardGradient: {
     padding: 20,
@@ -287,7 +298,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   countBadge: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.8)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -302,13 +313,13 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0f172a', // slate-900
+    color: '#0f172a',
     marginBottom: 4,
   },
   cardSubtitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#475569', // slate-600
+    color: '#475569',
     marginBottom: 12,
   },
   divider: {
@@ -318,7 +329,7 @@ const styles = StyleSheet.create({
   },
   cardDesc: {
     fontSize: 13,
-    color: '#64748b',
+    color: '#4b5563',
     lineHeight: 18,
   },
   cardFooter: {
@@ -330,6 +341,8 @@ const styles = StyleSheet.create({
   learnMore: {
     fontSize: 13,
     fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });
 

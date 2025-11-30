@@ -24,27 +24,32 @@ export const Button = ({
   disabled,
   ...props 
 }: ButtonProps) => {
-  const baseStyles = "flex-row items-center justify-center rounded-xl";
+  const baseStyles = "flex-row items-center justify-center rounded-full active:scale-[0.97] transition-transform";
+  
+  // Using specific colors to match new design system
   const variantStyles = {
-    primary: "bg-primary",
-    secondary: "bg-surface",
-    outline: "border-2 border-primary bg-transparent",
+    primary: "bg-indigo-600 shadow-md shadow-indigo-200",
+    secondary: "bg-white border border-slate-200 shadow-sm",
+    outline: "border border-indigo-600 bg-transparent",
     ghost: "bg-transparent",
   };
+  
   const sizeStyles = {
     default: "h-12 px-6",
-    sm: "h-9 px-3",
+    sm: "h-9 px-4",
     lg: "h-14 px-8",
   };
+  
   const textStyles = {
     primary: "text-white font-bold",
-    secondary: "text-text font-semibold",
-    outline: "text-primary font-bold",
-    ghost: "text-primary font-semibold",
+    secondary: "text-slate-900 font-semibold",
+    outline: "text-indigo-600 font-bold",
+    ghost: "text-indigo-600 font-semibold",
   };
 
   return (
     <TouchableOpacity
+      activeOpacity={0.9}
       className={clsx(
         baseStyles,
         variantStyles[variant],
@@ -56,7 +61,7 @@ export const Button = ({
       {...props}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? 'white' : '#3A86FF'} />
+        <ActivityIndicator color={variant === 'primary' ? 'white' : '#4F46E5'} />
       ) : (
         <>
           {icon}

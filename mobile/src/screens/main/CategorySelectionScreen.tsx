@@ -4,9 +4,14 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useCategory } from '../../contexts/CategoryContext';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Car, Bike, Truck, ChevronRight, Info, Bus } from 'lucide-react-native';
+import { Car, Bike, Truck, ChevronRight, Info, Bus, CheckCircle2 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { clsx } from 'clsx';
+
+// DESIGN TOKENS
+const PRIMARY = "#4f46e5";
+const BG_COLOR = "#F7F8FA";
 
 const { width } = Dimensions.get('window');
 
@@ -69,7 +74,7 @@ const CATEGORIES = [
 ];
 
 export const CategorySelectionScreen = () => {
-  const { setCategory } = useCategory();
+  const { selectedCategory, setCategory } = useCategory();
   const navigation = useNavigation<any>();
 
   const handleSelect = (id: string) => {
@@ -77,97 +82,110 @@ export const CategorySelectionScreen = () => {
   };
 
   return (
-    <View className="flex-1 bg-slate-50">
-      <SafeAreaView className="flex-1">
-        <View className="px-6 pt-4 pb-2">
-          <Text className="text-slate-400 text-sm uppercase font-bold tracking-wider mb-1">
-            Mirësevini në DriveWise
-          </Text>
-          <Text className="text-slate-900 text-3xl font-extrabold leading-tight">
-            Zgjidhni
-            <Text className="text-[#3b82f6]"> Kategorinë</Text>
-          </Text>
-        </View>
-
+    <View className="flex-1 bg-[#F7F8FA]">
+      <SafeAreaView className="flex-1" edges={['top']}>
         <ScrollView 
-          contentContainerStyle={{ padding: 24, paddingBottom: 100, gap: 20 }} 
+          contentContainerStyle={{ paddingBottom: 120 }} 
           showsVerticalScrollIndicator={false}
         >
-          {CATEGORIES.map((cat, index) => (
-            <Animated.View 
-              key={cat.id}
-              entering={FadeInDown.delay(index * 100).springify()}
-            >
-              <TouchableOpacity
-                onPress={() => handleSelect(cat.id)}
-                activeOpacity={0.9}
-                className="shadow-sm"
-                style={{
-                  shadowColor: cat.iconColor,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 12,
-                  elevation: 5
-                }}
-              >
-                <View className="bg-white rounded-3xl overflow-hidden border border-slate-100">
-                  {/* Gradient Header Bar */}
-                  <LinearGradient
-                    colors={cat.colors}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    className="h-2 w-full"
-                  />
-                  
-                  <View className="p-5 flex-row">
-                    <View className="flex-1 pr-4">
-                      <View className="flex-row items-center mb-2">
-                        <View className="bg-slate-100 px-2 py-1 rounded-md mr-2">
-                          <Text className="text-xs font-bold text-slate-600">{cat.id}</Text>
-                        </View>
-                        <Text className="text-lg font-bold text-slate-800">
-                          {cat.subtitle}
-                        </Text>
-                      </View>
-                      
-                      <Text className="text-slate-500 text-sm leading-5 mb-3">
-                        {cat.description}
-                      </Text>
-
-                      <View className="flex-row items-center">
-                        <Text style={{ color: cat.iconColor }} className="text-sm font-bold mr-1">
-                          Zgjidh
-                        </Text>
-                        <ChevronRight size={14} color={cat.iconColor} />
-                      </View>
-                    </View>
-
-                    <View className="justify-center">
-                      <View 
-                        style={{ backgroundColor: cat.accent }}
-                        className="h-20 w-20 rounded-2xl items-center justify-center transform rotate-3"
-                      >
-                        {/* @ts-ignore */}
-                        <cat.icon size={40} color={cat.iconColor} strokeWidth={1.5} />
-                      </View>
-                    </View>
-                  </View>
-
-                  {/* Background Pattern */}
-                  <View className="absolute -bottom-10 -left-10 opacity-5 pointer-events-none">
-                     {/* @ts-ignore */}
-                    <cat.icon size={150} color={cat.iconColor} />
-                  </View>
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
-          ))}
-
-          <View className="mt-4 p-4 bg-blue-50 rounded-2xl border border-blue-100 flex-row items-start">
-            <Info size={20} color="#3b82f6" className="mt-0.5" />
-            <Text className="ml-3 text-blue-700 text-sm flex-1 leading-5">
-              Kategoritë përcaktojnë llojin e pyetjeve dhe simulimeve që do të shihni. Mund ta ndryshoni kategorinë në çdo kohë nga menuja e profilit.
+          {/* Header */}
+          <View className="px-6 pt-8 pb-8 bg-white border-b border-slate-100 rounded-b-[32px] mb-6">
+            <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+              Mirësevini në DriveWise
             </Text>
+            <Text className="text-3xl font-extrabold text-slate-900 leading-tight">
+              Zgjidhni
+              <Text style={{ color: PRIMARY }}> Kategorinë</Text>
+            </Text>
+          </View>
+
+          <View className="px-6 gap-5">
+            {CATEGORIES.map((cat, index) => {
+              const isSelected = selectedCategory === cat.id;
+              return (
+                <Animated.View 
+                  key={cat.id}
+                  entering={FadeInDown.delay(index * 100).springify()}
+                >
+                  <TouchableOpacity
+                    onPress={() => handleSelect(cat.id)}
+                    activeOpacity={0.9}
+                    className={clsx(
+                      "rounded-3xl overflow-hidden border transition-all",
+                      isSelected ? "border-indigo-600 shadow-md shadow-indigo-100" : "border-slate-100 shadow-sm shadow-slate-100 bg-white"
+                    )}
+                  >
+                    {/* Gradient Header Bar if selected */}
+                    {isSelected && (
+                      <LinearGradient
+                        colors={[PRIMARY, '#6366f1']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        className="h-1.5 w-full"
+                      />
+                    )}
+                    
+                    <View className={clsx("p-5 flex-row items-start", isSelected ? "bg-indigo-50/30" : "bg-white")}>
+                      <View className="flex-1 pr-4">
+                        <View className="flex-row items-center mb-2">
+                          <View className={clsx(
+                             "px-2.5 py-1 rounded-lg mr-2",
+                             isSelected ? "bg-indigo-100" : "bg-slate-100"
+                          )}>
+                            <Text className={clsx(
+                               "text-xs font-bold",
+                               isSelected ? "text-indigo-700" : "text-slate-600"
+                            )}>{cat.id}</Text>
+                          </View>
+                          <Text className="text-lg font-bold text-slate-900">
+                            {cat.subtitle}
+                          </Text>
+                        </View>
+                        
+                        <Text className="text-slate-500 text-sm leading-5 mb-4">
+                          {cat.description}
+                        </Text>
+
+                        <View className="flex-row items-center">
+                          {isSelected ? (
+                             <View className="flex-row items-center">
+                                <CheckCircle2 size={16} color={PRIMARY} className="mr-1" />
+                                <Text style={{ color: PRIMARY }} className="text-sm font-bold">
+                                  E Zgjedhur
+                                </Text>
+                             </View>
+                          ) : (
+                             <View className="flex-row items-center">
+                                <Text className="text-sm font-bold text-slate-400 mr-1">
+                                  Zgjidh
+                                </Text>
+                                <ChevronRight size={14} color="#94a3b8" />
+                             </View>
+                          )}
+                        </View>
+                      </View>
+
+                      <View className="justify-center">
+                        <View 
+                          style={{ backgroundColor: isSelected ? '#e0e7ff' : cat.accent }}
+                          className="h-16 w-16 rounded-2xl items-center justify-center"
+                        >
+                          {/* @ts-ignore */}
+                          <cat.icon size={32} color={isSelected ? PRIMARY : cat.iconColor} strokeWidth={1.5} />
+                        </View>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                </Animated.View>
+              );
+            })}
+
+            <View className="mt-2 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex-row items-start">
+              <Info size={20} color="#64748b" className="mt-0.5" />
+              <Text className="ml-3 text-slate-500 text-xs flex-1 leading-5">
+                Kategoritë përcaktojnë llojin e pyetjeve dhe simulimeve që do të shihni. Mund ta ndryshoni kategorinë në çdo kohë.
+              </Text>
+            </View>
           </View>
         </ScrollView>
       </SafeAreaView>

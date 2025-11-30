@@ -33,14 +33,14 @@ import { MainTabParamList } from "./types";
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 // ---------- THEME ----------
-const BAR_BG = "#ffffff";          // white card
-const BAR_BORDER = "#e5e7eb";
-const PAGE_BG = "#020617";         // example dark page background; adjust to your app
+const BAR_BG = "#f9fafb";          // bar background
+const BAR_BORDER = "#e5e7eb";      // top border of the bar
+const PAGE_BG = "#f3f4f6";         // behind the bar
 
 const ICON_INACTIVE = "#9ca3af";   // gray-400
-const ICON_ACTIVE_BG = "#4f46e5";  // indigo circle
+const ICON_ACTIVE_BG = "#4f46e5";  // indigo-600
 const ICON_ACTIVE = "#ffffff";
-const LABEL_INACTIVE = "#6b7280";  // gray-500
+const LABEL_INACTIVE = "#9ca3af";
 const LABEL_ACTIVE = "#111827";    // gray-900
 
 type IconKey = keyof MainTabParamList;
@@ -88,7 +88,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
 
           const inputRange = [index - 1, index, index + 1];
 
-          // Circle scaling (appears only on active)
+          // Circle + icon lifting
           const circleScale = position.interpolate({
             inputRange,
             outputRange: [0, 1, 0],
@@ -101,19 +101,20 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
             extrapolate: "clamp",
           });
 
-          // Lift the circle+icon a bit when active
+          // Move the whole circle+icon up a bit from the bar
           const iconTranslateY = position.interpolate({
             inputRange,
-            outputRange: [0, -10, 0],
+            outputRange: [0, -14, 0], // higher lift, but bar is lower, so it sits nicely
             extrapolate: "clamp",
           });
 
           const iconScale = position.interpolate({
             inputRange,
-            outputRange: [1, 1.05, 1],
+            outputRange: [1, 1.06, 1],
             extrapolate: "clamp",
           });
 
+          // Label stays near the bar, doesn’t fly too high
           const labelOpacity = position.interpolate({
             inputRange,
             outputRange: [0.6, 1, 0.6],
@@ -122,7 +123,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
 
           const labelTranslateY = position.interpolate({
             inputRange,
-            outputRange: [2, 0, 2],
+            outputRange: [4, 0, 4],
             extrapolate: "clamp",
           });
 
@@ -145,6 +146,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
             navigation.emit({
               type: "tabLongPress",
               target: route.key,
+              canPreventDefault: true,
             });
           };
 
@@ -161,7 +163,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
               style={styles.tabItem}
               hitSlop={{ top: 8, bottom: 8, left: 10, right: 10 }}
             >
-              {/* ICON + CIRCLE (overlapping top of bar) */}
+              {/* ICON + CIRCLE */}
               <Animated.View
                 style={[
                   styles.iconWrapper,
@@ -184,11 +186,11 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
                     transform: [{ scale: iconScale }],
                   }}
                 >
-                  <IconComponent size={22} color={iconColor} />
+                  <IconComponent size={20} color={iconColor} />
                 </Animated.View>
               </Animated.View>
 
-              {/* LABEL (inside bar) */}
+              {/* LABEL */}
               <Animated.Text
                 numberOfLines={1}
                 ellipsizeMode="tail"

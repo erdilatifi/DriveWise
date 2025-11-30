@@ -8,7 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   TouchableOpacity,
-  StyleSheet,
+  Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
@@ -19,7 +19,7 @@ import {
   useSubmitTestAttempt,
 } from "@drivewise/core";
 import { Button } from "../../components/ui/Button";
-import { Clock, ChevronLeft, X } from "lucide-react-native";
+import { Clock, X, ChevronRight, ChevronLeft } from "lucide-react-native";
 import { clsx } from "clsx";
 import { useAuth } from "../../contexts/AuthContext";
 import { LinearGradient } from "expo-linear-gradient";
@@ -29,6 +29,10 @@ type NavigationProp = NativeStackNavigationProp<
   "TestRunner"
 >;
 type RouteProps = RouteProp<RootStackParamList, "TestRunner">;
+
+// DESIGN TOKENS
+const PRIMARY = "#4f46e5";
+const BG_COLOR = "#F7F8FA";
 
 export const TestRunnerScreen = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -164,8 +168,8 @@ export const TestRunnerScreen = () => {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-slate-50">
-        <ActivityIndicator size="large" color="#1e1b4b" />
-        <Text className="mt-4 text-slate-500">
+        <ActivityIndicator size="large" color={PRIMARY} />
+        <Text className="mt-4 text-slate-400 font-medium">
           Duke ngarkuar pyetjet...
         </Text>
       </SafeAreaView>
@@ -175,13 +179,13 @@ export const TestRunnerScreen = () => {
   if (error || !questions || questions.length === 0) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-slate-50 p-6">
-        <Text className="mb-4 text-center text-red-500 font-medium">
+        <Text className="mb-6 text-center text-slate-500 font-medium">
           {error ? "Gabim gjatë ngarkimit të testit" : "Nuk u gjetën pyetje për këtë test."}
         </Text>
         <Button 
           label="Kthehu mbrapa" 
           onPress={() => navigation.goBack()}
-          className="bg-[#1e1b4b]" 
+          className="bg-slate-900 px-8" 
         />
       </SafeAreaView>
     );
@@ -190,101 +194,83 @@ export const TestRunnerScreen = () => {
   const currentQuestion = questions[currentQuestionIndex];
   const currentAnswers = answers[currentQuestion.id] || [];
   const isTimeLow = timeLeft < 300; // last 5 mins
+  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
 
   return (
-    <View className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-[#F7F8FA]">
       <SafeAreaView className="flex-1" edges={["top"]}>
         {/* Header */}
-        <View className="flex-row items-center justify-between border-b border-slate-200 px-4 py-3 bg-white">
-          {/* Exit */}
+        <View className="bg-white px-5 py-3 flex-row items-center justify-between shadow-sm shadow-slate-100 z-10">
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            className="rounded-full bg-slate-100 p-2"
+            className="h-10 w-10 items-center justify-center rounded-full bg-slate-50 border border-slate-100"
           >
-            {/* @ts-ignore */}
-            <X size={24} color="#1e293b" />
+            <X size={20} color="#64748b" />
           </TouchableOpacity>
 
-          {/* Timer pill */}
-          <View
-            className={clsx(
-              "flex-row items-center rounded-full px-4 py-1.5 border",
-              isTimeLow
-                ? "bg-red-50 border-red-200"
-                : "bg-slate-100 border-slate-200"
-            )}
-          >
-            {/* @ts-ignore */}
-            <Clock size={16} color={isTimeLow ? "#ef4444" : "#64748b"} />
+          {/* Timer */}
+          <View className="flex-row items-center space-x-2 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
+            <Clock size={14} color={isTimeLow ? "#ef4444" : "#94a3b8"} />
             <Text
               className={clsx(
-                "ml-2 font-mono text-base font-bold tabular-nums",
-                isTimeLow
-                  ? "text-red-500"
-                  : "text-slate-700"
+                "font-mono text-sm font-bold tabular-nums",
+                isTimeLow ? "text-red-500" : "text-slate-600"
               )}
             >
               {formatTime(timeLeft)}
             </Text>
           </View>
 
-          {/* Progress label */}
           <View className="items-end">
-            <Text className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Pyetja
-            </Text>
-            <Text className="text-sm font-bold text-[#1e1b4b]">
-              {currentQuestionIndex + 1} <Text className="text-slate-400">/</Text> {questions.length}
-            </Text>
+             <Text className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Pyetja</Text>
+             <Text className="text-sm font-extrabold text-slate-900">
+                {currentQuestionIndex + 1}/{questions.length}
+             </Text>
           </View>
         </View>
 
-        {/* Progress Bar */}
-        <View className="h-1 w-full bg-slate-200">
+        {/* Progress Line */}
+        <View className="h-1 w-full bg-slate-100">
           <View
-            className="h-full bg-[#1e1b4b]"
-            style={{
-              width: `${
-                ((currentQuestionIndex + 1) / questions.length) * 100
-              }%`,
-            }}
+             className="h-full bg-indigo-600 rounded-r-full"
+             style={{ width: `${progress}%` }}
           />
         </View>
 
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120, paddingTop: 20 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 140, paddingTop: 24 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Question Image */}
-          {currentQuestion.image_url && (
-            <View className="mb-6 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-              <Image
-                source={{ uri: currentQuestion.image_url }}
-                className="h-52 w-full rounded-xl"
-                resizeMode="contain"
-              />
-            </View>
-          )}
+          {/* Question Card */}
+          <View className="bg-white p-1 rounded-3xl shadow-sm shadow-slate-200 mb-6 border border-slate-100">
+             {currentQuestion.image_url && (
+               <Image
+                 source={{ uri: currentQuestion.image_url }}
+                 className="h-56 w-full rounded-2xl bg-slate-50 mb-4"
+                 resizeMode="contain"
+               />
+             )}
+             
+             <View className="px-4 pb-4 pt-2">
+               <View className="flex-row items-center mb-3 space-x-2">
+                  <View className="bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">
+                    <Text className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
+                       4 Pikë
+                    </Text>
+                  </View>
+                  {category && (
+                    <View className="bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+                      <Text className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Kategoria {category}
+                      </Text>
+                    </View>
+                  )}
+               </View>
 
-          {/* Question Text Card */}
-          <View className="mb-6">
-            <Text className="mb-3 text-xl font-bold leading-8 text-slate-900">
-              {currentQuestion.question_text}
-            </Text>
-            <View className="flex-row items-center">
-              <View className="bg-blue-50 px-2 py-1 rounded border border-blue-100 mr-2">
-                <Text className="text-xs font-bold text-blue-700">
-                  4 Pikë
-                </Text>
-              </View>
-              {category && (
-                <View className="bg-slate-100 px-2 py-1 rounded border border-slate-200">
-                  <Text className="text-xs font-bold text-slate-600">
-                    Kat. {category}
-                  </Text>
-                </View>
-              )}
-            </View>
+               <Text className="text-lg font-bold text-slate-900 leading-7">
+                 {currentQuestion.question_text}
+               </Text>
+             </View>
           </View>
 
           {/* Options */}
@@ -300,29 +286,26 @@ export const TestRunnerScreen = () => {
               return (
                 <TouchableOpacity
                   key={option.id}
-                  onPress={() =>
-                    handleAnswer(currentQuestion.id, option.id)
-                  }
+                  onPress={() => handleAnswer(currentQuestion.id, option.id)}
+                  activeOpacity={0.9}
                   className={clsx(
-                    "flex-row items-center rounded-2xl border-2 p-4 transition-all active:scale-[0.99]",
+                    "flex-row items-center p-4 rounded-2xl border-2 transition-all",
                     isSelected
-                      ? "border-[#1e1b4b] bg-blue-50/50 shadow-sm"
-                      : "border-slate-200 bg-white shadow-sm"
+                      ? "border-indigo-600 bg-indigo-50/50"
+                      : "border-slate-100 bg-white"
                   )}
-                  activeOpacity={0.7}
                 >
-                  {/* Option badge */}
                   <View
                     className={clsx(
-                      "mr-4 h-10 w-10 items-center justify-center rounded-full border",
+                      "h-8 w-8 items-center justify-center rounded-full border mr-4",
                       isSelected
-                        ? "border-[#1e1b4b] bg-[#1e1b4b]"
-                        : "border-slate-200 bg-slate-50"
+                        ? "bg-indigo-600 border-indigo-600"
+                        : "bg-slate-50 border-slate-200"
                     )}
                   >
                     <Text
                       className={clsx(
-                        "text-sm font-bold",
+                        "text-xs font-bold",
                         isSelected ? "text-white" : "text-slate-500"
                       )}
                     >
@@ -330,13 +313,10 @@ export const TestRunnerScreen = () => {
                     </Text>
                   </View>
 
-                  {/* Option text */}
                   <Text
                     className={clsx(
-                      "flex-1 text-base leading-6",
-                      isSelected
-                        ? "text-slate-900 font-bold"
-                        : "text-slate-700 font-medium"
+                      "flex-1 text-[15px] leading-6",
+                      isSelected ? "text-slate-900 font-semibold" : "text-slate-600 font-medium"
                     )}
                   >
                     {option.text}
@@ -348,40 +328,41 @@ export const TestRunnerScreen = () => {
         </ScrollView>
 
         {/* Footer Controls */}
-        <View className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white px-4 py-4 shadow-lg">
+        <View className="absolute bottom-0 left-0 right-0 bg-white px-6 py-5 border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
           <View className="flex-row items-center justify-between gap-4">
-            <Button
-              variant="ghost"
-              label="Mbrapa"
+            <TouchableOpacity
+              onPress={() => setCurrentQuestionIndex((prev) => Math.max(prev - 1, 0))}
               disabled={currentQuestionIndex === 0}
-              onPress={() =>
-                setCurrentQuestionIndex((prev) => Math.max(prev - 1, 0))
-              }
-              className="flex-1 bg-slate-100 border border-slate-200"
-              textClassName="text-slate-600 font-bold"
-            />
+              className={clsx(
+                "h-12 w-12 items-center justify-center rounded-full border",
+                currentQuestionIndex === 0
+                  ? "border-slate-100 bg-slate-50"
+                  : "border-slate-200 bg-white active:bg-slate-50"
+              )}
+            >
+               <ChevronLeft size={24} color={currentQuestionIndex === 0 ? "#cbd5e1" : "#64748b"} />
+            </TouchableOpacity>
 
             {currentQuestionIndex === questions.length - 1 ? (
-              <Button
-                variant="primary"
-                label="Përfundo Testin"
+              <TouchableOpacity
                 onPress={handleSubmit}
-                loading={isSubmitting}
-                className="flex-1 bg-green-600 shadow-md shadow-green-200"
-                textClassName="text-white font-bold"
-              />
+                disabled={isSubmitting}
+                className="flex-1 bg-indigo-600 h-12 rounded-full items-center justify-center shadow-lg shadow-indigo-200 active:scale-95"
+              >
+                 {isSubmitting ? (
+                    <ActivityIndicator color="white" />
+                 ) : (
+                    <Text className="text-white font-bold text-base">Përfundo Testin</Text>
+                 )}
+              </TouchableOpacity>
             ) : (
-              <Button
-                variant="primary"
-                label="Vazhdo"
-                onPress={() =>
-                  setCurrentQuestionIndex((prev) =>
-                    Math.min(prev + 1, questions.length - 1)
-                  )
-                }
-                className="flex-1 bg-[#1e1b4b] shadow-md shadow-blue-200"
-                textClassName="text-white font-bold"
-              />
+              <TouchableOpacity
+                onPress={() => setCurrentQuestionIndex((prev) => Math.min(prev + 1, questions.length - 1))}
+                className="flex-1 bg-slate-900 h-12 rounded-full flex-row items-center justify-center shadow-lg shadow-slate-200 active:scale-95"
+              >
+                 <Text className="text-white font-bold text-base mr-2">Vazhdo</Text>
+                 <ChevronRight size={20} color="white" />
+              </TouchableOpacity>
             )}
           </View>
         </View>

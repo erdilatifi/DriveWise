@@ -5,12 +5,15 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LiteratureStackParamList } from '../../navigation/LiteratureNavigator';
 import { ALL_SIGNS, TrafficSign } from '../../data/signs';
-import { X } from 'lucide-react-native';
+import { X, ChevronLeft } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 
 type NavigationProp = NativeStackNavigationProp<LiteratureStackParamList>;
 type ScreenRouteProp = RouteProp<LiteratureStackParamList, 'SignsList'>;
+
+// DESIGN TOKENS
+const BG_COLOR = "#F7F8FA";
 
 const { width } = Dimensions.get('window');
 const COLUMNS = 3;
@@ -49,16 +52,19 @@ export const SignsListScreen = () => {
   return (
     <View style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safeArea}>
-        <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>{title}</Text>
-            <Text style={styles.headerSubtitle}>{signs.length} shenja</Text>
+        {/* Header */}
+        <View style={styles.headerContainer}>
+          <View style={styles.header}>
+            <TouchableOpacity 
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <ChevronLeft size={24} color="#334155" />
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.headerTitle}>{title}</Text>
+              <Text style={styles.headerSubtitle}>{signs.length} shenja</Text>
+            </View>
           </View>
         </View>
 
@@ -97,7 +103,7 @@ export const SignsListScreen = () => {
                 style={styles.closeButton}
                 onPress={() => setSelectedSign(null)}
               >
-                <X color="#1e293b" size={24} />
+                <X color="#64748b" size={24} />
               </TouchableOpacity>
 
               <View style={styles.modalImageContainer}>
@@ -123,62 +129,65 @@ export const SignsListScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: BG_COLOR,
   },
   safeArea: {
     flex: 1,
   },
+  headerContainer: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
   header: {
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingVertical: 20,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#fff',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#f8fafc',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
-  backButtonText: {
-    fontSize: 24,
-    color: '#1e293b',
-    marginTop: -4,
-  },
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1e293b',
+    color: '#0f172a',
   },
   headerSubtitle: {
     fontSize: 13,
     color: '#64748b',
+    fontWeight: '500',
   },
   listContent: {
     padding: 24,
+    paddingBottom: 120,
   },
   itemCard: {
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 8,
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: 'transparent', // Clean look
   },
   imageContainer: {
     width: '100%',
@@ -203,27 +212,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     width: '100%',
     maxWidth: 340,
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: 32,
+    padding: 32,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.2,
-    shadowRadius: 20,
+    shadowRadius: 30,
     elevation: 10,
   },
   closeButton: {
     position: 'absolute',
-    right: 16,
-    top: 16,
+    right: 20,
+    top: 20,
     zIndex: 10,
-    padding: 4,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
+    padding: 8,
+    backgroundColor: '#f8fafc',
+    borderRadius: 20,
   },
   modalImageContainer: {
-    width: 120,
-    height: 120,
+    width: 140,
+    height: 140,
     marginBottom: 24,
     alignItems: 'center',
     justifyContent: 'center',
@@ -234,18 +243,18 @@ const styles = StyleSheet.create({
   },
   modalTextContainer: {
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
-    color: '#1e293b',
+    color: '#0f172a',
     textAlign: 'center',
   },
   modalDescription: {
     fontSize: 15,
     color: '#64748b',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
   },
 });
