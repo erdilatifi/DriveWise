@@ -73,6 +73,14 @@ export const ProfileScreen = () => {
       onPress: () => navigation.navigate('TestHistory'),
     }] : []),
     {
+      icon: CreditCard,
+      title: 'Pakot',
+      rightElement: <ChevronRight size={18} color={isDark ? "#94a3b8" : "#94a3b8"} />,
+      color: 'text-slate-900 dark:text-white',
+      bgColor: 'bg-slate-50 dark:bg-slate-800',
+      onPress: () => navigation.navigate('Subscription'),
+    },
+    {
       icon: Sun,
       title: 'Pamja',
       rightElement: <Text className="text-slate-400 text-xs font-medium capitalize">{theme}</Text>,

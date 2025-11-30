@@ -208,7 +208,7 @@ export const TestResultScreen = () => {
             </View>
             
             {/* Grid of Numbers */}
-            <View className="flex-row flex-wrap gap-2.5 mb-6">
+            <View className="flex-row flex-wrap gap-3 mb-6">
               {answers.map((ans: any, index: number) => {
                 const isSelected = selectedQuestionIndex === index;
                 return (
@@ -216,7 +216,7 @@ export const TestResultScreen = () => {
                     key={ans.id}
                     onPress={() => setSelectedQuestionIndex(index)}
                     className={clsx(
-                      "w-[13.5%] aspect-square items-center justify-center rounded-xl border transition-all",
+                      "w-11 h-11 items-center justify-center rounded-xl border transition-all",
                       isSelected 
                         ? (ans.is_correct ? "border-green-500 bg-green-500" : "border-red-500 bg-red-500")
                         : (ans.is_correct ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-900/20" : "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-900/20")
@@ -270,7 +270,7 @@ export const TestResultScreen = () => {
                         </View>
                     )}
 
-                    <View className="space-y-3">
+                    <View className="gap-3">
                         {/* User Answer (if wrong) */}
                         {!ans.is_correct && (
                             <View className="bg-red-50 dark:bg-red-900/20 p-4 rounded-2xl border border-red-100 dark:border-red-900/30">
@@ -312,9 +312,9 @@ export const TestResultScreen = () => {
                   });
                 }
               }}
-              className="w-full bg-indigo-600 rounded-full py-4 flex-row items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-none"
+              className="w-full bg-indigo-600 rounded-full py-4 flex-row items-center justify-center gap-2 shadow-lg shadow-indigo-200 dark:shadow-none"
             >
-              <RotateCw size={20} color="white" className="mr-2" />
+              <RotateCw size={20} color="white" />
               <Text className="text-white font-bold text-base">{isPassed ? "Riprovo Testin" : "Provo Përsëri"}</Text>
             </TouchableOpacity>
 

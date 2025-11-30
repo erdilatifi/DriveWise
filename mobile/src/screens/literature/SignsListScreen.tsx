@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, Dimensions, Image, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, Dimensions, Image, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LiteratureStackParamList } from '../../navigation/LiteratureNavigator';
-import { ALL_SIGNS, TrafficSign } from '../../data/signs';
-import { X, ChevronLeft } from 'lucide-react-native';
+import { X, ChevronLeft, AlertCircle } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { RoadSign } from '@drivewise/core';
 
 type NavigationProp = NativeStackNavigationProp<LiteratureStackParamList>;
 type ScreenRouteProp = RouteProp<LiteratureStackParamList, 'SignsList'>;
@@ -23,12 +25,33 @@ const ITEM_WIDTH = (width - 48 - (GAP * (COLUMNS - 1))) / COLUMNS;
 export const SignsListScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<ScreenRouteProp>();
-  const { categoryId, title } = route.params;
+  const { categoryId, title } = route.params; // categoryId: 'danger', 'prohibition', etc.
 
-  const signs = ALL_SIGNS.filter(s => s.categoryId === categoryId);
-  const [selectedSign, setSelectedSign] = useState<TrafficSign | null>(null);
+  const [selectedSign, setSelectedSign] = useState<RoadSign | null>(null);
 
-  const renderItem = ({ item, index }: { item: TrafficSign; index: number }) => (
+  // Fetch signs from DB
+  const { data: signs = [], isLoading, error } = useQuery({
+    queryKey: ['traffic_signs', categoryId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('traffic_signs')
+        .select('*')
+        .eq('category', categoryId);
+      
+      if (error) throw error;
+      
+      // Transform image_url to public URL
+      return data.map((sign: RoadSign) => ({
+        ...sign,
+        image_url: sign.image_url 
+          ? supabase.storage.from('signs').getPublicUrl(sign.image_url).data.publicUrl
+          : null
+      })) as RoadSign[];
+    },
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
+
+  const renderItem = ({ item, index }: { item: RoadSign; index: number }) => (
     <Animated.View 
       entering={FadeInDown.delay(index * 50).springify()}
       style={{ width: ITEM_WIDTH, marginBottom: GAP }}
@@ -39,15 +62,41 @@ export const SignsListScreen = () => {
         className="bg-white dark:bg-slate-800 rounded-3xl p-2 aspect-square items-center justify-center shadow-sm shadow-slate-200 dark:shadow-none border border-transparent dark:border-slate-700"
       >
         <View style={styles.imageContainer}>
-          <Image 
-            source={item.image} 
-            style={styles.signImage} 
-            resizeMode="contain" 
-          />
+          {item.image_url ? (
+            <Image 
+              source={{ uri: item.image_url }} 
+              style={styles.signImage} 
+              resizeMode="contain" 
+            />
+          ) : (
+            <View className="items-center justify-center">
+               <Text className="text-xs text-slate-400 text-center">{item.code}</Text>
+            </View>
+          )}
         </View>
       </TouchableOpacity>
     </Animated.View>
   );
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-white dark:bg-slate-950 items-center justify-center">
+        <ActivityIndicator size="large" color="#4f46e5" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View className="flex-1 bg-white dark:bg-slate-950 items-center justify-center p-6">
+        <AlertCircle size={40} color="#ef4444" />
+        <Text className="text-slate-500 mt-4 text-center">Gabim gjatë ngarkimit të shenjave.</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} className="mt-4 bg-slate-100 p-3 rounded-full">
+           <Text className="text-slate-700 font-semibold">Kthehu</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-white dark:bg-slate-950">
@@ -76,6 +125,11 @@ export const SignsListScreen = () => {
           columnWrapperStyle={{ gap: GAP }}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View className="items-center justify-center py-10">
+               <Text className="text-slate-400">Nuk u gjetën shenja për këtë kategori.</Text>
+            </View>
+          }
         />
       </SafeAreaView>
 
@@ -107,11 +161,13 @@ export const SignsListScreen = () => {
               </TouchableOpacity>
 
               <View style={styles.modalImageContainer}>
-                <Image 
-                  source={selectedSign.image} 
-                  style={styles.modalImage} 
-                  resizeMode="contain" 
-                />
+                {selectedSign.image_url && (
+                  <Image 
+                    source={{ uri: selectedSign.image_url }} 
+                    style={styles.modalImage} 
+                    resizeMode="contain" 
+                  />
+                )}
               </View>
 
               <View style={styles.modalTextContainer}>

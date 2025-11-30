@@ -75,10 +75,10 @@ export const TestInstructionsScreen = () => {
     <View className="flex-1 bg-slate-50">
       <SafeAreaView className="flex-1">
         {/* Header */}
-        <View className="px-6 pt-2 pb-3 flex-row items-center justify-between">
+        <View className="relative px-6 pt-2 pb-3 flex-row items-center justify-center">
           <Button
             variant="ghost"
-            className="flex-row items-center gap-2 px-2 -ml-2 bg-white border border-slate-200 rounded-full"
+            className="absolute left-6 z-10 flex-row items-center gap-2 px-2 -ml-2 bg-white border border-slate-200 rounded-full"
             onPress={() => navigation.goBack()}
           >
             {/* @ts-ignore */}
@@ -91,9 +91,6 @@ export const TestInstructionsScreen = () => {
               Testimi
             </Text>
           </View>
-
-          {/* spacer to balance layout */}
-          <View style={{ width: 80 }} />
         </View>
 
         {/* Content */}
@@ -123,7 +120,7 @@ export const TestInstructionsScreen = () => {
           </View>
 
           {/* Instruction cards */}
-          <View className="space-y-4">
+          <View className="gap-4">
             {instructions.map((item, index) => {
               const IconComp = item.icon as React.ElementType;
               return (

@@ -135,10 +135,13 @@ export interface StudyMaterialTranslation {
 
 export interface RoadSign {
   id: string;
-  sign_code?: string;
-  category?: string;
-  image_url: string;
+  code: string;
+  category: string;
+  name: string;
+  description: string;
+  image_url: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface RoadSignTranslation {
@@ -383,6 +386,11 @@ export interface Database {
         Row: StudyMaterial
         Insert: Partial<StudyMaterial>
         Update: Partial<StudyMaterial>
+      }
+      traffic_signs: {
+        Row: RoadSign
+        Insert: Partial<RoadSign>
+        Update: Partial<RoadSign>
       }
       material_images: {
         Row: any

@@ -86,7 +86,7 @@ export const DecisionScenariosScreen = () => {
             Zgjidhni një temë për të filluar trajnimin.
           </Text>
 
-          <View className="space-y-4 pb-8">
+          <View className="gap-4 pb-8">
             {TOPICS.map((topic, index) => (
               <TouchableOpacity
                 key={topic.id}

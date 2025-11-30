@@ -1,8 +1,7 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useAuth } from '../contexts/AuthContext';
-import { useCategory } from '../contexts/CategoryContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCategory } from '@/contexts/CategoryContext';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { CategorySelectionScreen } from '../screens/main/CategorySelectionScreen';
@@ -35,36 +34,29 @@ const AuthNavigator = () => {
 };
 
 export const RootNavigator = () => {
-  const { user, loading } = useAuth();
-  const { selectedCategory, loading: categoryLoading } = useCategory();
-
-  if (loading || categoryLoading) {
-    return <LoadingScreen />;
-  }
+  const { selectedCategory } = useCategory();
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {!selectedCategory ? (
-          <Stack.Screen name="CategorySelection" component={CategorySelectionScreen} />
-        ) : (
-          <>
-            <Stack.Screen name="App" component={AppNavigator} />
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen name="TestInstructions" component={TestInstructionsScreen} />
-            <Stack.Screen name="TestRunner" component={TestRunnerScreen} />
-            <Stack.Screen name="TestResult" component={TestResultScreen} />
-            <Stack.Screen name="DecisionGame" component={DecisionGameScreen} />
-            <Stack.Screen name="DecisionScenarios" component={DecisionScenariosScreen} />
-            <Stack.Screen name="Subscription" component={SubscriptionScreen} />
-            <Stack.Screen name="PersonalizedTests" component={PersonalizedTestsScreen} />
-            <Stack.Screen name="TestHistory" component={TestHistoryScreen} />
-            <Stack.Screen name="PersonalInfo" component={PersonalInfoScreen} />
-            <Stack.Screen name="MaterialDetail" component={MaterialDetailScreen} />
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {!selectedCategory ? (
+        <Stack.Screen name="CategorySelection" component={CategorySelectionScreen} />
+      ) : (
+        <>
+          <Stack.Screen name="App" component={AppNavigator} />
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="TestInstructions" component={TestInstructionsScreen} />
+          <Stack.Screen name="TestRunner" component={TestRunnerScreen} />
+          <Stack.Screen name="TestResult" component={TestResultScreen} />
+          <Stack.Screen name="DecisionGame" component={DecisionGameScreen} />
+          <Stack.Screen name="DecisionScenarios" component={DecisionScenariosScreen} />
+          <Stack.Screen name="Subscription" component={SubscriptionScreen} />
+          <Stack.Screen name="PersonalizedTests" component={PersonalizedTestsScreen} />
+          <Stack.Screen name="TestHistory" component={TestHistoryScreen} />
+          <Stack.Screen name="PersonalInfo" component={PersonalInfoScreen} />
+          <Stack.Screen name="MaterialDetail" component={MaterialDetailScreen} />
+        </>
+      )}
+    </Stack.Navigator>
   );
 };

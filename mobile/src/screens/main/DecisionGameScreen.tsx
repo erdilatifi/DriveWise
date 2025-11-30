@@ -16,7 +16,7 @@ import { useScenarios, useCompleteCategory } from "@drivewise/core";
 import { Button } from "../../components/ui/Button";
 import { X, CheckCircle, XCircle, Clock, Play } from "lucide-react-native";
 import { clsx } from "clsx";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -327,7 +327,7 @@ export const DecisionGameScreen = () => {
         </View>
 
         {/* Options */}
-        <View className="space-y-3">
+        <View className="gap-3">
           {currentScenario.options.map((option: any, index: number) => {
             const isSelected = selectedOptions.includes(index);
             const isFeedbackMode = gameState === "feedback";
@@ -402,7 +402,7 @@ export const DecisionGameScreen = () => {
       </ScrollView>
 
       {/* Footer Controls */}
-      <View className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white px-4 py-4 shadow-lg">
+      <View className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white px-4 pt-4 pb-10 shadow-lg">
         <View className="w-full">
           {gameState === "playing" ? (
             <Button
@@ -410,7 +410,9 @@ export const DecisionGameScreen = () => {
               onPress={() => handleSubmitAnswer(false)}
               className={clsx(
                 "w-full shadow-md",
-                selectedOptions.length > 0 ? "bg-[#1e1b4b] shadow-blue-200" : "bg-slate-300"
+                selectedOptions.length > 0 
+                  ? "bg-[#1e1b4b] shadow-blue-200" 
+                  : "bg-[#1e1b4b] shadow-none"
               )}
               disabled={selectedOptions.length === 0}
               textClassName="text-white font-bold"
@@ -425,9 +427,9 @@ export const DecisionGameScreen = () => {
                     : "border-red-200 bg-red-50"
                 )}
               >
-                <View className="flex-row items-center mb-2">
+                <View className="flex-row items-center mb-2 gap-3">
                   {/* @ts-ignore */}
-                  {isCorrect ? <CheckCircle size={20} color="#15803d" className="mr-2"/> : <XCircle size={20} color="#b91c1c" className="mr-2"/>}
+                  {isCorrect ? <CheckCircle size={20} color="#15803d" /> : <XCircle size={20} color="#b91c1c" />}
                   <Text
                     className={clsx(
                       "text-base font-bold",
@@ -448,7 +450,7 @@ export const DecisionGameScreen = () => {
                 className="w-full bg-[#1e1b4b] shadow-md shadow-blue-200"
                 textClassName="text-white font-bold"
                 // @ts-ignore
-                icon={<Play size={18} className="mr-2 text-white" />}
+                icon={<Play size={18} color="white" />}
               />
             </View>
           )}

@@ -82,9 +82,9 @@ export const DecisionTrainerScreen = () => {
                    <TouchableOpacity
                      activeOpacity={0.9}
                      onPress={() => navigation.navigate('DecisionScenarios', { category: selectedCategory || 'B' })}
-                     className="w-full bg-white dark:bg-slate-900 py-4 rounded-2xl flex-row items-center justify-center shadow-lg shadow-black/10 active:scale-[0.98] transition-all"
+                     className="w-full bg-white dark:bg-slate-900 py-4 rounded-2xl flex-row items-center justify-center gap-2 shadow-lg shadow-black/10 active:scale-[0.98] transition-all"
                    >
-                      <Play size={20} color={PRIMARY} fill={PRIMARY} className="mr-2" />
+                      <Play size={20} color={PRIMARY} fill={PRIMARY} />
                       <Text className="text-indigo-900 dark:text-indigo-400 font-bold text-base">Fillo Lojën</Text>
                    </TouchableOpacity>
                 ) : (

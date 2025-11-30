@@ -85,6 +85,12 @@ export const TestsScreen: React.FC = () => {
 
   // ---------- SUBCOMPONENTS ----------
 
+  const getBarColor = (score: number) => {
+    if (score < 30) return "bg-violet-300 dark:bg-violet-900";
+    if (score < 70) return "bg-violet-500 dark:bg-violet-600";
+    return "bg-violet-700 dark:bg-violet-400";
+  };
+
   const GuestHeader = () => (
     <View className="px-6 pt-8 pb-8 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 rounded-b-[32px]">
       <Text className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
@@ -257,13 +263,12 @@ export const TestsScreen: React.FC = () => {
                           ).springify()}
                           className="items-center flex-1"
                         >
-                          <View className="w-full h-20 bg-slate-50 dark:bg-slate-800 rounded-xl overflow-hidden justify-end">
-                            <LinearGradient
-                              colors={
-                                isToday
-                                  ? [PRIMARY, "#22c55e"]
-                                  : ["#e5e7eb", "#cbd5e1"]
-                              }
+                          <View className="w-4 h-20 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden justify-end mx-auto">
+                            <View
+                              className={clsx(
+                                "w-full rounded-full",
+                                getBarColor(item.score)
+                              )}
                               style={{ height: `${height}%` }}
                             />
                           </View>
@@ -435,7 +440,7 @@ export const TestsScreen: React.FC = () => {
                         test.isLocked ? "text-amber-500" : "text-emerald-500"
                       )}
                     >
-                      {test.isLocked ? "Premium" : "FalAS"}
+                      {test.isLocked ? "Premium" : "Falas"}
                     </Text>
                   </View>
                 </TouchableOpacity>

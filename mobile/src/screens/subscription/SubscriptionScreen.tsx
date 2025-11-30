@@ -251,29 +251,32 @@ export const SubscriptionScreen = () => {
                       onPress={() => setSelectedPlan(plan.id)}
                       activeOpacity={0.9}
                       className={clsx(
-                        "relative rounded-3xl border-2 p-6 overflow-hidden",
+                        "relative rounded-3xl border-2 mb-4", // Removed overflow-hidden and p-6, added margin for spacing if needed
                         isSelected
                           ? "border-[#1e1b4b] bg-blue-50"
                           : "border-slate-200 bg-white"
                       )}
+                      style={{ overflow: 'visible' }} // Explicitly ensure overflow is visible for the pill
                     >
-                      {/* Decorative background for selected plan */}
-                      {isSelected && (
-                        <>
-                          <View className="absolute -right-10 -top-10 h-32 w-32 rounded-full border-[20px] border-[#1e1b4b]/5" />
-                          <View className="absolute -bottom-5 -left-5 h-24 w-24 rounded-full bg-[#1e1b4b]/5" />
-                        </>
-                      )}
+                      {/* Clipping container for background decorations */}
+                      <View className="absolute inset-0 rounded-3xl overflow-hidden">
+                        {isSelected && (
+                          <>
+                            <View className="absolute -right-10 -top-10 h-32 w-32 rounded-full border-[20px] border-[#1e1b4b]/5" />
+                            <View className="absolute -bottom-5 -left-5 h-24 w-24 rounded-full bg-[#1e1b4b]/5" />
+                          </>
+                        )}
+                      </View>
 
                       {isBestValue && (
-                        <View className="absolute -top-3 left-6 rounded-full bg-[#1e1b4b] px-3 py-1 shadow-sm z-10 border border-white/20">
+                        <View className="absolute -top-3 left-6 rounded-full bg-[#1e1b4b] px-3 py-1 shadow-sm z-50 border border-white/20">
                           <Text className="text-[10px] font-bold uppercase tracking-[0.16em] text-white">
                             Më i vlefshmi
                           </Text>
                         </View>
                       )}
 
-                      <View className="flex-row items-center justify-between relative z-10">
+                      <View className="p-6 flex-row items-center justify-between relative z-10">
                         <View>
                           <Text
                             className={clsx(

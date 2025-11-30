@@ -24,7 +24,7 @@ export const Button = ({
   disabled,
   ...props 
 }: ButtonProps) => {
-  const baseStyles = "flex-row items-center justify-center rounded-full active:scale-[0.97] transition-transform";
+  const baseStyles = "flex-row items-center justify-center rounded-full active:scale-[0.97] transition-transform gap-2";
   
   // Using specific colors to match new design system
   const variantStyles = {

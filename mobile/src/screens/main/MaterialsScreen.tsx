@@ -121,7 +121,7 @@ export const MaterialsScreen = () => {
           </View>
 
           {/* Content List */}
-          <View className="px-6 space-y-3">
+          <View className="px-6 gap-3">
             {data?.materials.map((material, index) => {
               const isLocked = !hasCategoryAccess && (material.chapter_id > 1);
               

@@ -253,7 +253,7 @@ export const TestRunnerScreen = () => {
              )}
              
              <View className="px-4 pb-4 pt-2">
-               <View className="flex-row items-center mb-3 space-x-2">
+               <View className="flex-row items-center mb-3 gap-2">
                   <View className="bg-indigo-50 dark:bg-indigo-900/20 px-2.5 py-1 rounded-lg border border-indigo-100 dark:border-indigo-500/30">
                     <Text className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
                        4 Pikë
@@ -275,7 +275,7 @@ export const TestRunnerScreen = () => {
           </View>
 
           {/* Options */}
-          <View className="space-y-3">
+          <View className="gap-3">
             {[
               { id: "A", text: currentQuestion.option_a },
               { id: "B", text: currentQuestion.option_b },
@@ -329,7 +329,7 @@ export const TestRunnerScreen = () => {
         </ScrollView>
 
         {/* Footer Controls */}
-        <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-900 px-6 py-5 border-t border-slate-100 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] dark:shadow-none">
+        <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-900 px-6 pt-5 pb-8 border-t border-slate-100 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] dark:shadow-none">
           <View className="flex-row items-center justify-between gap-4">
             <TouchableOpacity
               onPress={() => setCurrentQuestionIndex((prev) => Math.max(prev - 1, 0))}
