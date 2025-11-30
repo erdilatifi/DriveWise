@@ -344,6 +344,15 @@ export default function DecisionTrainerPage() {
       return;
     }
 
+    // Determine session IDs based on mode if not provided specifically
+    let finalSessionIds = specificIds;
+    if (!finalSessionIds && mode !== 'full') {
+      finalSessionIds = selectSessionScenarioIds({
+        scenarios: availableScenarios,
+        mode,
+      });
+    }
+
     setSelectedCategory(category);
     setCurrentScenarioIndex(0);
     setSelectedOptions([]);
@@ -352,7 +361,7 @@ export default function DecisionTrainerPage() {
     setTimeLeft(30);
     setTotalTime(0);
     setSessionAttempts([]);
-    setSessionScenarioIds(specificIds);
+    setSessionScenarioIds(finalSessionIds);
   };
   
   const handleStartWeakPoints = () => {

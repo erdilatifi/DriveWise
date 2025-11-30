@@ -326,6 +326,8 @@ const translations: Record<string, string> = {
     'trainer.perfectSession': 'Sesion perfekt! Asnjë gabim për t\'u rishikuar.',
     'trainer.practiceAgain5': 'Praktiko këtë kategori përsëri (5 pyetje)',
     'trainer.leaderboard': 'Tabela e Liderëve',
+    'trainer.toastCompleted': 'Sesioni përfundoi',
+    'trainer.toastAccuracy': 'saktësi',
     'trainer.toastTimesUp': "Koha mbaroi!",
     'trainer.toastCorrect': 'E saktë!',
     'trainer.toastIncorrect': 'E pasaktë. Lexo shpjegimin për të mësuar!',
@@ -349,6 +351,8 @@ const translations: Record<string, string> = {
     'category.start': 'Fillo',
     'category.noTestsTitle': 'Ende nuk ka teste',
     'category.noTestsDescription': 'Administratori nuk ka shtuar ende teste provuese për këtë kategori.',
+    'category.mock_tests_hint': 'Teste zyrtare simuluese',
+    'category.perTestApprox': 'Kohëzgjatja mesatare',
     
     // Test Page
     'test.exitTest': 'Dil nga Testi',

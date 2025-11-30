@@ -62,10 +62,18 @@ export default function MaterialsPage() {
 
   const [selectedCategory, setSelectedCategory] = useState<LicenseCategory | undefined>(undefined);
 
+  // Auto-select first allowed category
+  useEffect(() => {
+    if (!selectedCategory && allowedCategories.length > 0) {
+      setSelectedCategory(allowedCategories[0]);
+    }
+  }, [allowedCategories, selectedCategory]);
+
   const { data: listData, isLoading: listLoading, error } = useMaterials({
     pageSize: 100, // Fetch more items since they are lightweight
     category: selectedCategory,
     fields: 'id,chapter_id,category,title,order_index,is_published', // Explicitly exclude content
+    enabled: !!selectedCategory,
   });
 
   const materialsList = (listData?.materials ?? []) as Material[];
@@ -325,38 +333,6 @@ export default function MaterialsPage() {
     );
   }
 
-  if (!materialsList.length) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="pt-32">
-          <div className="container mx-auto px-4 py-10 max-w-3xl">
-            <GlassCard className="p-8 text-center bg-black/80">
-              {!selectedCategory ? (
-                <>
-                  <BookOpen className="w-12 h-12 text-orange-400 mx-auto mb-4" />
-                  <h1 className="text-xl font-bold mb-2">
-                    {isSq ? 'Zgjidhni një kategori' : 'Select a category'}
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    {isSq 
-                      ? 'Përdorni butonat në të majtë për të zgjedhur materialet.' 
-                      : 'Use the buttons on the left to select materials.'}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                  <h1 className="text-xl font-bold mb-2">{t('materials.emptyTitle')}</h1>
-                  <p className="text-sm text-muted-foreground">{t('materials.emptySubtitle')}</p>
-                </>
-              )}
-            </GlassCard>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="relative min-h-screen bg-background text-foreground overflow-hidden">
@@ -526,7 +502,25 @@ export default function MaterialsPage() {
             {/* Main content */}
             <main className="flex-1 min-w-0">
               <GlassCard className="p-6 md:p-10 border border-border/80 bg-black/85 min-h-[80vh]">
-                {selectedSection === 'signs' ? (
+                {!selectedCategory ? (
+                  <div className="flex flex-col items-center justify-center h-full py-20 text-center">
+                    <BookOpen className="w-16 h-16 text-orange-400 mx-auto mb-6" />
+                    <h1 className="text-2xl font-bold mb-3">
+                      {isSq ? 'Zgjidhni një kategori' : 'Select a category'}
+                    </h1>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                      {isSq 
+                        ? 'Përdorni butonat në menu për të zgjedhur kategorinë e patentës që dëshironi të studioni.' 
+                        : 'Use the buttons in the menu to select the license category you want to study.'}
+                    </p>
+                  </div>
+                ) : !materialsList.length && !listLoading ? (
+                  <div className="flex flex-col items-center justify-center h-full py-20 text-center">
+                    <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-6 opacity-50" />
+                    <h1 className="text-2xl font-bold mb-3">{t('materials.emptyTitle')}</h1>
+                    <p className="text-muted-foreground max-w-md mx-auto">{t('materials.emptySubtitle')}</p>
+                  </div>
+                ) : selectedSection === 'signs' ? (
                   <div className="flex flex-col gap-6 mb-8">
                     <div className="space-y-3 border-b border-border/40 pb-8">
                       <div className="flex items-center gap-2 text-orange-400">
@@ -644,9 +638,6 @@ export default function MaterialsPage() {
                             </span>
                         </div>
                         )}
-                        <span className="text-xs text-muted-foreground">
-                            ~5-10 {isSq ? 'min lexim' : 'min read'}
-                        </span>
                     </div>
                     
                     <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">

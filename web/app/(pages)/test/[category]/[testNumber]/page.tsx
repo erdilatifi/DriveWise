@@ -25,7 +25,7 @@ interface Question {
   question_text: string;
   option_a: string;
   option_b: string;
-  option_c: string;
+  option_c?: string;
   correct_answer: string;
   correct_answers?: string[]; // Multiple correct answers support
   image_url?: string;
@@ -737,10 +737,10 @@ export default function TestPage() {
       id: 'B',
       text: question.option_b,
     },
-    {
+    ...(question.option_c ? [{
       id: 'C',
       text: question.option_c,
-    },
+    }] : []),
   ];
 
   return (

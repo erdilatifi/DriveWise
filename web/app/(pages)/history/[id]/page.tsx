@@ -527,7 +527,9 @@ export default function ReviewPage() {
                 <p className="text-lg font-medium mb-6">{localizedQuestionText}</p>
 
                 <div className="space-y-3">
-                  {(['A', 'B', 'C'] as const).map((option) => {
+                  {(['A', 'B', 'C'] as const)
+                    .filter(option => option !== 'C' || !!question.option_c)
+                    .map((option) => {
                     const isCorrect = correctAnswers.includes(option);
                     const isSelected = selectedAnswers.includes(option);
                     const optionKey = `option_${option.toLowerCase()}` as 'option_a' | 'option_b' | 'option_c';

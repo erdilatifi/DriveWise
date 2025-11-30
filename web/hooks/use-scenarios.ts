@@ -33,30 +33,42 @@ export const TOPIC_MAPPING: Record<string, string> = {
   'parking': 'parking_rules',
 };
 
+export const REVERSE_TOPIC_MAPPING: Record<string, string> = Object.entries(TOPIC_MAPPING).reduce(
+  (acc, [k, v]) => ({ ...acc, [v]: k }),
+  {}
+);
+
 export function useScenarios(category?: Category, licenseCategory: string = 'B') {
   return useQuery({
     queryKey: ['scenarios', category, licenseCategory],
     queryFn: async () => {
       const supabase = createClient();
       
-      let baseQuery = supabase
-        .from('decision_trainer_scenarios')
-        .select('*')
-        .eq('is_active', true)
-        .order('level', { ascending: true });
+      const buildQuery = () => {
+        let q = supabase
+          .from('decision_trainer_scenarios')
+          .select('*')
+          .eq('is_active', true)
+          .order('level', { ascending: true });
 
-      // If a topic category is provided (e.g. 'traffic-lights'), filter by it.
-      // The DB column 'category' holds the topic string.
-      if (category) {
-        baseQuery = baseQuery.eq('category', category);
-      }
+        if (category) {
+          // Map frontend category (kebab-case) to DB topic (snake_case)
+          const dbTopic = TOPIC_MAPPING[category] || category;
+          q = q.eq('topic', dbTopic);
+        }
+        
+        // Filter by license category (e.g. 'B')
+        if (licenseCategory) {
+          q = q.eq('category', licenseCategory);
+        }
 
-      // Note: We are ignoring licenseCategory ('B') for now because the 
-      // decision_trainer_scenarios table uses the 'category' column for the Topic,
-      // and there is no separate column for license type in the current schema.
-      
+        return q;
+      };
+
       // Prefer published-only scenarios when the column exists
-      const { data, error } = await baseQuery.eq('is_published', true);
+      const { data, error } = await buildQuery().eq('is_published', true);
+
+      let resultData: Scenario[] = [];
 
       // If the is_published column does not exist yet (migration not run),
       // fall back to only filtering by is_active so scenarios still appear.
@@ -64,14 +76,22 @@ export function useScenarios(category?: Category, licenseCategory: string = 'B')
         // Postgres undefined_column error
         const pgError = error as { code?: string };
         if (pgError.code === '42703') {
-          const { data: fallbackData, error: fallbackError } = await baseQuery;
+          const { data: fallbackData, error: fallbackError } = await buildQuery();
           if (fallbackError) throw fallbackError;
-          return fallbackData as Scenario[];
+          resultData = fallbackData as Scenario[];
+        } else {
+          throw error;
         }
-        throw error;
+      } else {
+        resultData = data as Scenario[];
       }
 
-      return data as Scenario[];
+      // Transform DB data to match frontend expectations
+      // Map DB topic (snake_case) back to frontend category (kebab-case)
+      return resultData.map(scenario => ({
+        ...scenario,
+        category: REVERSE_TOPIC_MAPPING[scenario.topic] || scenario.category
+      }));
     },
     // Always refetch when the component mounts or the window gains focus
     // so that newly added scenarios in the admin panel are visible immediately.

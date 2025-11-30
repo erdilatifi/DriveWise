@@ -8,7 +8,7 @@ export interface Question {
   question_text: string;
   option_a: string;
   option_b: string;
-  option_c: string;
+  option_c?: string;
   correct_answer: 'A' | 'B' | 'C';
   correct_answers?: ('A' | 'B' | 'C')[]; // Multiple correct answers support
   image_url?: string;
@@ -23,7 +23,7 @@ export interface QuestionInput {
   question_text: string;
   option_a: string;
   option_b: string;
-  option_c: string;
+  option_c?: string;
   correct_answer: 'A' | 'B' | 'C';
   correct_answers?: ('A' | 'B' | 'C')[]; // Multiple correct answers support
   image_url?: string;

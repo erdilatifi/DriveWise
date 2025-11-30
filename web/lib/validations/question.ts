@@ -6,7 +6,7 @@ export const questionSchema = z.object({
   question_text: z.string().min(1, "Question text is required"),
   option_a: z.string().min(1, "Option A is required"),
   option_b: z.string().min(1, "Option B is required"),
-  option_c: z.string().min(1, "Option C is required"),
+  option_c: z.string().optional(),
   correct_answer: z.enum(['A', 'B', 'C']),
   correct_answers: z.array(z.enum(['A', 'B', 'C'])).optional(),
   image_url: z.string().optional(),

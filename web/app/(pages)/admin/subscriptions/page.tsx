@@ -8,6 +8,8 @@ import { Navbar } from '@/components/navbar';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import { useAuth } from '@/contexts/auth-context';
 import {
@@ -213,6 +215,14 @@ export default function AdminSubscriptionsPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 pt-28 pb-12 max-w-6xl space-y-6">
+        {/* Back Button */}
+        <Button variant="ghost" asChild className="pl-0 hover:bg-transparent hover:text-primary">
+          <Link href="/admin">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Admin Dashboard
+          </Link>
+        </Button>
+
         {/* Header / summary card */}
         <GlassCard className="p-6 md:p-7 border border-border/80 bg-black/85 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-2">

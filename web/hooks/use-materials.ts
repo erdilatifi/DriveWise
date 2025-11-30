@@ -51,6 +51,7 @@ export interface MaterialsQueryParams {
   pageSize?: number;
   includeUnpublished?: boolean;
   fields?: string; // New: Allow selecting specific columns
+  enabled?: boolean;
 }
 
 export interface MaterialsPageResult {
@@ -68,11 +69,13 @@ export function useMaterials(params: MaterialsQueryParams = {}) {
     pageSize = 50,
     includeUnpublished = false,
     fields = '*', // Default to all for backward compatibility
+    enabled = true,
   } = params;
   const supabase = createClient();
 
   return useQuery<MaterialsPageResult>({
     queryKey: ['materials', search, chapterId, category, page, pageSize, includeUnpublished, fields],
+    enabled,
     queryFn: async () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
@@ -88,7 +91,8 @@ export function useMaterials(params: MaterialsQueryParams = {}) {
       }
 
       if (category) {
-        query = query.eq('category', category);
+        // Include materials specific to the category OR shared materials (category is null)
+        query = query.or(`category.eq.${category},category.is.null`);
       }
 
       if (!includeUnpublished) {

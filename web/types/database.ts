@@ -10,7 +10,7 @@ export interface Question {
   question_text: string;
   option_a: string;
   option_b: string;
-  option_c: string;
+  option_c?: string;
   correct_answer: 'A' | 'B' | 'C';
   image_url?: string;
   topic?: string;
