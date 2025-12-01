@@ -139,3 +139,4 @@ export const DeleteAccountModal = ({ visible, onClose }: DeleteAccountModalProps
     </Modal>
   );
 };
+

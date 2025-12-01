@@ -5,6 +5,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 import { X, ChevronRight, Target, BrainCircuit, Car, AlertTriangle, Ban, Activity } from 'lucide-react-native';
+import { useTheme } from '../../theme';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'DecisionScenarios'>;
 type RouteProps = RouteProp<RootStackParamList, 'DecisionScenarios'>;
@@ -64,25 +65,26 @@ export const DecisionScenariosScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProps>();
   const { category } = route.params;
+  const { isDark } = useTheme();
 
   return (
-    <View className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-slate-50 dark:bg-slate-950">
       <SafeAreaView className="flex-1" edges={['top']}>
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
+        <View className="flex-row items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            className="h-10 w-10 items-center justify-center rounded-full bg-slate-50"
+            className="h-10 w-10 items-center justify-center rounded-full bg-slate-50 dark:bg-slate-800"
           >
             {/* @ts-ignore */}
-            <X size={24} color="#1e293b" />
+            <X size={24} color={isDark ? "#94a3b8" : "#1e293b"} />
           </TouchableOpacity>
-          <Text className="text-lg font-bold text-slate-900">Zgjidh Temën</Text>
+          <Text className="text-lg font-bold text-slate-900 dark:text-white">Zgjidh Temën</Text>
           <View className="w-10" />
         </View>
 
         <ScrollView className="flex-1 p-4">
-          <Text className="text-sm text-slate-500 mb-4">
+          <Text className="text-sm text-slate-500 dark:text-slate-400 mb-4">
             Zgjidhni një temë për të filluar trajnimin.
           </Text>
 
@@ -90,12 +92,12 @@ export const DecisionScenariosScreen = () => {
             {TOPICS.map((topic, index) => (
               <TouchableOpacity
                 key={topic.id}
-                className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm active:scale-95 transform transition-all"
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm dark:shadow-none active:scale-95 transform transition-all"
                 onPress={() => navigation.navigate('DecisionGame', { category, topic: topic.id })}
               >
                 <View className="flex-row h-28">
                   {/* Image Section */}
-                  <View className="w-28 h-full bg-slate-100">
+                  <View className="w-28 h-full bg-slate-100 dark:bg-slate-800">
                     <Image
                         source={{ uri: topic.image }}
                         className="w-full h-full"
@@ -107,17 +109,17 @@ export const DecisionScenariosScreen = () => {
                   {/* Content Section */}
                   <View className="flex-1 p-3 justify-between">
                     <View>
-                      <Text className="text-base font-bold text-slate-900 mb-1">
+                      <Text className="text-base font-bold text-slate-900 dark:text-white mb-1">
                         {topic.title}
                       </Text>
-                      <Text className="text-xs text-slate-500 leading-4" numberOfLines={2}>
+                      <Text className="text-xs text-slate-500 dark:text-slate-400 leading-4" numberOfLines={2}>
                         {topic.description}
                       </Text>
                     </View>
 
                     <View className="flex-row items-center justify-between mt-2">
-                        <View className="flex-row items-center bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
-                            <Text className="text-[10px] font-bold text-slate-600">30 Pyetje</Text>
+                        <View className="flex-row items-center bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded-md border border-slate-100 dark:border-slate-700">
+                            <Text className="text-[10px] font-bold text-slate-600 dark:text-slate-400">30 Pyetje</Text>
                         </View>
                         <View className="flex-row items-center">
                             <Text className="text-xs font-bold text-blue-600 mr-1">Fillo</Text>
@@ -135,3 +137,5 @@ export const DecisionScenariosScreen = () => {
     </View>
   );
 };
+
+

@@ -12,8 +12,8 @@ import {
   BottomTabBarProps,
 } from "@react-navigation/bottom-tabs";
 
-import { useAuth } from "@/contexts/AuthContext";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../theme";
 import { TestsScreen } from "../screens/main/TestsScreen";
 import { DecisionTrainerScreen } from "../screens/main/DecisionTrainerScreen";
 import { ProfileScreen } from "../screens/main/ProfileScreen";
@@ -50,18 +50,18 @@ const icons: Partial<IconMap> = {
 };
 
 // ---------- CUSTOM TAB BAR ----------
-const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
-  const { isDark } = useTheme();
+const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBarProps) => {
   // Single animated value for current index
   const position = useRef(new Animated.Value(state.index)).current;
+  const { isDark, colors } = useTheme();
 
-  const BAR_BG = isDark ? "#1e293b" : "#f9fafb";
-  const BAR_BORDER = isDark ? "#334155" : "#e5e7eb";
-  const ICON_INACTIVE = isDark ? "#94a3b8" : "#9ca3af";
+  const BAR_BG = colors.tabBar;
+  const BAR_BORDER = colors.borderSecondary;
+  const ICON_INACTIVE = colors.tabBarInactive;
   const ICON_ACTIVE = "#ffffff";
-  const ICON_ACTIVE_BG = isDark ? "#4f46e5" : "#4f46e5"; // Can vary if needed
-  const LABEL_INACTIVE = isDark ? "#94a3b8" : "#9ca3af";
-  const LABEL_ACTIVE = isDark ? "#f8fafc" : "#111827";
+  const ICON_ACTIVE_BG = colors.tabBarActive; 
+  const LABEL_INACTIVE = colors.tabBarInactive;
+  const LABEL_ACTIVE = colors.text;
 
   useEffect(() => {
     Animated.spring(position, {
@@ -75,7 +75,15 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
 
   return (
     <View style={styles.tabBarContainer}>
-      <View style={[styles.tabBarInner, { backgroundColor: BAR_BG, borderColor: BAR_BORDER }]}>
+      <View style={[
+        styles.tabBarInner, 
+        { 
+          backgroundColor: BAR_BG, 
+          borderColor: BAR_BORDER,
+          shadowColor: isDark ? '#000' : '#000',
+          shadowOpacity: isDark ? 0.4 : 0.18,
+        }
+      ]}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
 
@@ -216,7 +224,9 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
       </View>
     </View>
   );
-};
+});
+
+CustomTabBar.displayName = 'CustomTabBar';
 
 // ---------- NAVIGATOR ----------
 export const AppNavigator: React.FC = () => {
@@ -329,3 +339,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+
+

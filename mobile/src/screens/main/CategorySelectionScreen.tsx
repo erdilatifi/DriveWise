@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCategory } from '@/contexts/CategoryContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useCategory } from '../../contexts/CategoryContext';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Car, Bike, Truck, ChevronRight, Info, Bus, CheckCircle2 } from 'lucide-react-native';
@@ -197,4 +197,6 @@ export const CategorySelectionScreen = () => {
     </View>
   );
 };
+
+
 

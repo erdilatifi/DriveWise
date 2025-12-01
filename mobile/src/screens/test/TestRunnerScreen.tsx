@@ -21,8 +21,7 @@ import {
 import { Button } from "../../components/ui/Button";
 import { Clock, X, ChevronRight, ChevronLeft } from "lucide-react-native";
 import { clsx } from "clsx";
-import { useAuth } from "@/contexts/AuthContext";
-import { LinearGradient } from "expo-linear-gradient";
+import { useAuth } from "../../contexts/AuthContext";
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -122,26 +121,51 @@ export const TestRunnerScreen = () => {
     if (isSubmitting) {
         return;
     }
-    if (!user) {
-        Alert.alert("Gabim", "Ju duhet të jeni i kyçur për të dorëzuar testin.");
-        return;
-    }
 
     setIsSubmitting(true);
-    try {
-      let score = 0;
-      const totalQuestions = questions.length;
+    
+    // Calculate score
+    let score = 0;
+    const totalQuestions = questions.length;
 
-      questions.forEach((q) => {
-        const userAns = answers[q.id] || [];
-        const correctAnswer = q.correct_answer;
-        const isCorrect =
-          userAns.includes(correctAnswer) && userAns.length === 1;
-        if (isCorrect) score++;
+    const guestAnswers = questions.map((q) => {
+      const userAns = answers[q.id] || [];
+      const selectedAnswer = userAns[0] || '';
+      const correctAnswer = q.correct_answer;
+      const isCorrect = userAns.includes(correctAnswer) && userAns.length === 1;
+      if (isCorrect) score++;
+      
+      return {
+        questionId: q.id,
+        selectedAnswer,
+        correctAnswer,
+        isCorrect,
+        questionText: q.question_text,
+        imageUrl: q.image_url,
+        optionA: q.option_a,
+        optionB: q.option_b,
+        optionC: q.option_c,
+      };
+    });
+
+    const percentage = Math.round((score / totalQuestions) * 100);
+
+    // Guest mode: navigate with local results (no DB save)
+    if (!user) {
+      navigation.replace("TestResult", { 
+        guestResult: {
+          percentage,
+          score,
+          totalQuestions,
+          category,
+          answers: guestAnswers,
+        }
       });
+      return;
+    }
 
-      const percentage = Math.round((score / totalQuestions) * 100);
-
+    // Logged in user: save to database
+    try {
       const answersPayload: any = {};
       Object.keys(answers).forEach((k) => {
         answersPayload[k] = answers[k][0]; // first selected answer
@@ -210,7 +234,7 @@ export const TestRunnerScreen = () => {
           </TouchableOpacity>
 
           {/* Timer */}
-          <View className="flex-row items-center space-x-2 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-100 dark:border-slate-700">
+          <View className="flex-row gap-2 items-center space-x-2 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-100 dark:border-slate-700">
             <Clock size={14} color={isTimeLow ? "#ef4444" : "#94a3b8"} />
             <Text
               className={clsx(
@@ -239,7 +263,7 @@ export const TestRunnerScreen = () => {
         </View>
 
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 140, paddingTop: 24 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 220, paddingTop: 24 }}
           showsVerticalScrollIndicator={false}
         >
           {/* Question Card */}
@@ -329,40 +353,79 @@ export const TestRunnerScreen = () => {
         </ScrollView>
 
         {/* Footer Controls */}
-        <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-900 px-6 pt-5 pb-8 border-t border-slate-100 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] dark:shadow-none">
+        <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-900 px-6 pt-4 pb-12 border-t border-slate-100 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] dark:shadow-none">
+          {/* Question Navigation Grid */}
+          <View className="mb-8">
+            <Text className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Pyetjet</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {questions.map((q, idx) => {
+                const isAnswered = answers[q.id] && answers[q.id].length > 0;
+                const isCurrent = idx === currentQuestionIndex;
+                return (
+                  <TouchableOpacity
+                    key={q.id}
+                    onPress={() => setCurrentQuestionIndex(idx)}
+                    className={clsx(
+                      "h-10 w-10 items-center justify-center rounded-lg border-2",
+                      isCurrent
+                        ? "bg-indigo-600 border-indigo-600"
+                        : isAnswered
+                        ? "bg-green-50 dark:bg-green-900/20 border-green-500 dark:border-green-500"
+                        : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                    )}
+                  >
+                    <Text
+                      className={clsx(
+                        "text-xs font-bold",
+                        isCurrent
+                          ? "text-white"
+                          : isAnswered
+                          ? "text-green-700 dark:text-green-400"
+                          : "text-slate-500 dark:text-slate-400"
+                      )}
+                    >
+                      {idx + 1}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Navigation Buttons */}
           <View className="flex-row items-center justify-between gap-4">
             <TouchableOpacity
               onPress={() => setCurrentQuestionIndex((prev) => Math.max(prev - 1, 0))}
               disabled={currentQuestionIndex === 0}
               className={clsx(
-                "h-12 w-12 items-center justify-center rounded-full border",
+                "h-14 w-14 items-center justify-center rounded-full border-2",
                 currentQuestionIndex === 0
                   ? "border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800"
-                  : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 active:bg-slate-50 dark:active:bg-slate-800"
+                  : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 active:bg-slate-50 dark:active:bg-slate-800"
               )}
             >
-               <ChevronLeft size={24} color={currentQuestionIndex === 0 ? "#cbd5e1" : "#64748b"} />
+               <ChevronLeft size={28} color={currentQuestionIndex === 0 ? "#cbd5e1" : "#64748b"} />
             </TouchableOpacity>
 
             {currentQuestionIndex === questions.length - 1 ? (
               <TouchableOpacity
                 onPress={handleSubmit}
                 disabled={isSubmitting}
-                className="flex-1 bg-indigo-600 h-12 rounded-full items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-none active:scale-95"
+                className="flex-1 bg-indigo-600 h-14 rounded-full items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-none active:scale-95"
               >
                  {isSubmitting ? (
                     <ActivityIndicator color="white" />
                  ) : (
-                    <Text className="text-white font-bold text-base">Përfundo Testin</Text>
+                    <Text className="text-white font-bold text-lg">Përfundo Testin</Text>
                  )}
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
                 onPress={() => setCurrentQuestionIndex((prev) => Math.min(prev + 1, questions.length - 1))}
-                className="flex-1 bg-slate-900 dark:bg-white h-12 rounded-full flex-row items-center justify-center shadow-lg shadow-slate-200 dark:shadow-none active:scale-95"
+                className="flex-1 bg-slate-900 dark:bg-white h-14 rounded-full flex-row items-center justify-center shadow-lg shadow-slate-200 dark:shadow-none active:scale-95"
               >
-                 <Text className="text-white dark:text-slate-900 font-bold text-base mr-2">Vazhdo</Text>
-                 <ChevronRight size={20} color={PRIMARY ? "white" : "black"} /> 
+                 <Text className="text-white dark:text-slate-900 font-bold text-lg mr-2">Vazhdo</Text>
+                 <ChevronRight size={24} color="white" /> 
               </TouchableOpacity>
             )}
           </View>
@@ -371,4 +434,7 @@ export const TestRunnerScreen = () => {
     </View>
   );
 };
+
+
+
 

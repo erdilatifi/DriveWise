@@ -41,3 +41,4 @@ export const CategoryProvider = ({ children }: { children: React.ReactNode }) =>
     </CategoryContext.Provider>
   );
 };
+

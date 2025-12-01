@@ -54,36 +54,36 @@ export const PersonalInfoScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
-      <View className="px-6 py-4 flex-row items-center border-b border-slate-200 bg-white">
+    <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-950" edges={['top']}>
+      <View className="px-6 py-4 flex-row items-center border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
           <ChevronLeft size={24} color="#334155" />
         </TouchableOpacity>
-        <Text className="text-xl font-bold text-slate-900">Të dhënat personale</Text>
+        <Text className="text-xl font-bold text-slate-900 dark:text-white">Të dhënat personale</Text>
       </View>
 
       <View className="p-6 gap-6">
         {/* Email (Read Only) */}
         <View>
-          <Text className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">EMAIL</Text>
-          <View className="flex-row items-center border border-slate-200 rounded-xl p-4 bg-slate-100">
+          <Text className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">EMAIL</Text>
+          <View className="flex-row items-center border border-slate-200 dark:border-slate-700 rounded-xl p-4 bg-slate-100 dark:bg-slate-800">
             <Mail size={20} color="#94a3b8" className="mr-3" />
-            <Text className="text-slate-500 font-medium">{user?.email}</Text>
-            <View className="ml-auto bg-slate-200 px-2 py-1 rounded">
-              <Text className="text-[10px] text-slate-500 font-bold">JO E EDITUESHME</Text>
+            <Text className="text-slate-500 dark:text-slate-400 font-medium">{user?.email}</Text>
+            <View className="ml-auto bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">
+              <Text className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">JO E EDITUESHME</Text>
             </View>
           </View>
         </View>
 
         {/* Display Name */}
         <View>
-          <Text className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">EMRI I PLOTË</Text>
-          <View className="flex-row items-center border border-slate-300 rounded-xl p-3 bg-white focus:border-blue-500">
+          <Text className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">EMRI I PLOTË</Text>
+          <View className="flex-row items-center border border-slate-300 dark:border-slate-700 rounded-xl p-3 bg-white dark:bg-slate-800 focus:border-blue-500">
             <User size={20} color="#1e1b4b" className="mr-3" />
             <TextInput 
               value={fullName}
               onChangeText={setFullName}
-              className="flex-1 text-slate-900 font-medium text-base"
+              className="flex-1 text-slate-900 dark:text-white font-medium text-base"
               placeholder="Shkruani emrin tuaj"
               placeholderTextColor="#94a3b8"
             />
@@ -92,17 +92,17 @@ export const PersonalInfoScreen = () => {
 
         {/* Password */}
         <View>
-          <Text className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">FJALËKALIMI</Text>
-          <View className="flex-row items-center border border-slate-200 rounded-xl p-4 bg-white justify-between">
+          <Text className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">FJALËKALIMI</Text>
+          <View className="flex-row items-center border border-slate-200 dark:border-slate-700 rounded-xl p-4 bg-white dark:bg-slate-800 justify-between">
             <View className="flex-row items-center">
               <Lock size={20} color="#1e1b4b" className="mr-3" />
-              <Text className="text-slate-900 font-medium">••••••••</Text>
+              <Text className="text-slate-900 dark:text-white font-medium">••••••••</Text>
             </View>
             <TouchableOpacity onPress={handleResetPassword}>
               <Text className="text-[#3b82f6] font-bold text-sm">Ndrysho</Text>
             </TouchableOpacity>
           </View>
-          <Text className="text-xs text-slate-400 mt-2">
+          <Text className="text-xs text-slate-400 dark:text-slate-500 mt-2">
             Për të ndryshuar fjalëkalimin, ne do t'ju dërgojmë një email konfirmimi.
           </Text>
         </View>
@@ -110,10 +110,12 @@ export const PersonalInfoScreen = () => {
         <Button 
           label={loading ? "Duke ruajtur..." : "Ruaj ndryshimet"}
           onPress={handleUpdate}
-          className="mt-4 bg-[#1e1b4b]"
+          className="mt-4 bg-[#1e1b4b] dark:bg-indigo-600"
           disabled={loading}
         />
       </View>
     </SafeAreaView>
   );
 };
+
+

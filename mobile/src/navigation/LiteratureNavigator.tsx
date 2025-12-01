@@ -29,3 +29,4 @@ export const LiteratureNavigator = () => {
     </Stack.Navigator>
   );
 };
+

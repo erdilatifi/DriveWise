@@ -1,22 +1,22 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, Image, Alert, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../theme';
 import { useUserPlans } from '@drivewise/core';
-import { Button } from '@/components/ui/Button';
+import { Button } from '../../components/ui/Button';
 import { User, Bell, Moon, Smartphone, Key, RefreshCcw, LogOut, ChevronRight, MessageCircle, Instagram, Facebook, AlertCircle, CreditCard, Volume2, Sun, Monitor, Clock, Bug, Trash2 } from 'lucide-react-native';
 import { clsx } from 'clsx';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useNavigation } from '@react-navigation/native';
-import { ReportBugModal } from '@/components/modals/ReportBugModal';
-import { DeleteAccountModal } from '@/components/modals/DeleteAccountModal';
-import { ProfileSkeleton } from '@/components/skeletons/ProfileSkeleton';
+import { ReportBugModal } from '../../components/modals/ReportBugModal';
+import { DeleteAccountModal } from '../../components/modals/DeleteAccountModal';
+import { ProfileSkeleton } from '../../components/skeletons/ProfileSkeleton';
 
 export const ProfileScreen = () => {
   const { user, profile, signOut, loading: authLoading } = useAuth();
-  const { theme, setTheme, isDark } = useTheme();
+  const { themeMode, setThemeMode, isDark, colors } = useTheme();
   const { data: plans, isLoading: plansLoading } = useUserPlans(user?.id);
   const navigation = useNavigation<any>();
   
@@ -55,11 +55,14 @@ export const ProfileScreen = () => {
 
   const { progress, daysLeft, durationMonths } = getSubscriptionDetails();
 
+  // Dynamic chevron color based on theme
+  const chevronColor = isDark ? "#64748b" : "#94a3b8";
+
   const toolsItems = [
     ...(user ? [{
       icon: User,
       title: 'Të dhënat personale',
-      rightElement: <ChevronRight size={18} color={isDark ? "#94a3b8" : "#94a3b8"} />,
+      rightElement: <ChevronRight size={18} color={chevronColor} />,
       color: 'text-slate-900 dark:text-white',
       bgColor: 'bg-slate-50 dark:bg-slate-800',
       onPress: () => navigation.navigate('PersonalInfo'),
@@ -67,7 +70,7 @@ export const ProfileScreen = () => {
     ...(user ? [{
       icon: Clock,
       title: 'Historiku i Testeve',
-      rightElement: <ChevronRight size={18} color={isDark ? "#94a3b8" : "#94a3b8"} />,
+      rightElement: <ChevronRight size={18} color={chevronColor} />,
       color: 'text-slate-900 dark:text-white',
       bgColor: 'bg-slate-50 dark:bg-slate-800',
       onPress: () => navigation.navigate('TestHistory'),
@@ -75,7 +78,7 @@ export const ProfileScreen = () => {
     {
       icon: CreditCard,
       title: 'Pakot',
-      rightElement: <ChevronRight size={18} color={isDark ? "#94a3b8" : "#94a3b8"} />,
+      rightElement: <ChevronRight size={18} color={chevronColor} />,
       color: 'text-slate-900 dark:text-white',
       bgColor: 'bg-slate-50 dark:bg-slate-800',
       onPress: () => navigation.navigate('Subscription'),
@@ -83,7 +86,7 @@ export const ProfileScreen = () => {
     {
       icon: Sun,
       title: 'Pamja',
-      rightElement: <Text className="text-slate-400 text-xs font-medium capitalize">{theme}</Text>,
+      rightElement: <Text className="text-slate-400 dark:text-slate-500 text-xs font-medium capitalize">{themeMode}</Text>,
       color: 'text-slate-900 dark:text-white',
       bgColor: 'bg-slate-50 dark:bg-slate-800',
       onPress: () => setIsThemeExpanded(!isThemeExpanded),
@@ -91,44 +94,20 @@ export const ProfileScreen = () => {
     {
       icon: Bug,
       title: 'Raporto problem',
-      rightElement: <ChevronRight size={18} color={isDark ? "#94a3b8" : "#94a3b8"} />,
+      rightElement: <ChevronRight size={18} color={chevronColor} />,
       color: 'text-slate-900 dark:text-white',
       bgColor: 'bg-slate-50 dark:bg-slate-800',
       onPress: () => setShowBugModal(true),
     },
-    {
+    ...(user ? [{
       icon: Trash2,
       title: 'Fshij llogarinë',
-      rightElement: <ChevronRight size={18} color={isDark ? "#94a3b8" : "#94a3b8"} />,
+      rightElement: <ChevronRight size={18} color="#f87171" />,
       color: 'text-red-600 dark:text-red-400',
       bgColor: 'bg-red-50 dark:bg-red-900/20',
       iconColor: '#ef4444',
       onPress: () => setShowDeleteModal(true),
-    },
-  ];
-
-  const socialItems = [
-    {
-      icon: Instagram,
-      title: 'Instagram',
-      color: 'text-white',
-      bgColor: 'bg-pink-500',
-      onPress: () => {},
-    },
-    {
-      icon: Facebook,
-      title: 'Facebook',
-      color: 'text-white',
-      bgColor: 'bg-blue-600',
-      onPress: () => {},
-    },
-    {
-      icon: Monitor, // TikTok
-      title: 'TikTok',
-      color: 'text-white',
-      bgColor: 'bg-black dark:bg-slate-800',
-      onPress: () => {},
-    },
+    }] : []),
   ];
 
   return (
@@ -249,25 +228,33 @@ export const ProfileScreen = () => {
                         {item.rightElement}
                      </TouchableOpacity>
                      
+                     {/* Theme Picker Dropdown */}
                      {item.title === 'Pamja' && isThemeExpanded && (
                         <View className="bg-slate-50 dark:bg-slate-800/50 px-4 py-2 border-b border-slate-50 dark:border-slate-800">
-                           {['system', 'light', 'dark'].map((t) => (
+                           {(['system', 'light', 'dark'] as const).map((t) => (
                               <TouchableOpacity 
                                  key={t} 
                                  onPress={() => {
-                                    setTheme(t as any);
-                                    // Optional: close after selection or keep open
+                                    setThemeMode(t);
+                                    setIsThemeExpanded(false); // Close dropdown after selection
                                  }}
                                  className={clsx(
                                     "flex-row items-center justify-between py-3 px-3 rounded-xl mb-1",
-                                    theme === t ? "bg-white dark:bg-slate-700 shadow-sm" : ""
+                                    themeMode === t ? "bg-white dark:bg-slate-700 shadow-sm" : ""
                                  )}
                               >
-                                 <Text className={clsx(
-                                    "text-sm font-medium capitalize",
-                                    theme === t ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 dark:text-slate-400"
-                                 )}>{t}</Text>
-                                 {theme === t && <View className="h-2 w-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />}
+                                 <View className="flex-row items-center">
+                                    {t === 'system' && <Monitor size={16} color={isDark ? "#94a3b8" : "#64748b"} style={{ marginRight: 8 }} />}
+                                    {t === 'light' && <Sun size={16} color="#f59e0b" style={{ marginRight: 8 }} />}
+                                    {t === 'dark' && <Moon size={16} color="#6366f1" style={{ marginRight: 8 }} />}
+                                    <Text className={clsx(
+                                       "text-sm font-medium capitalize",
+                                       themeMode === t ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 dark:text-slate-400"
+                                    )}>
+                                       {t === 'system' ? 'Sistemi' : t === 'light' ? 'Dritë' : 'Errët'}
+                                    </Text>
+                                 </View>
+                                 {themeMode === t && <View className="h-2 w-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />}
                               </TouchableOpacity>
                            ))}
                         </View>
@@ -312,4 +299,6 @@ export const ProfileScreen = () => {
     </View>
   );
 };
+
+
 

@@ -102,3 +102,4 @@ export const ReportBugModal = ({ visible, onClose }: ReportBugModalProps) => {
     </Modal>
   );
 };
+

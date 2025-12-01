@@ -96,9 +96,25 @@ export const RegisterScreen = () => {
         style={StyleSheet.absoluteFillObject}
       />
 
-      {/* Ambient blobs */}
-      <View className="absolute top-10 right-[-60] h-72 w-72 rounded-full bg-[#ce76c9]/20 blur-3xl" />
-      <View className="absolute bottom-20 -left-20 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
+      {/* Ambient gradient lights */}
+      <LinearGradient
+        colors={['rgba(206, 118, 201, 0.35)', 'rgba(168, 85, 247, 0.08)', 'transparent']}
+        start={{ x: 0.7, y: 0 }}
+        end={{ x: 0, y: 0.8 }}
+        style={{ position: 'absolute', top: -80, right: -120, width: 380, height: 380 }}
+      />
+      <LinearGradient
+        colors={['rgba(99, 102, 241, 0.3)', 'rgba(79, 70, 229, 0.1)', 'transparent']}
+        start={{ x: 0.3, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ position: 'absolute', bottom: 50, left: -120, width: 320, height: 320 }}
+      />
+      <LinearGradient
+        colors={['rgba(168, 85, 247, 0.12)', 'transparent']}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={{ position: 'absolute', top: 300, right: -30, width: 180, height: 180 }}
+      />
 
       <SafeAreaView edges={['top']} className="flex-none">
         <View className="flex-row justify-between px-6 pt-2 items-center">
@@ -163,7 +179,7 @@ export const RegisterScreen = () => {
                   <User
                     size={20}
                     color={hasNameError ? '#ef4444' : '#9ca3af'}
-                    className="mr-3"
+                    style={{ marginRight: 12 }}
                   />
                   <Controller
                     control={control}
@@ -208,7 +224,7 @@ export const RegisterScreen = () => {
                   <Mail
                     size={20}
                     color={hasEmailError ? '#ef4444' : '#9ca3af'}
-                    className="mr-3"
+                    style={{ marginRight: 12 }}
                   />
                   <Controller
                     control={control}
@@ -254,7 +270,7 @@ export const RegisterScreen = () => {
                   <Lock
                     size={20}
                     color={hasPasswordError ? '#ef4444' : '#9ca3af'}
-                    className="mr-3"
+                    style={{ marginRight: 12 }}
                   />
                   <Controller
                     control={control}
@@ -306,7 +322,7 @@ export const RegisterScreen = () => {
                   <Lock
                     size={20}
                     color={hasConfirmError ? '#ef4444' : '#9ca3af'}
-                    className="mr-3"
+                    style={{ marginRight: 12 }}
                   />
                   <Controller
                     control={control}
@@ -363,7 +379,7 @@ export const RegisterScreen = () => {
                 <Text className="text-[14px] text-gray-500">
                   Keni llogari?{' '}
                 </Text>
-                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <TouchableOpacity onPress={() => navigation.replace('Login')}>
                    <Text className="text-[14px] font-bold text-[#ce76c9]">
                      Hyr
                    </Text>
@@ -384,3 +400,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
+
+

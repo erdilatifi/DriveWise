@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCategory } from '@/contexts/CategoryContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useCategory } from '../contexts/CategoryContext';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { CategorySelectionScreen } from '../screens/main/CategorySelectionScreen';
@@ -60,3 +60,5 @@ export const RootNavigator = () => {
     </Stack.Navigator>
   );
 };
+
+

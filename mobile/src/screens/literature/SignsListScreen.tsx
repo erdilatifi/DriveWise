@@ -8,8 +8,9 @@ import { X, ChevronLeft, AlertCircle } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { RoadSign } from '@drivewise/core';
+import { useTheme } from '../../theme';
 
 type NavigationProp = NativeStackNavigationProp<LiteratureStackParamList>;
 type ScreenRouteProp = RouteProp<LiteratureStackParamList, 'SignsList'>;
@@ -26,6 +27,7 @@ export const SignsListScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<ScreenRouteProp>();
   const { categoryId, title } = route.params; // categoryId: 'danger', 'prohibition', etc.
+  const { isDark } = useTheme();
 
   const [selectedSign, setSelectedSign] = useState<RoadSign | null>(null);
 
@@ -106,9 +108,9 @@ export const SignsListScreen = () => {
           <View style={styles.header}>
             <TouchableOpacity 
               onPress={() => navigation.goBack()}
-              style={styles.backButton}
+              style={[styles.backButton, isDark && styles.backButtonDark]}
             >
-              <ChevronLeft size={24} color="#334155" />
+              <ChevronLeft size={24} color={isDark ? '#94a3b8' : '#334155'} />
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
               <Text style={styles.headerTitle} className="text-slate-900 dark:text-white">{title}</Text>
@@ -142,7 +144,7 @@ export const SignsListScreen = () => {
       >
         {selectedSign && (
           <View style={styles.modalOverlay}>
-            <BlurView intensity={20} style={StyleSheet.absoluteFill} tint="dark" />
+            <BlurView intensity={80} style={StyleSheet.absoluteFill} tint="dark" />
             <TouchableOpacity 
               style={StyleSheet.absoluteFill} 
               activeOpacity={1} 
@@ -154,10 +156,10 @@ export const SignsListScreen = () => {
               className="bg-white dark:bg-slate-900 w-full max-w-[340px] rounded-[32px] p-8 items-center shadow-xl shadow-black/20"
             >
               <TouchableOpacity 
-                style={styles.closeButton}
+                style={[styles.closeButton, isDark && styles.closeButtonDark]}
                 onPress={() => setSelectedSign(null)}
               >
-                <X color="#64748b" size={24} />
+                <X color={isDark ? '#94a3b8' : '#64748b'} size={24} />
               </TouchableOpacity>
 
               <View style={styles.modalImageContainer}>
@@ -215,6 +217,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#e2e8f0',
+  },
+  backButtonDark: {
+    backgroundColor: '#1e293b',
+    borderColor: '#334155',
   },
   headerTitle: {
     fontSize: 20,
@@ -286,6 +292,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
     borderRadius: 20,
   },
+  closeButtonDark: {
+    backgroundColor: '#334155',
+  },
   modalImageContainer: {
     width: 140,
     height: 140,
@@ -314,3 +323,5 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
 });
+
+

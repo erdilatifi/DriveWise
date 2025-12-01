@@ -34,6 +34,7 @@ import {
 import { ENV } from "../../config/env";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
+import { useTheme } from "../../theme";
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -45,6 +46,7 @@ export const SubscriptionScreen = () => {
   const { selectedCategory } = useCategory();
   const { user, profile } = useAuth();
   const queryClient = useQueryClient();
+  const { isDark } = useTheme();
 
   const [selectedPlan, setSelectedPlan] = useState<PaidPlanTier>(
     BILLING_CONFIG.bestValuePlan
@@ -140,7 +142,7 @@ export const SubscriptionScreen = () => {
   ];
 
   return (
-    <View className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-slate-50 dark:bg-slate-950">
       <SafeAreaView className="flex-1">
         <ScrollView
           contentContainerStyle={{ paddingBottom: 100 }}
@@ -148,7 +150,7 @@ export const SubscriptionScreen = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={refreshStatus}
-              tintColor="#1e1b4b"
+              tintColor={isDark ? "#818cf8" : "#1e1b4b"}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -158,23 +160,23 @@ export const SubscriptionScreen = () => {
             <View className="mb-6 flex-row items-center justify-between">
               <TouchableOpacity
                 onPress={() => navigation.goBack()}
-                className="flex-row items-center rounded-full bg-white px-3 py-1 border border-slate-200 shadow-sm"
+                className="flex-row items-center rounded-full bg-white dark:bg-slate-800 px-3 py-1 border border-slate-200 dark:border-slate-700 shadow-sm"
                 activeOpacity={0.8}
               >
                 {/* @ts-ignore */}
-                <ArrowLeft size={20} color="#334155" />
-                <Text className="ml-2 text-sm font-medium text-slate-600">
+                <ArrowLeft size={20} color={isDark ? "#94a3b8" : "#334155"} />
+                <Text className="ml-2 text-sm font-medium text-slate-600 dark:text-slate-300">
                   Kthehu
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={refreshStatus}
-                className="items-center justify-center rounded-full bg-white p-2 border border-slate-200 shadow-sm"
+                className="items-center justify-center rounded-full bg-white dark:bg-slate-800 p-2 border border-slate-200 dark:border-slate-700 shadow-sm"
                 activeOpacity={0.8}
               >
                 {/* @ts-ignore */}
-                <RefreshCw size={18} color="#1e1b4b" />
+                <RefreshCw size={18} color={isDark ? "#818cf8" : "#1e1b4b"} />
               </TouchableOpacity>
             </View>
 
@@ -185,25 +187,25 @@ export const SubscriptionScreen = () => {
                   "mb-4 h-20 w-20 items-center justify-center rounded-full border-4",
                   isActive
                     ? "bg-green-500/10 border-green-500/30"
-                    : "bg-[#1e1b4b]/10 border-[#1e1b4b]/30"
+                    : "bg-[#1e1b4b]/10 dark:bg-indigo-900/20 border-[#1e1b4b]/30 dark:border-indigo-700/30"
                 )}
               >
                 {/* @ts-ignore */}
-                <Crown size={40} color={isActive ? "#22C55E" : "#1e1b4b"} fill={isActive ? "#22C55E" : "#1e1b4b"} />
+                <Crown size={40} color={isActive ? "#22C55E" : (isDark ? "#818cf8" : "#1e1b4b")} fill={isActive ? "#22C55E" : (isDark ? "#818cf8" : "#1e1b4b")} />
               </View>
 
-              <Text className="text-center text-3xl font-extrabold text-slate-900">
+              <Text className="text-center text-3xl font-extrabold text-slate-900 dark:text-white">
                 {isActive ? "Abonimi Aktiv" : "Bëhu Premium"}
               </Text>
-              <Text className="mt-2 text-center text-sm text-slate-500">
+              <Text className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
                 Për kategorinë{" "}
-                <Text className="font-semibold text-[#1e1b4b]">
+                <Text className="font-semibold text-[#1e1b4b] dark:text-indigo-400">
                   {selectedCategory}
                 </Text>
               </Text>
 
               {isActive && activeExpiryDate && (
-                <Text className="mt-4 rounded-full bg-green-50 px-4 py-2 text-xs font-medium text-green-600 border border-green-200">
+                <Text className="mt-4 rounded-full bg-green-50 dark:bg-green-900/20 px-4 py-2 text-xs font-medium text-green-600 dark:text-green-400 border border-green-200 dark:border-green-900/30">
                   Skadon më:{" "}
                   {new Date(activeExpiryDate).toLocaleDateString("sq-AL")}
                 </Text>
@@ -213,8 +215,8 @@ export const SubscriptionScreen = () => {
 
           {/* Features */}
           <View className="mb-8 px-6">
-            <View className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <Text className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <View className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+              <Text className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
                 Çfarë përfshin
               </Text>
               {features.map((feature, index) => (
@@ -225,11 +227,11 @@ export const SubscriptionScreen = () => {
                     index === features.length - 1 && "mb-0"
                   )}
                 >
-                  <View className="mr-3 h-7 w-7 items-center justify-center rounded-full bg-[#1e1b4b]">
+                  <View className="mr-3 h-7 w-7 items-center justify-center rounded-full bg-[#1e1b4b] dark:bg-indigo-600">
                     {/* @ts-ignore */}
                     <Check size={14} color="#FFFFFF" strokeWidth={3} />
                   </View>
-                  <Text className="text-sm font-medium text-slate-700">
+                  <Text className="text-sm font-medium text-slate-700 dark:text-slate-300">
                     {feature}
                   </Text>
                 </View>
@@ -253,8 +255,8 @@ export const SubscriptionScreen = () => {
                       className={clsx(
                         "relative rounded-3xl border-2 mb-4", // Removed overflow-hidden and p-6, added margin for spacing if needed
                         isSelected
-                          ? "border-[#1e1b4b] bg-blue-50"
-                          : "border-slate-200 bg-white"
+                          ? "border-[#1e1b4b] dark:border-indigo-500 bg-blue-50 dark:bg-indigo-900/20"
+                          : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
                       )}
                       style={{ overflow: 'visible' }} // Explicitly ensure overflow is visible for the pill
                     >
@@ -269,7 +271,7 @@ export const SubscriptionScreen = () => {
                       </View>
 
                       {isBestValue && (
-                        <View className="absolute -top-3 left-6 rounded-full bg-[#1e1b4b] px-3 py-1 shadow-sm z-50 border border-white/20">
+                        <View className="absolute -top-3 left-6 rounded-full bg-[#1e1b4b] dark:bg-indigo-600 px-3 py-1 shadow-sm z-50 border border-white/20">
                           <Text className="text-[10px] font-bold uppercase tracking-[0.16em] text-white">
                             Më i vlefshmi
                           </Text>
@@ -282,13 +284,13 @@ export const SubscriptionScreen = () => {
                             className={clsx(
                               "text-xl font-bold",
                               isSelected
-                                ? "text-[#1e1b4b]"
-                                : "text-slate-900"
+                                ? "text-[#1e1b4b] dark:text-indigo-400"
+                                : "text-slate-900 dark:text-white"
                             )}
                           >
                             {plan.label}
                           </Text>
-                          <Text className="mt-1 text-sm text-slate-500">
+                          <Text className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                             {plan.pricePerMonthEur.toFixed(2)}€ / muaj
                           </Text>
                         </View>
@@ -296,17 +298,17 @@ export const SubscriptionScreen = () => {
                         <View className="items-end">
                           <Text className={clsx(
                               "text-3xl font-extrabold",
-                              isSelected ? "text-[#1e1b4b]" : "text-slate-900"
+                              isSelected ? "text-[#1e1b4b] dark:text-indigo-400" : "text-slate-900 dark:text-white"
                           )}>
                             {plan.priceEur}€
                           </Text>
                           {isSelected ? (
-                            <View className="mt-2 h-6 w-6 items-center justify-center rounded-full bg-[#1e1b4b]">
+                            <View className="mt-2 h-6 w-6 items-center justify-center rounded-full bg-[#1e1b4b] dark:bg-indigo-600">
                               {/* @ts-ignore */}
                               <Check size={14} color="#FFFFFF" />
                             </View>
                           ) : (
-                            <View className="mt-2 h-6 w-6 rounded-full border-2 border-slate-300" />
+                            <View className="mt-2 h-6 w-6 rounded-full border-2 border-slate-300 dark:border-slate-600" />
                           )}
                         </View>
                       </View>
@@ -321,13 +323,13 @@ export const SubscriptionScreen = () => {
                   label="Blej pakon në web"
                   onPress={handlePurchase}
                   loading={loading}
-                  className="h-14 bg-[#1e1b4b]"
+                  className="h-14 bg-[#1e1b4b] dark:bg-indigo-600"
                   textClassName="text-lg font-bold"
                 />
                 <View className="mt-4 flex-row items-center justify-center">
                   {/* @ts-ignore */}
-                  <ShieldCheck size={14} color="#9CA3AF" />
-                  <Text className="ml-1 text-xs text-slate-400">
+                  <ShieldCheck size={14} color={isDark ? "#64748b" : "#9CA3AF"} />
+                  <Text className="ml-1 text-xs text-slate-400 dark:text-slate-500">
                     Pagesë e sigurtë përmes Web
                   </Text>
                 </View>
@@ -346,8 +348,8 @@ export const SubscriptionScreen = () => {
                   })
                 }
                 variant="secondary"
-                className="h-14 bg-white border border-slate-200"
-                textClassName="text-slate-900"
+                className="h-14 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                textClassName="text-slate-900 dark:text-white"
               />
             </View>
           )}
@@ -356,4 +358,6 @@ export const SubscriptionScreen = () => {
     </View>
   );
 };
+
+
 

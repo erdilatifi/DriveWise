@@ -17,8 +17,8 @@ export const MaterialDetailScreen = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#ce76c9" />
+      <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-slate-950">
+        <ActivityIndicator size="large" color="#4f46e5" />
       </SafeAreaView>
     );
   }
@@ -30,7 +30,7 @@ export const MaterialDetailScreen = () => {
     // 1. String -> Paragraph
     if (typeof value === 'string') {
       return (
-        <Text key={Math.random()} className="text-base text-slate-700 leading-7 mb-4">
+        <Text key={Math.random()} className="text-base text-slate-700 dark:text-slate-300 leading-7 mb-4">
           {value}
         </Text>
       );
@@ -64,12 +64,12 @@ export const MaterialDetailScreen = () => {
          return (
            <View key={Math.random()} className="mb-6">
              {value.title && (
-               <Text className="text-2xl font-bold text-slate-900 mb-3 leading-tight">
+               <Text className="text-2xl font-bold text-slate-900 dark:text-white mb-3 leading-tight">
                  {value.title}
                </Text>
              )}
              {value.description && (
-               <Text className="text-base text-slate-600 leading-7 mb-6">
+               <Text className="text-base text-slate-600 dark:text-slate-400 leading-7 mb-6">
                  {value.description}
                </Text>
              )}
@@ -90,8 +90,8 @@ export const MaterialDetailScreen = () => {
                 {/* Check if key is a meaningful title (not numeric index) */}
                 {isNaN(Number(key)) && (
                   <View className="flex-row items-center mb-2">
-                    <View className="h-1 w-1 rounded-full bg-orange-500 mr-2" />
-                    <Text className="text-lg font-bold text-slate-800 capitalize">
+                    <View className="h-1 w-1 rounded-full bg-indigo-500 dark:bg-indigo-400 mr-2" />
+                    <Text className="text-lg font-bold text-slate-800 dark:text-white capitalize">
                       {key.replace(/_/g, ' ')}
                     </Text>
                   </View>
@@ -108,14 +108,14 @@ export const MaterialDetailScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F7F8FA]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#F7F8FA] dark:bg-slate-950" edges={['top']}>
       {/* Header */}
-      <View className="px-6 py-4 bg-white border-b border-slate-100 flex-row items-center shadow-sm z-10 rounded-b-[32px]">
-        <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4 p-2 -ml-2 rounded-full active:bg-slate-50">
+      <View className="px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 flex-row items-center shadow-sm dark:shadow-none z-10 rounded-b-[32px]">
+        <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4 p-2 -ml-2 rounded-full active:bg-slate-50 dark:active:bg-slate-800">
            {/* @ts-ignore */}
            <ArrowLeft size={24} color="#1e293b" />
         </TouchableOpacity>
-        <Text className="text-lg font-bold text-slate-900 flex-1" numberOfLines={1}>{title}</Text>
+        <Text className="text-lg font-bold text-slate-900 dark:text-white flex-1" numberOfLines={1}>{title}</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
@@ -123,11 +123,11 @@ export const MaterialDetailScreen = () => {
         {material?.images && material.images.length > 0 && (
           <View className="mb-8">
              {material.images.map((img) => (
-               <View key={img.id} className="mb-6 rounded-3xl overflow-hidden bg-white border border-slate-100 shadow-sm">
+               <View key={img.id} className="mb-6 rounded-3xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none">
                  <Image source={{ uri: img.image_url }} style={{ width: '100%', height: 220, resizeMode: 'cover' }} />
                  {img.caption && (
-                   <View className="bg-white p-4 border-t border-slate-100">
-                     <Text className="text-sm text-slate-500 font-medium text-center">{img.caption}</Text>
+                   <View className="bg-white dark:bg-slate-900 p-4 border-t border-slate-100 dark:border-slate-800">
+                     <Text className="text-sm text-slate-500 dark:text-slate-400 font-medium text-center">{img.caption}</Text>
                    </View>
                  )}
                </View>
@@ -136,11 +136,11 @@ export const MaterialDetailScreen = () => {
         )}
 
         {/* Content */}
-        <View className="mb-8 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+        <View className="mb-8 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none">
            {material?.content ? (
              renderContentValue(material.content)
            ) : (
-             <Text className="text-slate-400 italic text-center py-10">
+             <Text className="text-slate-400 dark:text-slate-500 italic text-center py-10">
                Përmbajtja nuk është e disponueshme.
              </Text>
            )}
@@ -149,3 +149,5 @@ export const MaterialDetailScreen = () => {
     </SafeAreaView>
   );
 };
+
+

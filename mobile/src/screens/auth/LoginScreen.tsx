@@ -8,6 +8,7 @@ import {
   Platform,
   StyleSheet,
   TextInput,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
@@ -23,6 +24,7 @@ import {
   MoreHorizontal,
   Mail,
   Lock,
+  CheckCircle,
 } from 'lucide-react-native';
 
 import { supabase } from '../../lib/supabase';
@@ -37,6 +39,11 @@ export const LoginScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
+  const [forgotError, setForgotError] = useState<string | null>(null);
 
   const {
     control,
@@ -50,6 +57,28 @@ export const LoginScreen = () => {
     },
     mode: 'onChange',
   });
+
+  // Translate Supabase error messages to Albanian
+  const translateError = (message: string): string => {
+    const errorMap: Record<string, string> = {
+      'Invalid login credentials': 'Email ose fjalëkalimi i pasaktë',
+      'Email not confirmed': 'Email-i nuk është konfirmuar. Kontrolloni email-in tuaj.',
+      'User not found': 'Përdoruesi nuk u gjet',
+      'Invalid email': 'Email adresa nuk është e vlefshme',
+      'Password should be at least 6 characters': 'Fjalëkalimi duhet të ketë të paktën 6 karaktere',
+      'Email rate limit exceeded': 'Keni bërë shumë tentativa. Provoni përsëri më vonë.',
+      'Network request failed': 'Gabim në lidhje. Kontrolloni internetin tuaj.',
+      'Too many requests': 'Shumë tentativa. Prisni pak minuta.',
+    };
+    
+    // Check for partial matches
+    for (const [key, value] of Object.entries(errorMap)) {
+      if (message.toLowerCase().includes(key.toLowerCase())) {
+        return value;
+      }
+    }
+    return message;
+  };
 
   const onSubmit = async (data: LoginSchema) => {
     setLoading(true);
@@ -67,10 +96,37 @@ export const LoginScreen = () => {
         routes: [{ name: 'App' as any }],
       });
     } catch (err: any) {
-      setError(err.message || 'Ndodhi një gabim gjatë hyrjes');
+      setError(translateError(err.message) || 'Ndodhi një gabim gjatë hyrjes');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail.trim()) {
+      setForgotError('Ju lutem vendosni email adresën');
+      return;
+    }
+    setForgotLoading(true);
+    setForgotError(null);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+        redirectTo: 'drivewise://reset-password',
+      });
+      if (error) throw error;
+      setForgotSuccess(true);
+    } catch (err: any) {
+      setForgotError(err.message || 'Ndodhi një gabim');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const closeForgotModal = () => {
+    setShowForgotPassword(false);
+    setForgotEmail('');
+    setForgotSuccess(false);
+    setForgotError(null);
   };
 
   const hasEmailError = !!errors.email;
@@ -86,9 +142,25 @@ export const LoginScreen = () => {
         style={StyleSheet.absoluteFillObject}
       />
 
-      {/* Ambient blobs */}
-      <View className="absolute -top-20 -left-20 h-64 w-64 rounded-full bg-[#ce76c9]/20 blur-3xl" />
-      <View className="absolute top-40 -right-20 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
+      {/* Ambient gradient lights */}
+      <LinearGradient
+        colors={['rgba(206, 118, 201, 0.35)', 'rgba(168, 85, 247, 0.08)', 'transparent']}
+        start={{ x: 0.3, y: 0 }}
+        end={{ x: 1, y: 0.8 }}
+        style={{ position: 'absolute', top: -120, left: -150, width: 400, height: 400 }}
+      />
+      <LinearGradient
+        colors={['rgba(99, 102, 241, 0.3)', 'rgba(79, 70, 229, 0.1)', 'transparent']}
+        start={{ x: 0.7, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={{ position: 'absolute', top: 100, right: -100, width: 350, height: 350 }}
+      />
+      <LinearGradient
+        colors={['rgba(168, 85, 247, 0.15)', 'transparent']}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={{ position: 'absolute', bottom: 200, left: -50, width: 200, height: 200 }}
+      />
 
       <SafeAreaView edges={['top']} className="flex-none">
         <View className="flex-row justify-between px-6 pt-2 items-center">
@@ -172,7 +244,7 @@ export const LoginScreen = () => {
                   <Mail
                     size={20}
                     color={hasEmailError ? '#ef4444' : '#9ca3af'}
-                    className="mr-3"
+                    style={{ marginRight: 12 }}
                   />
                   <Controller
                     control={control}
@@ -208,7 +280,7 @@ export const LoginScreen = () => {
                   <Text className="text-[12px] font-bold text-gray-500 uppercase tracking-wider">
                     Fjalëkalimi
                   </Text>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => setShowForgotPassword(true)}>
                     <Text className="text-[12px] font-semibold text-[#ce76c9]">
                       Harruat fjalëkalimin?
                     </Text>
@@ -226,7 +298,7 @@ export const LoginScreen = () => {
                   <Lock
                     size={20}
                     color={hasPasswordError ? '#ef4444' : '#9ca3af'}
-                    className="mr-3"
+                    style={{ marginRight: 12 }}
                   />
                   <Controller
                     control={control}
@@ -283,7 +355,7 @@ export const LoginScreen = () => {
                 <Text className="text-[14px] text-gray-500">
                   Nuk keni llogari?{' '}
                 </Text>
-                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <TouchableOpacity onPress={() => navigation.replace('Register')}>
                    <Text className="text-[14px] font-bold text-[#ce76c9]">
                      Regjistrohu
                    </Text>
@@ -293,6 +365,88 @@ export const LoginScreen = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Forgot Password Modal */}
+      <Modal
+        visible={showForgotPassword}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={closeForgotModal}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1"
+        >
+          <View className="flex-1 bg-black/50 justify-end">
+            <View className="bg-white rounded-t-[32px] px-6 pt-6 pb-10">
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className="text-xl font-bold text-slate-900">Rivendos Fjalëkalimin</Text>
+              <TouchableOpacity onPress={closeForgotModal} className="p-2 bg-slate-100 rounded-full">
+                <X size={20} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            {forgotSuccess ? (
+              <View className="items-center py-8">
+                <View className="h-16 w-16 rounded-full bg-green-100 items-center justify-center mb-4">
+                  <CheckCircle size={32} color="#22c55e" />
+                </View>
+                <Text className="text-lg font-bold text-slate-900 mb-2">Email u dërgua!</Text>
+                <Text className="text-slate-500 text-center leading-6">
+                  Kontrolloni email-in tuaj ({forgotEmail}) për udhëzimet e rivendosjes së fjalëkalimit.
+                </Text>
+                <TouchableOpacity 
+                  onPress={closeForgotModal}
+                  className="mt-6 bg-slate-900 px-8 py-3 rounded-2xl"
+                >
+                  <Text className="text-white font-semibold">U kuptua</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                <Text className="text-slate-500 mb-6 leading-6">
+                  Vendosni email adresën tuaj dhe do t'ju dërgojmë udhëzimet për rivendosjen e fjalëkalimit.
+                </Text>
+
+                {forgotError && (
+                  <View className="mb-4 rounded-2xl bg-red-50 border border-red-100 px-4 py-3">
+                    <Text className="text-[13px] font-medium text-red-600">{forgotError}</Text>
+                  </View>
+                )}
+
+                <View className="flex-row items-center rounded-2xl px-4 py-3 border border-gray-100 bg-gray-50 mb-6">
+                  <Mail size={20} color="#9ca3af" style={{ marginRight: 12 }} />
+                  <TextInput
+                    style={[styles.textInput, { flex: 1 }]}
+                    placeholder="emri@shembull.com"
+                    placeholderTextColor="#9ca3af"
+                    value={forgotEmail}
+                    onChangeText={setForgotEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
+                </View>
+
+                <LinearGradient
+                  colors={['#ce76c9', '#a855f7']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  className="rounded-2xl"
+                >
+                  <Button
+                    label={forgotLoading ? 'DUKE DËRGUAR...' : 'DËRGO EMAIL'}
+                    onPress={handleForgotPassword}
+                    loading={forgotLoading}
+                    className="h-14 rounded-2xl bg-transparent"
+                    textClassName="text-[16px] font-bold tracking-wider text-white"
+                  />
+                </LinearGradient>
+              </>
+            )}
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 };
@@ -304,3 +458,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
+
+

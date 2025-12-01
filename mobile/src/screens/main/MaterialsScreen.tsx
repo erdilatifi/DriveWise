@@ -2,17 +2,17 @@ import React, { useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMaterials, useUserPlans } from '@drivewise/core';
-import { useCategory } from '@/contexts/CategoryContext';
+import { useCategory } from '../../contexts/CategoryContext';
 import { BookOpen, Lock, ChevronRight, PlayCircle, AlertTriangle } from 'lucide-react-native';
 import { clsx } from 'clsx';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '@/navigation/types';
-import { LiteratureStackParamList } from '@/navigation/LiteratureNavigator';
+import { RootStackParamList } from '../../navigation/types';
+import { LiteratureStackParamList } from '../../navigation/LiteratureNavigator';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { MaterialsSkeleton } from '@/components/skeletons/MaterialsSkeleton';
+import { MaterialsSkeleton } from '../../components/skeletons/MaterialsSkeleton';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList & LiteratureStackParamList>;
 
@@ -193,4 +193,6 @@ export const MaterialsScreen = () => {
     </View>
   );
 };
+
+
 

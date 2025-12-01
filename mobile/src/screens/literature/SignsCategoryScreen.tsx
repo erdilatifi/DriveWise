@@ -8,6 +8,7 @@ import { AlertTriangle, Octagon, Info, ArrowUpCircle, Ban, ChevronRight, BookOpe
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
+import { useTheme } from '../../theme';
 
 type NavigationProp = NativeStackNavigationProp<LiteratureStackParamList>;
 
@@ -70,6 +71,7 @@ const { width } = Dimensions.get('window');
 
 export const SignsCategoryScreen = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { isDark } = useTheme();
 
   return (
     <View className="flex-1 bg-white dark:bg-slate-950">
@@ -117,7 +119,7 @@ export const SignsCategoryScreen = () => {
             </LinearGradient>
           </Animated.View>
 
-          <Text style={styles.sectionTitle}>Kategoritë</Text>
+          <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>Kategoritë</Text>
 
           <View style={styles.cardsContainer}>
             {SIGN_CATEGORIES.map((category, index) => (
@@ -149,10 +151,10 @@ export const SignsCategoryScreen = () => {
                     </View>
                     
                     <View style={styles.cardBody}>
-                      <Text style={styles.cardTitle}>{category.title}</Text>
-                      <Text style={styles.cardSubtitle}>{category.subtitle}</Text>
+                      <Text style={[styles.cardTitle, isDark && styles.cardTitleDark]}>{category.title}</Text>
+                      <Text style={[styles.cardSubtitle, isDark && styles.cardSubtitleDark]}>{category.subtitle}</Text>
                       <View style={styles.divider} />
-                      <Text style={styles.cardDesc} numberOfLines={2}>
+                      <Text style={[styles.cardDesc, isDark && styles.cardDescDark]} numberOfLines={2}>
                         {category.description}
                       </Text>
                     </View>
@@ -267,6 +269,9 @@ const styles = StyleSheet.create({
     color: '#0f172a',
     marginBottom: 16,
   },
+  sectionTitleDark: {
+    color: '#ffffff',
+  },
   cardsContainer: {
     gap: 16,
   },
@@ -316,11 +321,17 @@ const styles = StyleSheet.create({
     color: '#0f172a',
     marginBottom: 4,
   },
+  cardTitleDark: {
+    color: '#1e293b',
+  },
   cardSubtitle: {
     fontSize: 14,
     fontWeight: '600',
     color: '#475569',
     marginBottom: 12,
+  },
+  cardSubtitleDark: {
+    color: '#334155',
   },
   divider: {
     height: 1,
@@ -331,6 +342,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#4b5563',
     lineHeight: 18,
+  },
+  cardDescDark: {
+    color: '#374151',
   },
   cardFooter: {
     flexDirection: 'row',
@@ -345,4 +359,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
+
+
 

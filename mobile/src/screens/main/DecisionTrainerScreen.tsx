@@ -3,15 +3,15 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '@/navigation/types';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCategory } from '@/contexts/CategoryContext';
+import { RootStackParamList } from '../../navigation/types';
+import { useAuth } from '../../contexts/AuthContext';
+import { useCategory } from '../../contexts/CategoryContext';
 import { useDecisionTrainerStats, useLeaderboard, useUserPlans } from '@drivewise/core';
-import { Button } from '@/components/ui/Button';
+import { Button } from '../../components/ui/Button';
 import { Play, Trophy, Target, Zap, Flame, Crown } from 'lucide-react-native';
 import { clsx } from 'clsx';
 import { LinearGradient } from 'expo-linear-gradient';
-import { DecisionTrainerSkeleton } from '@/components/skeletons/DecisionTrainerSkeleton';
+import { DecisionTrainerSkeleton } from '../../components/skeletons/DecisionTrainerSkeleton';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -178,4 +178,6 @@ export const DecisionTrainerScreen = () => {
     </View>
   );
 };
+
+
 

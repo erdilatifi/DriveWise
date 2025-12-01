@@ -35,8 +35,9 @@ type TestAttempt = {
 export const TestResultScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProps>();
-  const { attemptId } = route.params;
+  const { attemptId, guestResult } = route.params;
 
+  const isGuestMode = !!guestResult;
   const [selectedQuestionIndex, setSelectedQuestionIndex] = React.useState<number | null>(0);
 
   const {
@@ -46,6 +47,8 @@ export const TestResultScreen = () => {
   } = useQuery<TestAttempt>({
     queryKey: ["test-attempt", attemptId],
     queryFn: async () => {
+      if (!attemptId) throw new Error("No attempt ID");
+      
       // 1. Fetch Attempt
       const { data: attemptData, error: attemptError } = await supabase
         .from("test_attempts")
@@ -85,9 +88,11 @@ export const TestResultScreen = () => {
 
       return { ...(attemptData as any), answers: mergedAnswers } as TestAttempt;
     },
+    enabled: !!attemptId && !isGuestMode, // Only fetch if we have attemptId and not guest
   });
 
-  if (isLoading || !attempt) {
+  // Loading state (only for logged-in users)
+  if (!isGuestMode && (isLoading || !attempt)) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-slate-950">
         <ActivityIndicator size="large" color={PRIMARY} />
@@ -98,7 +103,8 @@ export const TestResultScreen = () => {
     );
   }
 
-  if (isError) {
+  // Error state (only for logged-in users)
+  if (!isGuestMode && isError) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-slate-950 p-6">
         <View className="mb-4 rounded-2xl border border-red-100 bg-red-50 dark:bg-red-900/20 dark:border-red-900/30 px-4 py-3">
@@ -120,8 +126,33 @@ export const TestResultScreen = () => {
     );
   }
 
-  const isPassed = attempt.percentage >= 85;
-  const answers = attempt.answers || [];
+  // Normalize data for both guest and logged-in modes
+  const resultData = isGuestMode ? {
+    percentage: guestResult!.percentage,
+    score: guestResult!.score,
+    total_questions: guestResult!.totalQuestions,
+    category: guestResult!.category,
+    test_set_id: null,
+  } : attempt!;
+
+  // Normalize answers for both modes
+  const answers = isGuestMode 
+    ? guestResult!.answers.map((ans, idx) => ({
+        id: idx.toString(),
+        is_correct: ans.isCorrect,
+        selected_answer: ans.selectedAnswer,
+        question: {
+          question_text: ans.questionText,
+          image_url: ans.imageUrl,
+          correct_answer: ans.correctAnswer,
+          option_a: ans.optionA,
+          option_b: ans.optionB,
+          option_c: ans.optionC,
+        },
+      }))
+    : (attempt?.answers || []);
+
+  const isPassed = resultData.percentage >= 85;
 
   return (
     <View className="flex-1 bg-white dark:bg-slate-950">
@@ -170,7 +201,7 @@ export const TestResultScreen = () => {
                    "mb-1 text-6xl font-black tracking-tighter",
                    isPassed ? "text-green-500" : "text-red-500"
                 )}>
-                  {attempt.percentage}%
+                  {resultData.percentage}%
                 </Text>
                 <Text className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                   Saktësia Totale
@@ -183,17 +214,17 @@ export const TestResultScreen = () => {
               {/* Details */}
               <View className="flex-row justify-between">
                  <View className="items-center flex-1">
-                    <Text className="text-2xl font-bold text-slate-900 dark:text-white">{attempt.score}</Text>
+                    <Text className="text-2xl font-bold text-slate-900 dark:text-white">{resultData.score}</Text>
                     <Text className="text-xs text-slate-400 dark:text-slate-500 font-semibold">Të Sakta</Text>
                  </View>
                  <View className="w-px bg-slate-100 dark:bg-slate-800 h-full mx-4" />
                  <View className="items-center flex-1">
-                    <Text className="text-2xl font-bold text-slate-900 dark:text-white">{attempt.total_questions}</Text>
+                    <Text className="text-2xl font-bold text-slate-900 dark:text-white">{resultData.total_questions}</Text>
                     <Text className="text-xs text-slate-400 dark:text-slate-500 font-semibold">Pyetje</Text>
                  </View>
                  <View className="w-px bg-slate-100 dark:bg-slate-800 h-full mx-4" />
                  <View className="items-center flex-1">
-                    <Text className="text-2xl font-bold text-slate-900 dark:text-white">{attempt.category}</Text>
+                    <Text className="text-2xl font-bold text-slate-900 dark:text-white">{resultData.category}</Text>
                     <Text className="text-xs text-slate-400 dark:text-slate-500 font-semibold">Kategoria</Text>
                  </View>
               </View>
@@ -295,20 +326,38 @@ export const TestResultScreen = () => {
             )}
           </View>
 
+          {/* Guest mode banner */}
+          {isGuestMode && (
+            <View className="mb-6 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 p-4">
+              <Text className="text-amber-800 dark:text-amber-300 font-semibold text-sm mb-1">
+                Rezultati nuk u ruajt
+              </Text>
+              <Text className="text-amber-700 dark:text-amber-400 text-xs leading-5">
+                Krijoni një llogari falas për të ruajtur progresin tuaj dhe për të pasur qasje në të gjitha testet.
+              </Text>
+              <TouchableOpacity 
+                onPress={() => navigation.navigate("Register")}
+                className="mt-3 bg-amber-600 dark:bg-amber-700 py-2.5 rounded-xl"
+              >
+                <Text className="text-white font-bold text-center text-sm">Regjistrohu Falas</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* Actions */}
           <View className="mt-2 w-full gap-3">
             <TouchableOpacity 
               activeOpacity={0.9}
               onPress={() => {
-                if (attempt.test_set_id) {
+                if (resultData.test_set_id) {
                   navigation.navigate("TestRunner", {
-                    testId: attempt.test_set_id,
-                    category: attempt.category,
+                    testId: resultData.test_set_id,
+                    category: resultData.category,
                   });
                 } else {
                   navigation.navigate("TestRunner", {
                     testId: "random",
-                    category: attempt.category,
+                    category: resultData.category,
                   });
                 }
               }}
@@ -336,3 +385,5 @@ export const TestResultScreen = () => {
     </View>
   );
 };
+
+

@@ -21,6 +21,7 @@
     "expo": "~54.0.25",
     "expo-dev-client": "^6.0.18",
     "expo-linear-gradient": "~15.0.7",
+    "expo-network": "~8.0.7",
     "expo-status-bar": "~3.0.8",
     "expo-system-ui": "^6.0.8",
     "lucide-react-native": "^0.554.0",
@@ -42,7 +43,7 @@
   "devDependencies": {
     "@types/react": "~19.1.0",
     "autoprefixer": "^10.4.22",
-    "eas-cli": "^16.28.0",
+    "eas-cli": "^0.0.0",
     "postcss": "^8.5.6",
     "typescript": "~5.9.2"
   },

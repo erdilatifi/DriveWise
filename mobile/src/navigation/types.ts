@@ -21,7 +21,27 @@ export type RootStackParamList = {
   CategorySelection: undefined;
   TestInstructions: { testId: string; category: string };
   TestRunner: { testId: string; category: string };
-  TestResult: { attemptId: string };
+  TestResult: { 
+    attemptId?: string;
+    // Guest mode results (not saved to DB)
+    guestResult?: {
+      percentage: number;
+      score: number;
+      totalQuestions: number;
+      category: string;
+      answers: Array<{
+        questionId: string;
+        selectedAnswer: string;
+        correctAnswer: string;
+        isCorrect: boolean;
+        questionText: string;
+        imageUrl?: string;
+        optionA?: string;
+        optionB?: string;
+        optionC?: string;
+      }>;
+    };
+  };
   DecisionGame: { category: string; scenarioId?: string; topic?: string };
   DecisionScenarios: { category: string };
   Subscription: undefined;

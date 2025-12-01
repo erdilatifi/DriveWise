@@ -16,7 +16,8 @@ import { useScenarios, useCompleteCategory } from "@drivewise/core";
 import { Button } from "../../components/ui/Button";
 import { X, CheckCircle, XCircle, Clock, Play } from "lucide-react-native";
 import { clsx } from "clsx";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { useTheme } from "../../theme";
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -39,6 +40,7 @@ export const DecisionGameScreen = () => {
   const route = useRoute<RouteProps>();
   const { category, scenarioId, topic } = route.params;
   const { user } = useAuth();
+  const { isDark } = useTheme();
 
   // Fetch scenarios filtered by category and optionally topic
   // @ts-ignore
@@ -197,23 +199,23 @@ export const DecisionGameScreen = () => {
 
   if (!allScenarios || allScenarios.length === 0) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-slate-50 p-6">
+      <SafeAreaView className="flex-1 items-center justify-center bg-slate-50 dark:bg-slate-950 p-6">
         <View className="items-center">
-          <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-slate-100 border border-slate-200">
+          <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
             {/* @ts-ignore */}
-            <XCircle size={48} color="#94a3b8" />
+            <XCircle size={48} color={isDark ? "#64748b" : "#94a3b8"} />
           </View>
-          <Text className="mb-2 text-xl font-bold text-slate-900 text-center">
+          <Text className="mb-2 text-xl font-bold text-slate-900 dark:text-white text-center">
             Nuk u gjetën skenarë
           </Text>
-          <Text className="mb-8 text-base text-slate-500 text-center">
+          <Text className="mb-8 text-base text-slate-500 dark:text-slate-400 text-center">
             Nuk ka skenarë të disponueshëm për këtë kategori aktualisht.
           </Text>
 
           <Button
             label="Kthehu mbrapa"
             onPress={() => navigation.goBack()}
-            className="w-full min-w-[200px] bg-[#1e1b4b]"
+            className="w-full min-w-[200px] bg-[#1e1b4b] dark:bg-indigo-600"
             textClassName="text-white font-bold"
           />
         </View>
@@ -223,23 +225,23 @@ export const DecisionGameScreen = () => {
 
   if (!currentScenario || gameState === "finished") {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-slate-50 p-6">
+      <SafeAreaView className="flex-1 items-center justify-center bg-slate-50 dark:bg-slate-950 p-6">
         <View className="items-center">
-          <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-yellow-100 border border-yellow-200">
+          <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800">
             <Text className="text-4xl">🏆</Text>
           </View>
-          <Text className="mb-2 text-3xl font-bold text-slate-900">
+          <Text className="mb-2 text-3xl font-bold text-slate-900 dark:text-white">
             Sesioni përfundoi!
           </Text>
-          <Text className="mb-8 text-lg text-slate-500">
+          <Text className="mb-8 text-lg text-slate-500 dark:text-slate-400">
             Pikët e fituara:{" "}
-            <Text className="font-semibold text-yellow-600">{score} XP</Text>
+            <Text className="font-semibold text-yellow-600 dark:text-yellow-400">{score} XP</Text>
           </Text>
 
           <Button
             label="Kthehu në menu"
             onPress={() => navigation.goBack()}
-            className="w-full min-w-[200px] bg-[#1e1b4b]"
+            className="w-full min-w-[200px] bg-[#1e1b4b] dark:bg-indigo-600"
             textClassName="text-white font-bold"
           />
         </View>
@@ -248,39 +250,39 @@ export const DecisionGameScreen = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={["top", "bottom"]}>
+    <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-950" edges={["top", "bottom"]}>
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-slate-200">
+      <View className="flex-row items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
         <TouchableOpacity
           onPress={() => navigation.goBack()}
-          className="h-10 w-10 items-center justify-center rounded-full bg-slate-100 border border-slate-200"
+          className="h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
         >
           {/* @ts-ignore */}
-          <X size={20} color="#1e293b" />
+          <X size={20} color={isDark ? "#94a3b8" : "#1e293b"} />
         </TouchableOpacity>
 
         <View className="flex-row items-center gap-2">
           {/* Timer Pill */}
           <View className={clsx(
             "flex-row items-center rounded-full border px-3 py-1.5",
-            timeLeft <= 10 ? "border-red-200 bg-red-50" : "border-slate-200 bg-slate-100"
+            timeLeft <= 10 ? "border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/30" : "border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800"
           )}>
             {/* @ts-ignore */}
-            <Clock size={14} color={timeLeft <= 10 ? "#ef4444" : "#64748b"} />
+            <Clock size={14} color={timeLeft <= 10 ? "#ef4444" : (isDark ? "#94a3b8" : "#64748b")} />
             <Text className={clsx(
               "ml-1 text-xs font-bold tabular-nums",
-              timeLeft <= 10 ? "text-red-600" : "text-slate-700"
+              timeLeft <= 10 ? "text-red-600 dark:text-red-400" : "text-slate-700 dark:text-slate-300"
             )}>
               {timeLeft}s
             </Text>
           </View>
 
           {/* XP pill */}
-          <View className="flex-row items-center rounded-full border border-yellow-200 bg-yellow-50 px-3 py-1.5">
-            <Text className="mr-1 text-xs font-bold text-yellow-700">
+          <View className="flex-row items-center rounded-full border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/30 px-3 py-1.5">
+            <Text className="mr-1 text-xs font-bold text-yellow-700 dark:text-yellow-400">
               {score}
             </Text>
-            <Text className="text-[10px] font-semibold uppercase tracking-[0.16em] text-yellow-600">
+            <Text className="text-[10px] font-semibold uppercase tracking-[0.16em] text-yellow-600 dark:text-yellow-500">
               XP
             </Text>
           </View>
@@ -288,9 +290,9 @@ export const DecisionGameScreen = () => {
       </View>
 
       {/* Progress Bar */}
-      <View className="h-1 w-full bg-slate-200">
+      <View className="h-1 w-full bg-slate-200 dark:bg-slate-800">
         <View
-          className="h-full bg-[#1e1b4b]"
+          className="h-full bg-[#1e1b4b] dark:bg-indigo-500"
           style={{
             width: `${((currentIndex + 1) / gameScenarios.length) * 100}%`,
           }}
@@ -300,12 +302,12 @@ export const DecisionGameScreen = () => {
       {/* Content */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 200 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Scenario Image */}
         {currentScenario.image_url && (
-          <View className="mb-6 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+          <View className="mb-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 shadow-sm dark:shadow-none">
             <Image
               source={{ uri: currentScenario.image_url }}
               className="h-52 w-full rounded-xl"
@@ -317,11 +319,11 @@ export const DecisionGameScreen = () => {
         {/* Question Text Card */}
         <View className="mb-6">
           <View className="flex-row justify-between items-center mb-2">
-            <Text className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <Text className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Skenari {currentIndex + 1}/{gameScenarios.length}
             </Text>
           </View>
-          <Text className="text-xl font-bold leading-8 text-slate-900">
+          <Text className="text-xl font-bold leading-8 text-slate-900 dark:text-white">
             {currentScenario.question}
           </Text>
         </View>
@@ -332,39 +334,39 @@ export const DecisionGameScreen = () => {
             const isSelected = selectedOptions.includes(index);
             const isFeedbackMode = gameState === "feedback";
 
-            let borderClass = "border-slate-200";
-            let bgClass = "bg-white";
-            let textClass = "text-slate-700 font-medium";
-            let indexBgClass = "bg-slate-50 border-slate-200";
-            let indexTextClass = "text-slate-500";
+            let borderClass = "border-slate-200 dark:border-slate-700";
+            let bgClass = "bg-white dark:bg-slate-900";
+            let textClass = "text-slate-700 dark:text-slate-300 font-medium";
+            let indexBgClass = "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700";
+            let indexTextClass = "text-slate-500 dark:text-slate-400";
             let icon: React.ReactNode = null;
 
             if (isFeedbackMode) {
               if (option.isCorrect) {
                 // Always highlight correct answer in feedback
-                borderClass = "border-green-500";
-                bgClass = "bg-green-50";
-                textClass = "text-green-900 font-bold";
-                indexBgClass = "bg-green-100 border-green-200";
-                indexTextClass = "text-green-700";
+                borderClass = "border-green-500 dark:border-green-600";
+                bgClass = "bg-green-50 dark:bg-green-900/30";
+                textClass = "text-green-900 dark:text-green-300 font-bold";
+                indexBgClass = "bg-green-100 dark:bg-green-800 border-green-200 dark:border-green-700";
+                indexTextClass = "text-green-700 dark:text-green-300";
                 // @ts-ignore
                 icon = <CheckCircle size={20} color="#16a34a" />;
               } else if (isSelected && !option.isCorrect) {
                 // Highlight wrong selection
-                borderClass = "border-red-500";
-                bgClass = "bg-red-50";
-                textClass = "text-red-900 font-bold";
-                indexBgClass = "bg-red-100 border-red-200";
-                indexTextClass = "text-red-700";
+                borderClass = "border-red-500 dark:border-red-600";
+                bgClass = "bg-red-50 dark:bg-red-900/30";
+                textClass = "text-red-900 dark:text-red-300 font-bold";
+                indexBgClass = "bg-red-100 dark:bg-red-800 border-red-200 dark:border-red-700";
+                indexTextClass = "text-red-700 dark:text-red-300";
                 // @ts-ignore
                 icon = <XCircle size={20} color="#dc2626" />;
               }
             } else {
               if (isSelected) {
-                borderClass = "border-[#1e1b4b]";
-                bgClass = "bg-blue-50";
-                textClass = "text-[#1e1b4b] font-bold";
-                indexBgClass = "bg-[#1e1b4b] border-[#1e1b4b]";
+                borderClass = "border-[#1e1b4b] dark:border-indigo-500";
+                bgClass = "bg-blue-50 dark:bg-indigo-900/30";
+                textClass = "text-[#1e1b4b] dark:text-indigo-300 font-bold";
+                indexBgClass = "bg-[#1e1b4b] dark:bg-indigo-600 border-[#1e1b4b] dark:border-indigo-600";
                 indexTextClass = "text-white";
               }
             }
@@ -402,44 +404,51 @@ export const DecisionGameScreen = () => {
       </ScrollView>
 
       {/* Footer Controls */}
-      <View className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white px-4 pt-4 pb-10 shadow-lg">
+      <View className="absolute bottom-0 left-0 right-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 pt-4 pb-10 shadow-lg dark:shadow-none">
         <View className="w-full">
           {gameState === "playing" ? (
             <Button
               label="Konfirmo"
-              onPress={() => handleSubmitAnswer(false)}
+              onPress={() => {
+                if (selectedOptions.length > 0) {
+                  handleSubmitAnswer(false);
+                }
+              }}
+              activeOpacity={selectedOptions.length > 0 ? 0.7 : 1}
               className={clsx(
-                "w-full shadow-md",
-                selectedOptions.length > 0 
-                  ? "bg-[#1e1b4b] shadow-blue-200" 
-                  : "bg-[#1e1b4b] shadow-none"
+                "w-full transition-all",
+                selectedOptions.length > 0
+                  ? "bg-[#1e1b4b] dark:bg-indigo-600 opacity-100 shadow-md shadow-blue-200 dark:shadow-none"
+                  : "bg-[#1e1b4b] dark:bg-indigo-600 opacity-50 shadow-none"
               )}
-              disabled={selectedOptions.length === 0}
-              textClassName="text-white font-bold"
+              textClassName={clsx(
+                "font-bold",
+                selectedOptions.length > 0 ? "text-white" : "text-white/70"
+              )}
             />
           ) : (
             <View>
               <View
                 className={clsx(
-                  "mb-4 rounded-2xl border px-4 py-4 shadow-sm",
+                  "mb-4 rounded-2xl border px-4 py-4 shadow-sm dark:shadow-none",
                   isCorrect
-                    ? "border-green-200 bg-green-50"
-                    : "border-red-200 bg-red-50"
+                    ? "border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30"
+                    : "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30"
                 )}
               >
                 <View className="flex-row items-center mb-2 gap-3">
                   {/* @ts-ignore */}
-                  {isCorrect ? <CheckCircle size={20} color="#15803d" /> : <XCircle size={20} color="#b91c1c" />}
+                  {isCorrect ? <CheckCircle size={20} color={isDark ? "#22c55e" : "#15803d"} /> : <XCircle size={20} color={isDark ? "#ef4444" : "#b91c1c"} />}
                   <Text
                     className={clsx(
                       "text-base font-bold",
-                      isCorrect ? "text-green-800" : "text-red-800"
+                      isCorrect ? "text-green-800 dark:text-green-300" : "text-red-800 dark:text-red-300"
                     )}
                   >
                     {isCorrect ? "Përgjigje e saktë!" : "Përgjigje e gabuar"}
                   </Text>
                 </View>
-                <Text className="text-sm leading-5 text-slate-700 ml-1">
+                <Text className="text-sm leading-5 text-slate-700 dark:text-slate-300 ml-1">
                   {currentScenario.correct_explanation}
                 </Text>
               </View>
@@ -447,7 +456,7 @@ export const DecisionGameScreen = () => {
               <Button
                 label={currentIndex < (gameScenarios.length || 0) - 1 ? "Vazhdo" : "Përfundo"}
                 onPress={handleNext}
-                className="w-full bg-[#1e1b4b] shadow-md shadow-blue-200"
+                className="w-full bg-[#1e1b4b] dark:bg-indigo-600 shadow-md shadow-blue-200 dark:shadow-none"
                 textClassName="text-white font-bold"
                 // @ts-ignore
                 icon={<Play size={18} color="white" />}
@@ -459,3 +468,6 @@ export const DecisionGameScreen = () => {
     </SafeAreaView>
   );
 };
+
+
+

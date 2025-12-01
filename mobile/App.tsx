@@ -4,6 +4,24 @@ import "../global.css";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cssInterop } from "nativewind";
 import { LinearGradient } from "expo-linear-gradient";
+import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+
+// Providers
+import { AuthProvider } from './src/contexts/AuthContext';
+import { CategoryProvider } from './src/contexts/CategoryContext';
+import { ThemeProvider, useTheme } from './src/theme';
+import { SupabaseProvider } from '@drivewise/core';
+import { supabase } from './src/lib/supabase';
+
+// Components
+import { RootNavigator } from './src/navigation/RootNavigator';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { LoadingScreen } from './src/components/ui/LoadingScreen';
+import { NetworkStatus } from './src/components/NetworkStatus';
+import { useAuth } from './src/contexts/AuthContext';
+import { useCategory } from './src/contexts/CategoryContext';
 
 // Configure 3rd party components for NativeWind
 cssInterop(LinearGradient, {
@@ -18,21 +36,6 @@ LogBox.ignoreLogs([
   "SafeAreaView has been deprecated",
 ]);
 
-import { AuthProvider } from '@/contexts/AuthContext';
-import { CategoryProvider } from '@/contexts/CategoryContext';
-import { ThemeProvider } from '@/contexts/ThemeContext';
-import { RootNavigator } from '@/navigation/RootNavigator';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { SupabaseProvider } from '@drivewise/core';
-import { supabase } from '@/lib/supabase';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { StatusBar } from 'expo-status-bar';
-import { useTheme } from '@/contexts/ThemeContext';
-import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCategory } from '@/contexts/CategoryContext';
-import { LoadingScreen } from '@/components/ui/LoadingScreen';
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -43,19 +46,21 @@ const queryClient = new QueryClient({
   },
 });
 
+// Inner app content that needs access to contexts
 function AppContent() {
-  const { isDark } = useTheme();
+  const { colors } = useTheme();
   const { loading: authLoading } = useAuth();
   const { loading: categoryLoading } = useCategory();
 
   if (authLoading || categoryLoading) {
     return <LoadingScreen />;
   }
-  
+
   return (
     <View className="flex-1 bg-white dark:bg-slate-950">
-      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <StatusBar style={colors.statusBarStyle} />
       <RootNavigator />
+      <NetworkStatus />
     </View>
   );
 }

@@ -43,12 +43,12 @@ export const TestHistoryScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-      <View className="px-6 py-4 flex-row items-center border-b border-gray-100">
+    <SafeAreaView className="flex-1 bg-white dark:bg-slate-950" edges={['top']}>
+      <View className="px-6 py-4 flex-row items-center border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
         <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
           <ChevronLeft size={24} color="#35565f" />
         </TouchableOpacity>
-        <Text className="text-xl font-bold text-[#35565f]">Historiku i Testeve</Text>
+        <Text className="text-xl font-bold text-[#35565f] dark:text-white">Historiku i Testeve</Text>
       </View>
 
       <FlatList
@@ -57,7 +57,7 @@ export const TestHistoryScreen = () => {
         contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
         ListEmptyComponent={
           <View className="items-center justify-center py-10">
-            <Text className="text-gray-400 text-center">Nuk keni bërë asnjë test akoma.</Text>
+            <Text className="text-gray-400 dark:text-slate-500 text-center">Nuk keni bërë asnjë test akoma.</Text>
           </View>
         }
         renderItem={({ item }) => {
@@ -65,11 +65,11 @@ export const TestHistoryScreen = () => {
           return (
             <TouchableOpacity
               onPress={() => navigation.navigate('TestResult', { attemptId: item.id })}
-              className="mb-4 flex-row items-center rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
+              className="mb-4 flex-row items-center rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm dark:shadow-none"
             >
               <View className={clsx(
                 "h-12 w-12 items-center justify-center rounded-full mr-4",
-                isPassed ? "bg-green-50" : "bg-red-50"
+                isPassed ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20"
               )}>
                 {isPassed ? (
                   // @ts-ignore
@@ -81,12 +81,12 @@ export const TestHistoryScreen = () => {
               </View>
               
               <View className="flex-1">
-                <Text className="text-base font-bold text-[#35565f]">
+                <Text className="text-base font-bold text-[#35565f] dark:text-white">
                   Testi {item.test_number}
                 </Text>
                 <View className="flex-row items-center mt-1">
                   <Calendar size={12} color="#9CA3AF" className="mr-1" />
-                  <Text className="text-xs text-gray-400">
+                  <Text className="text-xs text-gray-400 dark:text-slate-500">
                     {new Date(item.completed_at).toLocaleDateString('sq-AL')}
                   </Text>
                 </View>
@@ -95,11 +95,11 @@ export const TestHistoryScreen = () => {
               <View className="items-end mr-3">
                 <Text className={clsx(
                   "text-lg font-extrabold",
-                  isPassed ? "text-green-600" : "text-red-500"
+                  isPassed ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"
                 )}>
                   {item.percentage}%
                 </Text>
-                <Text className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+                <Text className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">
                   {item.score}/{item.total_questions}
                 </Text>
               </View>
@@ -130,3 +130,5 @@ export const TestHistoryScreen = () => {
     </SafeAreaView>
   );
 };
+
+

@@ -1,8 +1,8 @@
 import React, { useMemo } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useCategory } from "@/contexts/CategoryContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCategory } from "../../contexts/CategoryContext";
+import { useAuth } from "../../contexts/AuthContext";
 import {
   useDashboardStats,
   useTestCount,
@@ -24,11 +24,11 @@ import {
 } from "lucide-react-native";
 import { clsx } from "clsx";
 import { useNavigation } from "@react-navigation/native";
-import { RootStackParamList } from "@/navigation/types";
+import { RootStackParamList } from "../../navigation/types";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
+import { DashboardSkeleton } from "../../components/skeletons/DashboardSkeleton";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, "App">;
 
@@ -43,7 +43,7 @@ export const TestsScreen: React.FC = () => {
 
   const { data: stats, isLoading: statsLoading } = useDashboardStats(user?.id);
   const { data: globalStreak } = useGlobalDailyStreak(user?.id);
-  const { data: testCount = 30 } = useTestCount(selectedCategory || "B");
+  const { data: testCount, isLoading: testCountLoading } = useTestCount(selectedCategory || "B");
   const { data: plans } = useUserPlans(user?.id);
 
   const isGuest = !user;
@@ -57,6 +57,7 @@ export const TestsScreen: React.FC = () => {
     );
   }, [plans, selectedCategory, profile]);
 
+  // Only use testCount when it's loaded, otherwise show skeleton
   const validTestCount = testCount && testCount > 0 ? testCount : 30;
 
   const tests = useMemo(
@@ -69,7 +70,13 @@ export const TestsScreen: React.FC = () => {
     [validTestCount, hasCategoryAccess]
   );
 
-  if (user && statsLoading) {
+  // Show skeleton while essential data is loading
+  if (user && (statsLoading || testCountLoading)) {
+    return <DashboardSkeleton />;
+  }
+
+  // For guests, also wait for test count
+  if (!user && testCountLoading) {
     return <DashboardSkeleton />;
   }
 
@@ -86,9 +93,9 @@ export const TestsScreen: React.FC = () => {
   // ---------- SUBCOMPONENTS ----------
 
   const getBarColor = (score: number) => {
-    if (score < 30) return "bg-violet-300 dark:bg-violet-900";
-    if (score < 70) return "bg-violet-500 dark:bg-violet-600";
-    return "bg-violet-700 dark:bg-violet-400";
+    if (score < 30) return "bg-violet-300";
+    if (score < 70) return "bg-violet-500";
+    return "bg-violet-700";
   };
 
   const GuestHeader = () => (
@@ -113,7 +120,7 @@ export const TestsScreen: React.FC = () => {
           <View className="h-12 w-12 rounded-2xl bg-slate-50 dark:bg-slate-800 items-center justify-center border border-slate-100 dark:border-slate-700 mb-2">
             <BookOpen size={20} color={PRIMARY} />
           </View>
-          <Text className="text-xs font-semibold text-slate-900 dark:text-slate-200">
+          <Text className="text-xs font-semibold text-slate-900 dark:text-white">
             Literatura
           </Text>
           <Text className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 text-center">
@@ -129,7 +136,7 @@ export const TestsScreen: React.FC = () => {
           <View className="h-12 w-12 rounded-2xl bg-slate-50 dark:bg-slate-800 items-center justify-center border border-slate-100 dark:border-slate-700 mb-2">
             <BrainCircuit size={20} color={PRIMARY} />
           </View>
-          <Text className="text-xs font-semibold text-slate-900 dark:text-slate-200">
+          <Text className="text-xs font-semibold text-slate-900 dark:text-white">
             Trajneri
           </Text>
           <Text className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 text-center">
@@ -145,7 +152,7 @@ export const TestsScreen: React.FC = () => {
           <View className="h-12 w-12 rounded-2xl bg-slate-50 dark:bg-slate-800 items-center justify-center border border-slate-100 dark:border-slate-700 mb-2">
             <FileText size={20} color={PRIMARY} />
           </View>
-          <Text className="text-xs font-semibold text-slate-900 dark:text-slate-200">
+          <Text className="text-xs font-semibold text-slate-900 dark:text-white">
             Testet
           </Text>
           <Text className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 text-center">
@@ -158,7 +165,7 @@ export const TestsScreen: React.FC = () => {
       <TouchableOpacity
         activeOpacity={0.9}
         onPress={() => navigation.getParent()?.navigate("Login")}
-        className="mt-8 bg-slate-900 dark:bg-indigo-600 py-4 rounded-full flex-row items-center justify-center shadow-sm shadow-slate-200"
+        className="mt-8 bg-slate-900 dark:bg-indigo-600 py-4 rounded-full flex-row items-center justify-center shadow-sm shadow-slate-200 dark:shadow-none"
       >
         <LogIn size={18} color="white" />
         <Text className="text-white font-bold text-sm ml-2">
@@ -277,7 +284,7 @@ export const TestsScreen: React.FC = () => {
                               "mt-1 text-[9px] font-medium",
                               isToday
                                 ? "text-slate-900 dark:text-white"
-                                : "text-slate-400 dark:text-slate-600"
+                                : "text-slate-400 dark:text-slate-500"
                             )}
                             numberOfLines={1}
                           >
@@ -288,7 +295,7 @@ export const TestsScreen: React.FC = () => {
                     })
                   ) : (
                     <View className="flex-1 items-center justify-center">
-                      <Text className="text-slate-400 text-xs">
+                      <Text className="text-slate-400 dark:text-slate-500 text-xs">
                         Ende nuk ka rezultate për këtë javë.
                       </Text>
                     </View>
@@ -307,14 +314,19 @@ export const TestsScreen: React.FC = () => {
             {/* Random test (primary hero card) */}
             <TouchableOpacity
               activeOpacity={0.9}
-              onPress={() =>
-                navigation
-                  .getParent()
-                  ?.navigate("TestInstructions", {
-                    testId: "random",
-                    category: selectedCategory!,
-                  })
-              }
+              onPress={() => {
+                if (!hasCategoryAccess) {
+                  // Guests/non-premium: redirect to subscription or allow only test 1
+                  navigation.getParent()?.navigate("Subscription");
+                } else {
+                  navigation
+                    .getParent()
+                    ?.navigate("TestInstructions", {
+                      testId: "random",
+                      category: selectedCategory!,
+                    });
+                }
+              }}
               className="mb-3"
             >
               <LinearGradient
@@ -452,3 +464,6 @@ export const TestsScreen: React.FC = () => {
     </View>
   );
 };
+
+
+
