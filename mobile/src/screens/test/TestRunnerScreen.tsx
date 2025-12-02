@@ -353,7 +353,7 @@ export const TestRunnerScreen = () => {
         </ScrollView>
 
         {/* Footer Controls */}
-        <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-900 px-6 pt-4 pb-12 border-t border-slate-100 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] dark:shadow-none">
+        <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-900 px-6 pt-4 pb-20 border-t border-slate-100 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] dark:shadow-none">
           {/* Question Navigation Grid */}
           <View className="mb-8">
             <Text className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Pyetjet</Text>

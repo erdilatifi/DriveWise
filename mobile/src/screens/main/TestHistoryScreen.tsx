@@ -54,7 +54,7 @@ export const TestHistoryScreen = () => {
       <FlatList
         data={history}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: 24, paddingBottom: 200 }}
         ListEmptyComponent={
           <View className="items-center justify-center py-10">
             <Text className="text-gray-400 dark:text-slate-500 text-center">Nuk keni bërë asnjë test akoma.</Text>

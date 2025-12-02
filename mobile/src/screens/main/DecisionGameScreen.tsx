@@ -404,7 +404,7 @@ export const DecisionGameScreen = () => {
       </ScrollView>
 
       {/* Footer Controls */}
-      <View className="absolute bottom-0 left-0 right-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 pt-4 pb-10 shadow-lg dark:shadow-none">
+      <View className="absolute bottom-0 left-0 right-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 pt-4 pb-24 shadow-lg dark:shadow-none">
         <View className="w-full">
           {gameState === "playing" ? (
             <Button

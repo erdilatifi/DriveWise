@@ -16,6 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Linking from 'expo-linking';
 import {
   X,
   Check,
@@ -110,8 +111,14 @@ export const LoginScreen = () => {
     setForgotLoading(true);
     setForgotError(null);
     try {
+      // Create deep link URL for password reset redirect
+      // Use direct scheme in dev for reliable testing with Expo Go
+      const redirectUrl = __DEV__ 
+        ? 'drivewise://reset-password'
+        : Linking.createURL('reset-password');
+      
       const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-        redirectTo: 'drivewise://reset-password',
+        redirectTo: redirectUrl,
       });
       if (error) throw error;
       setForgotSuccess(true);

@@ -39,7 +39,7 @@ export const DecisionTrainerScreen = () => {
   return (
     <View className="flex-1 bg-white dark:bg-slate-950">
       <SafeAreaView className="flex-1" edges={['top']}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 200 }} showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View className="px-6 pt-8 pb-8 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 rounded-b-[32px] mb-6">
             <View className="flex-row items-center justify-between mb-6">

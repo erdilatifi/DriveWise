@@ -8,6 +8,7 @@ import {
   Platform,
   StyleSheet,
   TextInput,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
@@ -15,6 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Linking from 'expo-linking';
 import {
   X,
   Check,
@@ -58,10 +60,18 @@ export const RegisterScreen = () => {
     setLoading(true);
     setError(null);
     try {
-      const { error } = await supabase.auth.signUp({
+      // Create a deep link URL for email confirmation redirect
+      // In development (Expo Go), this generates exp://... URLs
+      // In production/dev-builds, this generates drivewise://... URLs
+      const redirectUrl = __DEV__ 
+        ? 'drivewise://auth/callback'  // Use scheme directly for dev (add to Supabase allowlist)
+        : Linking.createURL('auth/callback');
+      
+      const { error, data: signUpData } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
+          emailRedirectTo: redirectUrl,
           data: {
             full_name: data.full_name,
           },
@@ -70,10 +80,27 @@ export const RegisterScreen = () => {
 
       if (error) throw error;
 
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'App' as any }],
-      });
+      // If email confirmation is required, show success message
+      // Otherwise, user is auto-logged in
+      if (signUpData?.user && !signUpData.session) {
+        // Email confirmation required
+        Alert.alert(
+          'Regjistrimi u krye!',
+          'Kemi dërguar një link konfirmimi në email-in tuaj. Hapeni email-in dhe klikoni linkun për të aktivizuar llogarinë, pastaj hyni këtu.',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.replace('Login'),
+            },
+          ]
+        );
+      } else if (signUpData?.session) {
+        // Auto-logged in (email confirmation disabled in Supabase)
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'App' as any }],
+        });
+      }
     } catch (err: any) {
       setError(err.message || 'Ndodhi një gabim gjatë regjistrimit');
     } finally {

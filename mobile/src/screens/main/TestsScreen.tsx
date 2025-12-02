@@ -21,6 +21,7 @@ import {
   BrainCircuit,
   FileText,
   LogIn,
+  ChevronRight,
 } from "lucide-react-native";
 import { clsx } from "clsx";
 import { useNavigation } from "@react-navigation/native";
@@ -38,7 +39,7 @@ const BG_COLOR = "#F7F8FA";
 
 export const TestsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
-  const { selectedCategory } = useCategory();
+  const { selectedCategory, setCategory } = useCategory();
   const { user, profile } = useAuth();
 
   const { data: stats, isLoading: statsLoading } = useDashboardStats(user?.id);
@@ -57,7 +58,7 @@ export const TestsScreen: React.FC = () => {
     );
   }, [plans, selectedCategory, profile]);
 
-  // Only use testCount when it's loaded, otherwise show skeleton
+  // Show 30 tests while loading or if count is 0
   const validTestCount = testCount && testCount > 0 ? testCount : 30;
 
   const tests = useMemo(
@@ -70,13 +71,8 @@ export const TestsScreen: React.FC = () => {
     [validTestCount, hasCategoryAccess]
   );
 
-  // Show skeleton while essential data is loading
-  if (user && (statsLoading || testCountLoading)) {
-    return <DashboardSkeleton />;
-  }
-
-  // For guests, also wait for test count
-  if (!user && testCountLoading) {
+  // Only show skeleton while loading user stats (not test count - show tests immediately)
+  if (user && statsLoading) {
     return <DashboardSkeleton />;
   }
 
@@ -236,7 +232,7 @@ export const TestsScreen: React.FC = () => {
     <View className="flex-1 bg-[#F7F8FA] dark:bg-slate-950">
       <SafeAreaView className="flex-1" edges={["top"]}>
         <ScrollView
-          contentContainerStyle={{ paddingBottom: 120 }}
+          contentContainerStyle={{ paddingBottom: 200 }}
           showsVerticalScrollIndicator={false}
         >
           {/* Header */}
@@ -392,11 +388,16 @@ export const TestsScreen: React.FC = () => {
               <Text className="text-base font-semibold text-slate-900 dark:text-white">
                 Të gjitha testet
               </Text>
-              <View className="bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
-                <Text className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+              <TouchableOpacity 
+                activeOpacity={0.8}
+                onPress={() => setCategory(null)}
+                className="bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 flex-row items-center"
+              >
+                <Text className="text-[11px] font-medium text-slate-600 dark:text-slate-300 mr-1">
                   Kategoria {selectedCategory}
                 </Text>
-              </View>
+                <ChevronRight size={12} color="#64748b" />
+              </TouchableOpacity>
             </View>
 
             <View className="flex-row flex-wrap justify-between gap-y-4">

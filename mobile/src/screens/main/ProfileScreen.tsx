@@ -113,7 +113,7 @@ export const ProfileScreen = () => {
   return (
     <View className="flex-1 bg-white dark:bg-slate-950">
       <SafeAreaView className="flex-1" edges={['top']}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 140 }} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 200 }} showsVerticalScrollIndicator={false}>
           
           {/* Header Profile Section */}
           <View className="items-center pt-8 pb-8 px-6 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 rounded-b-[32px]">

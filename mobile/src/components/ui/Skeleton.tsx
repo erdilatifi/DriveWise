@@ -33,7 +33,7 @@ export function Skeleton({ className, style, ...props }: SkeletonProps) {
 
   return (
     <Animated.View
-      className={cn("bg-muted/10 bg-gray-200 rounded-md", className)}
+      className={cn("bg-slate-200 dark:bg-slate-800 rounded-md", className)}
       style={[animatedStyle, style]}
       {...props}
     />

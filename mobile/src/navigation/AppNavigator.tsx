@@ -51,7 +51,6 @@ const icons: Partial<IconMap> = {
 
 // ---------- CUSTOM TAB BAR ----------
 const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBarProps) => {
-  // Single animated value for current index
   const position = useRef(new Animated.Value(state.index)).current;
   const { isDark, colors } = useTheme();
 
@@ -100,7 +99,6 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
 
           const inputRange = [index - 1, index, index + 1];
 
-          // Circle + icon lifting
           const circleScale = position.interpolate({
             inputRange,
             outputRange: [0, 1, 0],
@@ -113,10 +111,9 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
             extrapolate: "clamp",
           });
 
-          // Move the whole circle+icon up a bit from the bar
           const iconTranslateY = position.interpolate({
             inputRange,
-            outputRange: [0, -14, 0], // higher lift, but bar is lower, so it sits nicely
+            outputRange: [0, -14, 0],
             extrapolate: "clamp",
           });
 
@@ -126,7 +123,6 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
             extrapolate: "clamp",
           });
 
-          // Label stays near the bar, doesn’t fly too high
           const labelOpacity = position.interpolate({
             inputRange,
             outputRange: [0.6, 1, 0.6],
@@ -275,14 +271,13 @@ export default AppNavigator;
 
 // ---------- STYLES ----------
 const styles = StyleSheet.create({
-  // Floating bar, centered horizontally, not attached to sides
   tabBarContainer: {
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: Platform.OS === "ios" ? 30 : 24,
+    bottom: Platform.OS === "ios" ? 44 : 52,
     alignItems: "center",
-    backgroundColor: "transparent", // your screen background shows behind
+    backgroundColor: "transparent",
   },
   tabBarInner: {
     width: "86%",
@@ -297,8 +292,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
 
     paddingHorizontal: 22,
-    paddingTop: 26, // more top space so circle can sit nicely in the middle of the top edge
-    paddingBottom: 12,
+    paddingTop: 18,
+    paddingBottom: 2,
 
     overflow: "visible",
     elevation: 16,
@@ -312,14 +307,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-end",
   },
-  // This wrapper is positioned so its center is on the top edge of the bar
   iconWrapper: {
     width: 50,
     height: 50,
     borderRadius: 25,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: -25, // half of height -> center at the top edge of the card
+    marginTop: -20, // UPDATED
   },
   activeCircle: {
     position: "absolute",
@@ -334,10 +328,9 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   label: {
-    marginTop: 4,
+    marginTop: 0, // UPDATED (tighter)
+    marginBottom: 6, // UPDATED
     fontSize: 12,
     fontWeight: "600",
   },
 });
-
-

@@ -72,7 +72,8 @@ export function useMaterials(params: MaterialsQueryParams = {}) {
       }
 
       if (category) {
-        query = query.eq('category', category);
+        // Include materials specific to the category OR shared materials (category is null)
+        query = query.or(`category.eq.${category},category.is.null`);
       }
 
       if (!includeUnpublished) {

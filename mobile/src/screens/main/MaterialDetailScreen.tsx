@@ -23,6 +23,40 @@ export const MaterialDetailScreen = () => {
     );
   }
 
+  // Render a section with title and points (matching web structure)
+  const renderSection = (section: any, index: number): React.ReactNode => {
+    const pointsRaw = section.points;
+    const pointsArray = Array.isArray(pointsRaw)
+      ? pointsRaw
+      : typeof pointsRaw === 'string'
+        ? [pointsRaw]
+        : [];
+
+    return (
+      <View key={section.order ?? index} className="mb-6 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+        {section.title && (
+          <View className="flex-row items-center mb-4">
+            <View className="h-2 w-2 rounded-full bg-indigo-500 mr-3" />
+            <Text className="text-lg font-bold text-slate-900 dark:text-white flex-1">
+              {section.title}
+            </Text>
+          </View>
+        )}
+        {pointsArray.length > 0 && (
+          <View className="gap-3">
+            {pointsArray.map((point: any, idx: number) => (
+              <View key={idx} className="flex-row items-start pl-4 border-l-2 border-slate-200 dark:border-slate-600">
+                <Text className="text-sm text-slate-600 dark:text-slate-300 leading-6 flex-1">
+                  {typeof point === 'string' ? point : String(point)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  };
+
   // Generic JSON Renderer (mirrors web implementation)
   const renderContentValue = (value: any, depth: number = 0): React.ReactNode => {
     if (!value) return null;
@@ -36,15 +70,36 @@ export const MaterialDetailScreen = () => {
       );
     }
 
-    // 2. Array -> List
+    // 2. Array -> Check if it's an array of sections or generic items
     if (Array.isArray(value)) {
+      // Check if this looks like a sections array (objects with title/points)
+      const looksLikeSections = value.length > 0 && 
+        typeof value[0] === 'object' && 
+        value[0] !== null &&
+        ('title' in value[0] || 'points' in value[0]);
+
+      if (looksLikeSections) {
+        return (
+          <View key={Math.random()} className="gap-4">
+            {value.map((section, idx) => renderSection(section, idx))}
+          </View>
+        );
+      }
+
+      // Generic array -> List
       return (
-        <View key={Math.random()} className="mb-4 space-y-2 pl-2">
+        <View key={Math.random()} className="mb-4 gap-2 pl-2">
           {value.map((item, idx) => (
             <View key={idx} className="flex-row items-start">
               <View className="h-1.5 w-1.5 rounded-full bg-indigo-400 mt-2.5 mr-3" />
               <View className="flex-1">
-                {renderContentValue(item, depth + 1)}
+                {typeof item === 'string' ? (
+                  <Text className="text-base text-slate-700 dark:text-slate-300 leading-6">
+                    {item}
+                  </Text>
+                ) : (
+                  renderContentValue(item, depth + 1)
+                )}
               </View>
             </View>
           ))}
@@ -59,8 +114,10 @@ export const MaterialDetailScreen = () => {
         return renderContentValue(value.chapter, depth + 1);
       }
 
-      // Specific Chapter fields
+      // Specific Chapter fields with sections array
       if (value.title || value.description || value.sections) {
+         const sections = Array.isArray(value.sections) ? value.sections : [];
+         
          return (
            <View key={Math.random()} className="mb-6">
              {value.title && (
@@ -73,16 +130,20 @@ export const MaterialDetailScreen = () => {
                  {value.description}
                </Text>
              )}
-             {value.sections && renderContentValue(value.sections, depth + 1)}
+             {sections.length > 0 && (
+               <View className="gap-4">
+                 {sections.map((section: any, idx: number) => renderSection(section, idx))}
+               </View>
+             )}
            </View>
          );
       }
 
       // Generic Object iteration (fallback for other structures)
       return (
-        <View key={Math.random()} className="space-y-4">
+        <View key={Math.random()} className="gap-4">
           {Object.entries(value).map(([key, subValue]) => {
-            // Skip internal keys or IDs if needed, but usually show content
+            // Skip internal keys or IDs if needed
             if (key === 'id' || key === 'order') return null;
             
             return (
@@ -90,7 +151,7 @@ export const MaterialDetailScreen = () => {
                 {/* Check if key is a meaningful title (not numeric index) */}
                 {isNaN(Number(key)) && (
                   <View className="flex-row items-center mb-2">
-                    <View className="h-1 w-1 rounded-full bg-indigo-500 dark:bg-indigo-400 mr-2" />
+                    <View className="h-1.5 w-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 mr-2" />
                     <Text className="text-lg font-bold text-slate-800 dark:text-white capitalize">
                       {key.replace(/_/g, ' ')}
                     </Text>
@@ -118,7 +179,7 @@ export const MaterialDetailScreen = () => {
         <Text className="text-lg font-bold text-slate-900 dark:text-white flex-1" numberOfLines={1}>{title}</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 200 }} showsVerticalScrollIndicator={false}>
         {/* Hero Images */}
         {material?.images && material.images.length > 0 && (
           <View className="mb-8">
@@ -137,13 +198,39 @@ export const MaterialDetailScreen = () => {
 
         {/* Content */}
         <View className="mb-8 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none">
-           {material?.content ? (
-             renderContentValue(material.content)
-           ) : (
-             <Text className="text-slate-400 dark:text-slate-500 italic text-center py-10">
-               Përmbajtja nuk është e disponueshme.
-             </Text>
-           )}
+           {(() => {
+             // Parse content if it's a string (Supabase might return JSONB as string)
+             let content: any = material?.content;
+             if (typeof content === 'string') {
+               try {
+                 content = JSON.parse(content);
+               } catch (e) {
+                 // If parsing fails, show the string as-is
+                 return (
+                   <Text className="text-base text-slate-700 dark:text-slate-300 leading-7">
+                     {content as string}
+                   </Text>
+                 );
+               }
+             }
+             
+             if (content && typeof content === 'object' && Object.keys(content).length > 0) {
+               return renderContentValue(content);
+             }
+             
+             return (
+               <View className="py-10">
+                 <Text className="text-slate-400 dark:text-slate-500 italic text-center mb-4">
+                   Përmbajtja nuk është e disponueshme.
+                 </Text>
+                 {__DEV__ && (
+                   <Text className="text-xs text-slate-400 dark:text-slate-600 text-center">
+                     Debug: content type = {typeof material?.content}, value = {JSON.stringify(material?.content)?.slice(0, 100)}
+                   </Text>
+                 )}
+               </View>
+             );
+           })()}
         </View>
       </ScrollView>
     </SafeAreaView>

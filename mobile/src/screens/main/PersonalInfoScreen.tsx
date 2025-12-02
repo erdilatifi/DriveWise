@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronLeft, User, Mail, Lock } from 'lucide-react-native';
+import * as Linking from 'expo-linking';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
@@ -43,8 +44,14 @@ export const PersonalInfoScreen = () => {
   const handleResetPassword = async () => {
     if (!user?.email) return;
     try {
+      // Create deep link URL for password reset redirect
+      // Use direct scheme in dev for reliable testing with Expo Go
+      const redirectUrl = __DEV__ 
+        ? 'drivewise://reset-password'
+        : Linking.createURL('reset-password');
+      
       const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-        redirectTo: 'drivewise://reset-password', // Adjust scheme if needed
+        redirectTo: redirectUrl,
       });
       if (error) throw error;
       Alert.alert('Email u dërgua', `Një email për ndryshimin e fjalëkalimit është dërguar në ${user.email}.`);

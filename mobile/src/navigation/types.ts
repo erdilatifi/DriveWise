@@ -18,6 +18,7 @@ export type RootStackParamList = {
   App: NavigatorScreenParams<MainTabParamList>;
   Login: undefined;
   Register: undefined;
+  ResetPassword: undefined;
   CategorySelection: undefined;
   TestInstructions: { testId: string; category: string };
   TestRunner: { testId: string; category: string };

@@ -437,19 +437,24 @@ export function useTestCount(category: string, enabled: boolean = true) {
   return useQuery({
     queryKey: ['test-count', category],
     queryFn: async () => {
-      
+      // Optimized: only fetch test_number column, limited fields for speed
       const { data, error } = await supabase
         .from('admin_questions')
         .select('test_number')
-        .eq('category', category);
+        .eq('category', category)
+        .order('test_number', { ascending: true });
 
       if (error) throw error;
       
       // Get unique test numbers
       const uniqueTests = [...new Set(((data || []) as any[]).map(q => q.test_number))];
-      return uniqueTests.length;
+      return uniqueTests.length || 30; // Fallback to 30 if no tests found
     },
     staleTime: 10 * 60 * 1000, // 10 minutes - test count doesn't change often
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    placeholderData: 30, // Show 30 tests immediately while loading
+    refetchOnMount: false, // Don't refetch if data exists
+    refetchOnWindowFocus: false, // Don't refetch on focus
     enabled: enabled && !!category,
   });
 }

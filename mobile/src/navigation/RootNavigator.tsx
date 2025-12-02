@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useCategory } from '../contexts/CategoryContext';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
+import { ResetPasswordScreen } from '../screens/auth/ResetPasswordScreen';
 import { CategorySelectionScreen } from '../screens/main/CategorySelectionScreen';
 import { AppNavigator } from './AppNavigator';
 import { ActivityIndicator, View } from 'react-native';
@@ -39,12 +40,19 @@ export const RootNavigator = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!selectedCategory ? (
-        <Stack.Screen name="CategorySelection" component={CategorySelectionScreen} />
+        <>
+          <Stack.Screen name="CategorySelection" component={CategorySelectionScreen} />
+          {/* Auth screens available before category selection for deep link handling */}
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+        </>
       ) : (
         <>
           <Stack.Screen name="App" component={AppNavigator} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
           <Stack.Screen name="TestInstructions" component={TestInstructionsScreen} />
           <Stack.Screen name="TestRunner" component={TestRunnerScreen} />
           <Stack.Screen name="TestResult" component={TestResultScreen} />
