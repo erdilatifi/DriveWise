@@ -60,12 +60,12 @@ export default function HistoryPage() {
 
     try {
       await deleteTestMutation.mutateAsync(testToDelete);
-      toast.success('Test deleted successfully');
+      toast.success('Testi u fshi me sukses');
       setDeleteDialogOpen(false);
       setTestToDelete(null);
     } catch (error) {
       console.error('Error deleting test:', error);
-      toast.error('Failed to delete test');
+      toast.error('Dështoi fshirja e testit');
     }
   };
 
@@ -74,12 +74,12 @@ export default function HistoryPage() {
 
     try {
       await clearAllMutation.mutateAsync(user.id);
-      toast.success('All test history cleared successfully');
+      toast.success('Historia e testeve u pastrua me sukses');
       setClearAllDialogOpen(false);
       setCurrentPage(1);
     } catch (error) {
       console.error('Error clearing history:', error);
-      toast.error('Failed to clear history');
+      toast.error('Dështoi pastrimi i historisë');
     }
   };
 
@@ -226,28 +226,28 @@ export default function HistoryPage() {
           <Button variant="ghost" asChild className="mb-4">
             <Link href="/dashboard">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
+              Kthehu te Paneli
             </Link>
           </Button>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Test History</h1>
+              <h1 className="text-3xl font-bold mb-2">Historia e Testeve</h1>
               <p className="text-muted-foreground">
-                Review all your completed tests and track your progress
+                Rishikoni të gjitha testet e përfunduara dhe gjurmoni përparimin tuaj
               </p>
             </div>
             {totalTests > 0 && (
               <div className="flex items-center gap-4">
                 <div className="text-right">
                   <p className="text-3xl font-bold text-primary">{totalTests}</p>
-                  <p className="text-sm text-muted-foreground">Total Tests</p>
+                  <p className="text-sm text-muted-foreground">Teste Totale</p>
                 </div>
                 <Button
                   variant="destructive"
                   onClick={() => setClearAllDialogOpen(true)}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Clear All History
+                  Pastro Gjithë Historinë
                 </Button>
               </div>
             )}
@@ -259,7 +259,7 @@ export default function HistoryPage() {
           <>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <p className="text-sm text-muted-foreground">
-                Filter by result
+                Filtro sipas rezultatit
               </p>
               <div className="flex gap-2">
                 <Button
@@ -267,21 +267,21 @@ export default function HistoryPage() {
                   size="sm"
                   onClick={() => setStatusFilter('all')}
                 >
-                  All
+                  Të gjitha
                 </Button>
                 <Button
                   variant={statusFilter === 'passed' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setStatusFilter('passed')}
                 >
-                  Passed
+                  Kaluar
                 </Button>
                 <Button
                   variant={statusFilter === 'failed' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setStatusFilter('failed')}
                 >
-                  Failed
+                  Dështuar
                 </Button>
               </div>
             </div>
@@ -313,14 +313,14 @@ export default function HistoryPage() {
                             </div>
                             <div>
                               <h3 className="font-semibold text-base sm:text-lg mb-0.5">
-                                Category {test.category} - {
-                                  test.test_number === 'mixed' ? 'Mixed Test' :
-                                  test.test_number === 'personalized' ? 'Personalized Test' :
-                                  `Test #${test.test_number}`
+                                Kategoria {test.category} - {
+                                  test.test_number === 'mixed' ? 'Test i Përzier' :
+                                  test.test_number === 'personalized' ? 'Test i Personalizuar' :
+                                  `Testi #${test.test_number}`
                                 }
                               </h3>
                               <p className="text-xs sm:text-sm text-muted-foreground">
-                                {formatDate(test.completed_at)} • {test.total_questions} questions
+                                {formatDate(test.completed_at)} • {test.total_questions} pyetje
                               </p>
                             </div>
                           </div>
@@ -328,7 +328,7 @@ export default function HistoryPage() {
                             <span className={`px-2 py-1 rounded-full font-medium ${
                               passed ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'
                             }`}>
-                              {passed ? 'Passed' : 'Failed'}
+                              {passed ? 'Kaluar' : 'Dështuar'}
                             </span>
                           </div>
                         </div>
@@ -340,11 +340,11 @@ export default function HistoryPage() {
                               <p className={`text-2xl sm:text-3xl font-bold ${passed ? 'text-green-500' : 'text-red-500'}`}>
                                 {test.percentage}%
                               </p>
-                              <p className="text-xs text-muted-foreground">Score</p>
+                              <p className="text-xs text-muted-foreground">Rezultati</p>
                             </div>
                             <div className="hidden sm:block h-8 w-px bg-border" />
                             <div className="text-xs sm:text-sm text-muted-foreground">
-                              {test.score}/{test.total_questions} correct
+                              {test.score}/{test.total_questions} të sakta
                             </div>
                           </div>
 
@@ -352,7 +352,7 @@ export default function HistoryPage() {
                             <Button asChild className="flex-[0.7] sm:flex-none">
                               <Link href={`/history/${test.id}`}>
                                 <Eye className="w-4 h-4 mr-2" />
-                                Review
+                                Rishiko
                               </Link>
                             </Button>
                             <Button
@@ -376,8 +376,8 @@ export default function HistoryPage() {
               </div>
             ) : (
               <GlassCard className="p-12 text-center mb-8 border border-border/80 bg-black/80">
-                <p className="text-muted-foreground mb-2">No tests in this filter yet</p>
-                <p className="text-xs text-muted-foreground">Try changing the filter or take a new test.</p>
+                <p className="text-muted-foreground mb-2">Ende asnjë test në këtë filtër</p>
+                <p className="text-xs text-muted-foreground">Provoni të ndryshoni filtrin ose bëni një test të ri.</p>
               </GlassCard>
             )}
 
@@ -385,21 +385,21 @@ export default function HistoryPage() {
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Test History?</AlertDialogTitle>
+                  <AlertDialogTitle>Fshi Historinë e Testit?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete this test attempt and all associated answers.
+                    Ky veprim nuk mund të zhbëhet. Do të fshijë përgjithmonë këtë përpjekje testi dhe të gjitha përgjigjet e lidhura me të.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
-                    Cancel
+                    Anulo
                   </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDeleteTest}
                     disabled={deleteTestMutation.isPending}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
-                    {deleteTestMutation.isPending ? 'Deleting...' : 'Delete'}
+                    {deleteTestMutation.isPending ? 'Duke fshirë...' : 'Fshi'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -409,21 +409,21 @@ export default function HistoryPage() {
             <AlertDialog open={clearAllDialogOpen} onOpenChange={setClearAllDialogOpen}>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Clear All Test History?</AlertDialogTitle>
+                  <AlertDialogTitle>Pastro Gjithë Historinë e Testeve?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete ALL {totalTests} test attempts and their associated answers from your history.
+                    Ky veprim nuk mund të zhbëhet. Do të fshijë përgjithmonë TË GJITHA {totalTests} përpjekjet e testeve dhe përgjigjet e lidhura me to nga historia juaj.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel onClick={() => setClearAllDialogOpen(false)}>
-                    Cancel
+                    Anulo
                   </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleClearAllHistory}
                     disabled={clearAllMutation.isPending}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
-                    {clearAllMutation.isPending ? 'Clearing...' : `Clear All ${totalTests} Tests`}
+                    {clearAllMutation.isPending ? 'Duke pastruar...' : `Pastro të gjitha ${totalTests} testet`}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -435,7 +435,7 @@ export default function HistoryPage() {
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   {/* Page Info */}
                   <div className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages}
+                    Faqja {currentPage} nga {totalPages}
                   </div>
 
                   {/* Pagination Controls */}
@@ -447,7 +447,7 @@ export default function HistoryPage() {
                       disabled={currentPage === 1}
                     >
                       <ChevronLeft className="w-4 h-4 mr-1" />
-                      Previous
+                      E Mëparshme
                     </Button>
 
                     <div className="flex items-center gap-1">
@@ -481,15 +481,15 @@ export default function HistoryPage() {
                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
                     >
-                      Next
+                      E Radhës
                       <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>
 
                   {/* Total Tests Info */}
                   <div className="text-sm text-muted-foreground">
-                    Showing {(currentPage - 1) * testsPerPage + 1}{' '}
-                    - {Math.min(currentPage * testsPerPage, totalTests)} of {totalTests} tests
+                    Duke shfaqur {(currentPage - 1) * testsPerPage + 1}{' '}
+                    - {Math.min(currentPage * testsPerPage, totalTests)} nga {totalTests} teste
                   </div>
                 </div>
               </GlassCard>
@@ -497,9 +497,9 @@ export default function HistoryPage() {
           </>
         ) : (
           <GlassCard className="p-12 text-center border border-border/80 bg-black/80">
-            <p className="text-muted-foreground mb-4">No test history yet</p>
+            <p className="text-muted-foreground mb-4">Ende asnjë histori testesh</p>
             <Button asChild>
-              <Link href="/">Start Your First Test</Link>
+              <Link href="/">Fillo Testin Tënd të Parë</Link>
             </Button>
           </GlassCard>
         )}

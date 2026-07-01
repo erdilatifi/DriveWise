@@ -23,7 +23,6 @@ export function useRateLimit({ maxRequests = 5, windowMs = 60000 }: RateLimitOpt
   }, [timestamps, maxRequests, windowMs]);
 
   const remaining = Math.max(0, maxRequests - timestamps.length);
-  const resetInMs = timestamps.length > 0 ? Math.max(0, windowMs - (Date.now() - timestamps[0])) : 0;
 
-  return { checkLimit, remaining, resetInMs };
+  return { checkLimit, remaining };
 }

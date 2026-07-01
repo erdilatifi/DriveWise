@@ -38,12 +38,12 @@ export interface BugReportData {
 }
 
 const LOCATIONS = [
-  'Dashboard',
-  'Mock test list',
-  'Mock test session',
-  'Payments/checkout',
-  'Account/profile',
-  'Other',
+  'Paneli',
+  'Lista e mock testeve',
+  'Sesioni i mock testit',
+  'Pagesat/checkout',
+  'Llogaria/profili',
+  'Tjetër',
 ];
 
 export function BugReportModal({ isOpen, onClose, onSubmit }: BugReportModalProps) {
@@ -82,20 +82,20 @@ export function BugReportModal({ isOpen, onClose, onSubmit }: BugReportModalProp
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-primary">
             <Bug className="w-5 h-5" />
-            Report a bug
+            Raporto një problem
           </DialogTitle>
           <DialogDescription>
-            Found something not working correctly? Tell us and we’ll look into it.
+            Gjetët diçka që nuk punon mirë? Na tregoni dhe ne do ta shqyrtojmë.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="bug-title">Bug title <span className="text-destructive">*</span></Label>
+            <Label htmlFor="bug-title">Titulli i problemit <span className="text-destructive">*</span></Label>
             <Input
               id="bug-title"
-              placeholder="e.g. Timer doesn't stop when test ends"
+              placeholder="p.sh. Kronometri nuk ndalon kur mbaron testi"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -104,10 +104,10 @@ export function BugReportModal({ isOpen, onClose, onSubmit }: BugReportModalProp
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="bug-description">What went wrong? <span className="text-destructive">*</span></Label>
+            <Label htmlFor="bug-description">Çfarë shkoi keq? <span className="text-destructive">*</span></Label>
             <Textarea
               id="bug-description"
-              placeholder="Describe what happened and what you expected instead."
+              placeholder="Përshkruani çfarë ndodhi dhe çfarë prisnit të ndodhte."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="min-h-[80px]"
@@ -117,10 +117,10 @@ export function BugReportModal({ isOpen, onClose, onSubmit }: BugReportModalProp
 
           {/* Steps to Reproduce */}
           <div className="space-y-2">
-            <Label htmlFor="bug-steps">Steps to reproduce <span className="text-muted-foreground text-xs">(Optional)</span></Label>
+            <Label htmlFor="bug-steps">Hapat për ta riprodhuar <span className="text-muted-foreground text-xs">(Opsionale)</span></Label>
             <Textarea
               id="bug-steps"
-              placeholder={'Step 1: Go to ...\nStep 2: Click on ...\nStep 3: ...'}
+              placeholder={'Hapi 1: Shko te ...\nHapi 2: Kliko mbi ...\nHapi 3: ...'}
               value={stepsToReproduce}
               onChange={(e) => setStepsToReproduce(e.target.value)}
               className="min-h-[80px]"
@@ -130,10 +130,10 @@ export function BugReportModal({ isOpen, onClose, onSubmit }: BugReportModalProp
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Location */}
             <div className="space-y-2">
-              <Label htmlFor="bug-location">Where did this happen?</Label>
+              <Label htmlFor="bug-location">Ku ndodhi kjo?</Label>
               <Select value={location} onValueChange={setLocation}>
                 <SelectTrigger id="bug-location">
-                  <SelectValue placeholder="Select location" />
+                  <SelectValue placeholder="Zgjidh vendndodhjen" />
                 </SelectTrigger>
                 <SelectContent>
                   {LOCATIONS.map((loc) => (
@@ -147,10 +147,10 @@ export function BugReportModal({ isOpen, onClose, onSubmit }: BugReportModalProp
 
             {/* Device/Browser */}
             <div className="space-y-2">
-              <Label htmlFor="bug-device">Device / browser <span className="text-muted-foreground text-xs">(Optional)</span></Label>
+              <Label htmlFor="bug-device">Pajisja / shfletuesi <span className="text-muted-foreground text-xs">(Opsionale)</span></Label>
               <Input
                 id="bug-device"
-                placeholder="e.g. iPhone + Safari"
+                placeholder="p.sh. iPhone + Safari"
                 value={deviceBrowser}
                 onChange={(e) => setDeviceBrowser(e.target.value)}
               />
@@ -159,11 +159,11 @@ export function BugReportModal({ isOpen, onClose, onSubmit }: BugReportModalProp
 
           {/* Email */}
           <div className="space-y-2">
-            <Label htmlFor="bug-email">Email <span className="text-muted-foreground text-xs">(Optional, if you want a reply)</span></Label>
+            <Label htmlFor="bug-email">Email <span className="text-muted-foreground text-xs">(Opsionale, nëse doni përgjigje)</span></Label>
             <Input
               id="bug-email"
               type="email"
-              placeholder="your@email.com"
+              placeholder="emaili-juaj@email.com"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
             />
@@ -176,7 +176,7 @@ export function BugReportModal({ isOpen, onClose, onSubmit }: BugReportModalProp
               onClick={onClose}
               disabled={isSubmitting}
             >
-              Cancel
+              Anulo
             </Button>
             <Button
               type="submit"
@@ -184,7 +184,7 @@ export function BugReportModal({ isOpen, onClose, onSubmit }: BugReportModalProp
               className="gap-2"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              Submit bug report
+              Dërgo raportin
             </Button>
           </DialogFooter>
         </form>

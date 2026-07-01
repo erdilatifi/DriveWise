@@ -41,9 +41,9 @@ export default function AdminSignsPage() {
     try {
       const publicUrl = await uploadImage.mutateAsync(file);
       setEditingSign({ ...editingSign, image_url: publicUrl });
-      toast.success('Image uploaded successfully');
+      toast.success(t('admin.signs.imageUploaded'));
     } catch (error) {
-      toast.error('Failed to upload image');
+      toast.error(t('admin.signs.imageUploadError'));
     } finally {
       setIsUploading(false);
     }
@@ -58,22 +58,22 @@ export default function AdminSignsPage() {
         description: editingSign.description,
         image_url: editingSign.image_url
       });
-      toast.success('Sign updated successfully');
+      toast.success(t('admin.signs.updated'));
       setEditingSign(null);
       refetch();
     } catch (error) {
-      toast.error('Failed to update sign');
+      toast.error(t('admin.signs.updateError'));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this sign?')) {
+    if (confirm(t('admin.signs.deleteConfirm'))) {
       try {
         await deleteSign.mutateAsync(id);
-        toast.success('Sign deleted successfully');
+        toast.success(t('admin.signs.deleted'));
         refetch();
       } catch (error) {
-        toast.error('Failed to delete sign');
+        toast.error(t('admin.signs.deleteError'));
       }
     }
   };
@@ -112,7 +112,7 @@ export default function AdminSignsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search by name or code..."
+                placeholder={t('admin.signs.searchPlaceholder')}
                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-card/50 focus:outline-none focus:border-primary"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -123,18 +123,18 @@ export default function AdminSignsPage() {
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             >
-              <option value="all">All Categories</option>
-              <option value="danger">Danger</option>
-              <option value="prohibition">Prohibition</option>
-              <option value="mandatory">Mandatory</option>
-              <option value="info">Info</option>
+              <option value="all">{t('admin.signs.allCategories')}</option>
+              <option value="danger">{t('admin.signs.categoryDanger')}</option>
+              <option value="prohibition">{t('admin.signs.categoryProhibition')}</option>
+              <option value="mandatory">{t('admin.signs.categoryMandatory')}</option>
+              <option value="info">{t('admin.signs.categoryInfo')}</option>
             </select>
           </div>
 
           {isLoading ? (
             <div className="text-center py-12">
               <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-              <p className="text-muted-foreground">Loading signs...</p>
+              <p className="text-muted-foreground">{t('admin.signs.loading')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -158,7 +158,7 @@ export default function AdminSignsPage() {
                           />
                           <div className="text-white flex flex-col items-center">
                             <Upload className="w-6 h-6 mb-2" />
-                            <span className="text-xs">Change Image</span>
+                            <span className="text-xs">{t('admin.signs.changeImage')}</span>
                           </div>
                         </label>
                         {isUploading && (
@@ -170,7 +170,7 @@ export default function AdminSignsPage() {
                       
                       <div className="space-y-3">
                         <div>
-                          <label className="text-xs text-muted-foreground mb-1 block">Name</label>
+                          <label className="text-xs text-muted-foreground mb-1 block">{t('admin.signs.name')}</label>
                           <input
                             value={editingSign.name}
                             onChange={(e) => setEditingSign({ ...editingSign, name: e.target.value })}
@@ -178,7 +178,7 @@ export default function AdminSignsPage() {
                           />
                         </div>
                         <div>
-                          <label className="text-xs text-muted-foreground mb-1 block">Description</label>
+                          <label className="text-xs text-muted-foreground mb-1 block">{t('admin.signs.description')}</label>
                           <textarea
                             value={editingSign.description}
                             onChange={(e) => setEditingSign({ ...editingSign, description: e.target.value })}
@@ -190,7 +190,7 @@ export default function AdminSignsPage() {
                       <div className="flex gap-2 pt-2 mt-auto">
                         <Button size="sm" onClick={handleSave} className="flex-1">
                           <Save className="w-4 h-4 mr-2" />
-                          Save
+                          {t('common.save')}
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => setEditingSign(null)}>
                           <X className="w-4 h-4" />
@@ -206,7 +206,7 @@ export default function AdminSignsPage() {
                         ) : (
                           <div className="text-center text-muted-foreground">
                             <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                            <span className="text-xs">No image</span>
+                            <span className="text-xs">{t('admin.signs.noImage')}</span>
                           </div>
                         )}
                         <div className="absolute top-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-xs font-mono text-primary">
@@ -228,7 +228,7 @@ export default function AdminSignsPage() {
                           className="flex-1 hover:bg-primary/10 hover:text-primary"
                           onClick={() => setEditingSign(sign)}
                         >
-                          Edit
+                          {t('admin.signs.edit')}
                         </Button>
                         <Button 
                           size="sm" 
@@ -254,17 +254,17 @@ export default function AdminSignsPage() {
                 disabled={page === 1}
                 onClick={() => setPage(p => p - 1)}
               >
-                Previous
+                {t('admin.signs.previous')}
               </Button>
               <div className="flex items-center px-4">
-                Page {page} of {Math.ceil(data.total / 50)}
+                {t('admin.signs.page')} {page} {t('admin.signs.of')} {Math.ceil(data.total / 50)}
               </div>
               <Button
                 variant="outline"
                 disabled={page >= Math.ceil(data.total / 50)}
                 onClick={() => setPage(p => p + 1)}
               >
-                Next
+                {t('admin.signs.next')}
               </Button>
             </div>
           )}

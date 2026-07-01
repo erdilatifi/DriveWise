@@ -46,8 +46,8 @@ export default function RegisterPage() {
     e.preventDefault();
     
     if (!checkLimit()) {
-      toast.error('Too many registration attempts', {
-        description: 'Please wait a minute before trying again.',
+      toast.error('Shumë tentativa regjistrimi', {
+        description: 'Ju lutem prisni një minutë para se të provoni përsëri.',
       });
       return;
     }
@@ -58,14 +58,14 @@ export default function RegisterPage() {
 
     if (password !== confirmPassword) {
       setStatus('error');
-      setStatusMessage('Passwords do not match');
+      setStatusMessage('Fjalëkalimet nuk përputhen');
       setLoading(false);
       return;
     }
 
     if (password.length < 6) {
       setStatus('error');
-      setStatusMessage('Password must be at least 6 characters');
+      setStatusMessage('Fjalëkalimi duhet të ketë të paktën 6 karaktere');
       setLoading(false);
       return;
     }
@@ -74,17 +74,17 @@ export default function RegisterPage() {
 
     if (signUpError) {
       setStatus('error');
-      setStatusMessage(signUpError.message || 'Failed to create account');
-      toast.error('Registration failed', {
-        description: signUpError.message || 'Failed to create account',
+      setStatusMessage(signUpError.message || 'Dështoi krijimi i llogarisë');
+      toast.error('Regjistrimi dështoi', {
+        description: signUpError.message || 'Dështoi krijimi i llogarisë',
       });
     } else {
       setStatus('success');
       setStatusMessage(
-        `Your account has been created. We've sent a confirmation link to ${email}. Please open that email and click the link to activate your account, then come back here and sign in. If you don't see it, check your spam or junk folder.`,
+        `Llogaria juaj u krijua. Ju kemi dërguar një link konfirmimi në ${email}. Ju lutem hapni atë email dhe klikoni linkun për të aktivizuar llogarinë tuaj, pastaj kthehuni këtu dhe hyni. Nëse nuk e shihni, kontrolloni dosjen e spam-it.`,
       );
-      toast.success('Account created!', {
-        description: 'Please check your email and confirm your account before logging in.',
+      toast.success('Llogaria u krijua!', {
+        description: 'Ju lutem kontrolloni email-in tuaj dhe konfirmoni llogarinë para se të hyni.',
       });
     }
 
@@ -105,28 +105,28 @@ export default function RegisterPage() {
           <div className="space-y-2">
             <p className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-black/60 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               <span className="h-1.5 w-6 bg-gradient-to-r from-orange-500 to-amber-300 rounded-full" />
-              Create your DriveWise account
+              Krijo llogarinë tënde DriveWise
             </p>
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
-              Built for focused, exam-ready practice.
+              Ndërtuar për praktikë të fokusuar dhe gati për provim.
             </h1>
             <p className="text-sm text-muted-foreground max-w-md">
-              Personalised tests, decision trainer scenarios, and rich analytics help you understand exactly what to study next.
+              Testet e personalizuara, skenarët e Decision Trainer dhe analitika e pasur të ndihmojnë të kuptosh saktësisht çfarë duhet të studiosh më pas.
             </p>
           </div>
 
           <ul className="space-y-2 text-sm">
             <li className="flex items-start gap-2">
               <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              <span>Track pass rate, weak topics, and streak in a clear dashboard.</span>
+              <span>Gjurmo shkallën e kalimit, temat e dobëta dhe serinë në një panel të qartë.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-1 h-1.5 w-1.5 rounded-full bg-orange-400" />
-              <span>Practice with mixed and personalised tests that feel like the real exam.</span>
+              <span>Praktiko me teste të përziera dhe të personalizuara që ngjajnë me provimin real.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-1 h-1.5 w-1.5 rounded-full bg-sky-400" />
-              <span>Review every answer with explanations and materials links.</span>
+              <span>Rishiko çdo përgjigje me shpjegime dhe lidhje me materialet mësimore.</span>
             </li>
           </ul>
         </div>
@@ -232,7 +232,7 @@ export default function RegisterPage() {
                 disabled={loading || status === 'success'}
               >
                 {status === 'success'
-                  ? 'Check your email'
+                  ? 'Kontrollo email-in tënd'
                   : loading
                   ? t('auth.creatingAccount')
                   : t('auth.signUp')}

@@ -93,13 +93,13 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
     const errors: string[] = [];
 
     if (!formData.title.trim()) {
-      errors.push('Title is required');
+      errors.push('Titulli është i detyrueshëm');
     }
     if (!formData.chapter_id || formData.chapter_id < 1 || formData.chapter_id > 20) {
-      errors.push('Chapter must be between 1 and 20');
+      errors.push('Kapitulli duhet të jetë mes 1 dhe 20');
     }
     if (!formData.order_index) {
-      errors.push('Order index is required');
+      errors.push('Indeksi i renditjes është i detyrueshëm');
     }
 
     let content: Record<string, unknown> = {};
@@ -107,7 +107,7 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
     try {
       content = JSON.parse(formData.content_text || '{}');
     } catch {
-      errors.push('Content must be valid JSON');
+      errors.push('Përmbajtja duhet të jetë JSON e vlefshme');
     }
 
     if (errors.length > 0) {
@@ -127,13 +127,13 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
         is_published: formData.is_published,
       });
 
-      toast.success('Material updated successfully!');
+      toast.success('Materiali u përditësua me sukses!');
 
       setTimeout(() => {
         router.push('/admin/materials');
       }, 500);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to update material';
+      const message = error instanceof Error ? error.message : 'Dështoi përditësimi i materialit';
       toast.error(message);
       console.error('Error updating material:', error);
     }
@@ -141,12 +141,12 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
 
   const handleAddImage = async () => {
     if (!material) {
-      toast.error('Material not loaded yet');
+      toast.error('Materiali ende nuk është ngarkuar');
       return;
     }
 
     if (!imageFile) {
-      toast.error('Please select an image file');
+      toast.error('Ju lutem zgjidhni një skedar imazhi');
       return;
     }
 
@@ -164,12 +164,12 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
         order_index: order === null ? undefined : order,
       });
 
-      toast.success('Image added successfully');
+      toast.success('Imazhi u shtua me sukses');
       setImageFile(null);
       setImageCaption('');
       setImageOrderIndex('');
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to add image';
+      const message = error instanceof Error ? error.message : 'Dështoi shtimi i imazhit';
       toast.error(message);
       console.error('Error adding material image:', error);
     }
@@ -178,9 +178,9 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
   const handleDeleteImage = async (imageId: string) => {
     try {
       await deleteMaterialImage.mutateAsync(imageId);
-      toast.success('Image deleted');
+      toast.success('Imazhi u fshi');
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to delete image';
+      const message = error instanceof Error ? error.message : 'Dështoi fshirja e imazhit';
       toast.error(message);
       console.error('Error deleting material image:', error);
     }
@@ -191,7 +191,7 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">Duke ngarkuar...</p>
         </div>
       </div>
     );
@@ -217,13 +217,13 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
             <Button variant="ghost" asChild>
               <Link href="/admin/materials">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Materials
+                Kthehu te Materialet
               </Link>
             </Button>
           </div>
-          <h1 className="text-3xl font-bold">Edit Study Material</h1>
+          <h1 className="text-3xl font-bold">Ndrysho Materialin Mësimor</h1>
           <p className="text-sm text-muted-foreground">
-            Chapter {material.chapter_id} – {material.title}
+            Kapitulli {material.chapter_id} – {material.title}
           </p>
         </div>
 
@@ -233,7 +233,7 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
             {/* Chapter and Order */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="chapter_id">Chapter *</Label>
+                <Label htmlFor="chapter_id">Kapitulli *</Label>
                 <Select
                   value={String(formData.chapter_id)}
                   onValueChange={(value) => {
@@ -252,7 +252,7 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
                       const chapter = index + 1;
                       return (
                         <SelectItem key={chapter} value={String(chapter)}>
-                          Chapter {chapter}
+                          Kapitulli {chapter}
                         </SelectItem>
                       );
                     })}
@@ -261,7 +261,7 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="order_index">Order Index *</Label>
+                <Label htmlFor="order_index">Indeksi i Renditjes *</Label>
                 <Input
                   id="order_index"
                   type="number"
@@ -280,7 +280,7 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
 
             {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="title">Titulli *</Label>
               <Input
                 id="title"
                 value={formData.title}
@@ -292,7 +292,7 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
             {/* Content JSON */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="content_text">Content (JSON) *</Label>
+                <Label htmlFor="content_text">Përmbajtja (JSON) *</Label>
                 <Textarea
                   id="content_text"
                   rows={10}
@@ -320,7 +320,7 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
                 }
               />
               <Label htmlFor="is_published" className="text-sm">
-                Published (visible to users)
+                Publikuar (i dukshëm për përdoruesit)
               </Label>
             </div>
 
@@ -328,13 +328,13 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
             <div className="space-y-4 pt-4 border-t border-border">
               <div className="flex items-center gap-2">
                 <ImagePlus className="w-4 h-4" />
-                <h2 className="text-lg font-semibold">Material Images</h2>
+                <h2 className="text-lg font-semibold">Imazhet e Materialit</h2>
               </div>
 
               <div className="grid gap-6 md:grid-cols-[minmax(0,2fr),minmax(0,3fr)]">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="image_file">Add Image</Label>
+                    <Label htmlFor="image_file">Shto Imazh</Label>
                     <input
                       id="image_file"
                       type="file"
@@ -345,17 +345,17 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="image_caption">Caption</Label>
+                    <Label htmlFor="image_caption">Titra</Label>
                     <Input
                       id="image_caption"
                       value={imageCaption}
                       onChange={(e) => setImageCaption(e.target.value)}
-                      placeholder="Optional caption"
+                      placeholder="Titra opsionale"
                     />
                   </div>
 
                   <div className="space-y-2 max-w-xs">
-                    <Label htmlFor="image_order_index">Order Index</Label>
+                    <Label htmlFor="image_order_index">Indeksi i Renditjes</Label>
                     <Input
                       id="image_order_index"
                       type="number"
@@ -365,10 +365,10 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
                         const value = e.target.value;
                         setImageOrderIndex(value === '' ? '' : parseInt(value, 10) || '');
                       }}
-                      placeholder="Leave empty to append at the end"
+                      placeholder="Lëreni bosh për ta shtuar në fund"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Images are shown above the chapter content on the materials page.
+                      Imazhet shfaqen mbi përmbajtjen e kapitullit në faqen e materialeve.
                     </p>
                   </div>
 
@@ -385,22 +385,22 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
                     {uploadImage.isPending || createMaterialImage.isPending ? (
                       <>
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                        Uploading...
+                        Duke ngarkuar...
                       </>
                     ) : (
                       <>
                         <ImagePlus className="w-4 h-4 mr-2" />
-                        Upload Image
+                        Ngarko Imazhin
                       </>
                     )}
                   </Button>
                 </div>
 
                 <div className="space-y-3">
-                  <p className="text-sm font-medium">Existing Images</p>
+                  <p className="text-sm font-medium">Imazhet Ekzistuese</p>
                   {!material.images || material.images.length === 0 ? (
                     <p className="text-xs text-muted-foreground">
-                      No images added for this material yet.
+                      Ende nuk janë shtuar imazhe për këtë material.
                     </p>
                   ) : (
                     <div className="grid grid-cols-2 gap-3">
@@ -419,11 +419,11 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
                           </div>
                           <div className="p-2 space-y-1 text-xs">
                             <p className="font-medium truncate">
-                              {img.caption || 'No caption'}
+                              {img.caption || 'Pa titra'}
                             </p>
                             {typeof img.order_index === 'number' && (
                               <p className="text-[10px] text-muted-foreground">
-                                Order: {img.order_index}
+                                Renditja: {img.order_index}
                               </p>
                             )}
                             <div className="flex justify-end pt-1">
@@ -457,12 +457,12 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
                 {updateMaterial.isPending ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Updating...
+                    Duke përditësuar...
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4 mr-2" />
-                    Update Material
+                    Përditëso Materialin
                   </>
                 )}
               </Button>
@@ -472,7 +472,7 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
                 onClick={() => router.push('/admin/materials')}
                 disabled={updateMaterial.isPending}
               >
-                Cancel
+                Anulo
               </Button>
             </div>
           </GlassCard>

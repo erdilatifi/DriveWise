@@ -54,14 +54,14 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
             
             <div className="space-y-4">
-              <h1 className="text-2xl font-bold text-foreground">Something went wrong</h1>
+              <h1 className="text-2xl font-bold text-foreground">Diçka shkoi keq</h1>
               <p className="text-muted-foreground">
-                We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
+                Hasëm një gabim të papritur. Ju lutem provoni të rifreskoni faqen ose kontaktoni mbështetjen nëse problemi vazhdon.
               </p>
-              
+
               {process.env.NODE_ENV === 'development' && this.state.error && (
                 <details className="text-left bg-muted/50 rounded-lg p-4 mt-4">
-                  <summary className="cursor-pointer text-sm font-medium mb-2">Error Details</summary>
+                  <summary className="cursor-pointer text-sm font-medium mb-2">Detajet e gabimit</summary>
                   <pre className="text-xs text-muted-foreground overflow-auto">
                     {this.state.error.message}
                     {'\n'}
@@ -69,15 +69,15 @@ export class ErrorBoundary extends Component<Props, State> {
                   </pre>
                 </details>
               )}
-              
+
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
                 <Button onClick={this.handleReset} variant="outline" className="flex items-center gap-2">
                   <RefreshCw className="w-4 h-4" />
-                  Try Again
+                  Provo Përsëri
                 </Button>
                 <Button onClick={this.handleReload} className="flex items-center gap-2">
                   <RefreshCw className="w-4 h-4" />
-                  Reload Page
+                  Rifresko Faqen
                 </Button>
               </div>
             </div>

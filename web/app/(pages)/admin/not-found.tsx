@@ -9,22 +9,22 @@ export default function AdminNotFound() {
       <GlassCard className="p-8 max-w-lg text-center border border-border/80 bg-black/80">
         <Shield className="w-20 h-20 mx-auto mb-4 text-yellow-500" />
         <h1 className="text-5xl font-bold mb-2">404</h1>
-        <h2 className="text-2xl font-semibold mb-2">Admin Page Not Found</h2>
+        <h2 className="text-2xl font-semibold mb-2">Faqja e adminit nuk u gjet</h2>
         <p className="text-muted-foreground mb-6">
-          The admin page you're looking for doesn't exist.
+          Faqja e adminit që po kërkoni nuk ekziston.
         </p>
-        
+
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button asChild size="lg">
             <Link href="/admin">
               <Shield className="w-4 h-4 mr-2" />
-              Admin Dashboard
+              Paneli i Adminit
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
             <Link href="/dashboard">
               <Home className="w-4 h-4 mr-2" />
-              User Dashboard
+              Paneli i Përdoruesit
             </Link>
           </Button>
         </div>

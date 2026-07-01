@@ -86,30 +86,30 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
 
     // Comprehensive validation
     const errors: string[] = [];
-    
+
     if (!formData.question_text) {
-      errors.push('Question text is required');
+      errors.push('Teksti i pyetjes është i detyrueshëm');
     }
     if (!formData.option_a) {
-      errors.push('Option A is required');
+      errors.push('Opsioni A është i detyrueshëm');
     }
     if (!formData.option_b) {
-      errors.push('Option B is required');
+      errors.push('Opsioni B është i detyrueshëm');
     }
     if (hasOptionC && !formData.option_c) {
-      errors.push('Option C is required');
+      errors.push('Opsioni C është i detyrueshëm');
     }
     if (!formData.correct_answer) {
-      errors.push('Please select the correct answer');
+      errors.push('Ju lutem zgjidhni përgjigjen e saktë');
     }
     if (!['A', 'B', 'C'].includes(formData.correct_answer)) {
-      errors.push('Correct answer must be A, B, or C');
+      errors.push('Përgjigja e saktë duhet të jetë A, B ose C');
     }
     if (!formData.category) {
-      errors.push('Category is required');
+      errors.push('Kategoria është e detyrueshme');
     }
     if (!formData.test_number || formData.test_number < 1 || formData.test_number > 10) {
-      errors.push('Test number must be between 1 and 10');
+      errors.push('Numri i testit duhet të jetë ndërmjet 1 dhe 10');
     }
 
     if (errors.length > 0) {
@@ -141,15 +141,15 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
         is_published: formData.is_published,
       });
       console.log('Question updated successfully:', result);
-      toast.success('Question updated successfully!');
-      
+      toast.success('Pyetja u përditësua me sukses!');
+
       // Small delay to show success message
       setTimeout(() => {
         router.push('/admin/questions');
       }, 500);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error(`Failed to update question: ${message}`);
+      const message = error instanceof Error ? error.message : 'Ndodhi një gabim i panjohur';
+      toast.error(`Përditësimi i pyetjes dështoi: ${message}`);
       console.error('Error updating question:', error, { formData });
     }
   };
@@ -159,7 +159,7 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">Duke ngarkuar...</p>
         </div>
       </div>
     );
@@ -192,13 +192,13 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
             {/* Question Text */}
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="question_text">Question Text *</Label>
+                <Label htmlFor="question_text">Teksti i Pyetjes *</Label>
                 <Textarea
                   id="question_text"
                   rows={4}
                   value={formData.question_text}
                   onChange={(e) => setFormData({ ...formData, question_text: e.target.value })}
-                  placeholder="Enter the question text..."
+                  placeholder="Shkruaj tekstin e pyetjes..."
                 />
               </div>
             </div>
@@ -206,45 +206,45 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
             {/* Options */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label>Answer Options *</Label>
+                <Label>Opsionet e Përgjigjes *</Label>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setHasOptionC(!hasOptionC)}
                 >
-                  {hasOptionC ? 'Remove Option C' : 'Add Option C'}
+                  {hasOptionC ? 'Hiq Opsionin C' : 'Shto Opsionin C'}
                 </Button>
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="option_a" className="text-sm text-muted-foreground">Option A</Label>
+                <Label htmlFor="option_a" className="text-sm text-muted-foreground">Opsioni A</Label>
                 <Input
                   id="option_a"
                   value={formData.option_a}
                   onChange={(e) => setFormData({ ...formData, option_a: e.target.value })}
-                  placeholder="Enter option A..."
+                  placeholder="Shkruaj opsionin A..."
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="option_b" className="text-sm text-muted-foreground">Option B</Label>
+                <Label htmlFor="option_b" className="text-sm text-muted-foreground">Opsioni B</Label>
                 <Input
                   id="option_b"
                   value={formData.option_b}
                   onChange={(e) => setFormData({ ...formData, option_b: e.target.value })}
-                  placeholder="Enter option B..."
+                  placeholder="Shkruaj opsionin B..."
                 />
               </div>
 
               {hasOptionC && (
                 <div className="space-y-2">
-                  <Label htmlFor="option_c" className="text-sm text-muted-foreground">Option C</Label>
+                  <Label htmlFor="option_c" className="text-sm text-muted-foreground">Opsioni C</Label>
                   <Input
                     id="option_c"
                     value={formData.option_c || ''}
                     onChange={(e) => setFormData({ ...formData, option_c: e.target.value })}
-                    placeholder="Enter option C..."
+                    placeholder="Shkruaj opsionin C..."
                   />
                 </div>
               )}
@@ -252,8 +252,8 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
 
             {/* Correct Answer */}
             <div className="space-y-3">
-              <Label className="text-base font-semibold">Correct Answer *</Label>
-              <p className="text-sm text-muted-foreground">Select which option is the correct answer</p>
+              <Label className="text-base font-semibold">Përgjigja e Saktë *</Label>
+              <p className="text-sm text-muted-foreground">Zgjidh cili opsion është përgjigja e saktë</p>
               <RadioGroup
                 value={formData.correct_answer}
                 onValueChange={(value) => {
@@ -265,27 +265,27 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
                 <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/50 transition-colors">
                   <RadioGroupItem value="A" id="correct_a" />
                   <Label htmlFor="correct_a" className="cursor-pointer flex-1 font-medium">
-                    Option A {formData.correct_answer === 'A' && <span className="text-primary ml-2">✓ Selected</span>}
+                    Opsioni A {formData.correct_answer === 'A' && <span className="text-primary ml-2">✓ E zgjedhur</span>}
                   </Label>
                 </div>
                 <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/50 transition-colors">
                   <RadioGroupItem value="B" id="correct_b" />
                   <Label htmlFor="correct_b" className="cursor-pointer flex-1 font-medium">
-                    Option B {formData.correct_answer === 'B' && <span className="text-primary ml-2">✓ Selected</span>}
+                    Opsioni B {formData.correct_answer === 'B' && <span className="text-primary ml-2">✓ E zgjedhur</span>}
                   </Label>
                 </div>
-                
+
                 {hasOptionC && (
                   <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/50 transition-colors">
                     <RadioGroupItem value="C" id="correct_c" />
                     <Label htmlFor="correct_c" className="cursor-pointer flex-1 font-medium">
-                      Option C {formData.correct_answer === 'C' && <span className="text-primary ml-2">✓ Selected</span>}
+                      Opsioni C {formData.correct_answer === 'C' && <span className="text-primary ml-2">✓ E zgjedhur</span>}
                     </Label>
                   </div>
                 )}
               </RadioGroup>
               <p className="text-xs text-muted-foreground">
-                Currently selected: <span className="font-semibold text-primary">Option {formData.correct_answer}</span>
+                Aktualisht e zgjedhur: <span className="font-semibold text-primary">Opsioni {formData.correct_answer}</span>
               </p>
             </div>
 

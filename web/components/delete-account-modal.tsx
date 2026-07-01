@@ -32,11 +32,11 @@ export interface DeleteAccountFeedback {
 }
 
 const DELETION_REASONS = [
-  { id: 'passed', label: 'I passed the exam' },
-  { id: 'not-needed', label: 'I don’t need the mock tests anymore' },
-  { id: 'duplicate', label: 'I made another account' },
-  { id: 'unsatisfied', label: 'I’m not satisfied with the app' },
-  { id: 'other', label: 'Other' },
+  { id: 'passed', label: 'E kalova provimin' },
+  { id: 'not-needed', label: 'Nuk më duhen më mock testet' },
+  { id: 'duplicate', label: 'Krijova një llogari tjetër' },
+  { id: 'unsatisfied', label: 'Nuk jam i/e kënaqur me aplikacionin' },
+  { id: 'other', label: 'Tjetër' },
 ];
 
 export function DeleteAccountModal({
@@ -67,17 +67,17 @@ export function DeleteAccountModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="w-5 h-5" />
-            Are you sure you want to delete your account?
+            Jeni i sigurt që doni të fshini llogarinë tuaj?
           </DialogTitle>
           <DialogDescription>
-            All progress, mock test history, and account data will be permanently deleted. This action cannot be undone.
+            I gjithë progresi, historiku i mock testeve dhe të dhënat e llogarisë do të fshihen përgjithmonë. Ky veprim nuk mund të zhbëhet.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           {/* Reason Selection */}
           <div className="space-y-3">
-            <Label className="text-base font-medium">Why are you leaving?</Label>
+            <Label className="text-base font-medium">Pse po largoheni?</Label>
             <RadioGroup value={reason} onValueChange={setReason} className="gap-3">
               {DELETION_REASONS.map((option) => (
                 <div key={option.id} className="flex items-start space-x-3">
@@ -93,7 +93,7 @@ export function DeleteAccountModal({
                     {/* Custom Reason Input */}
                     {option.id === 'other' && reason === 'other' && (
                       <Input
-                        placeholder="Please tell us more..."
+                        placeholder="Ju lutem na tregoni më shumë..."
                         value={customReason}
                         onChange={(e) => setCustomReason(e.target.value)}
                         className="mt-2 h-8 text-sm"
@@ -111,11 +111,11 @@ export function DeleteAccountModal({
             <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300 bg-emerald-500/5 p-4 rounded-lg border border-emerald-500/10">
               <div className="space-y-2">
                 <Label htmlFor="testimonial" className="font-medium text-emerald-600 dark:text-emerald-400">
-                  Congratulations! Want to share your experience? <span className="text-muted-foreground font-normal text-xs">(Optional)</span>
+                  Urime! Doni të ndani përvojën tuaj? <span className="text-muted-foreground font-normal text-xs">(Opsionale)</span>
                 </Label>
                 <Textarea
                   id="testimonial"
-                  placeholder="Your feedback helps future learners. Tell us how our mock tests helped you!"
+                  placeholder="Mendimi juaj ndihmon nxënësit e ardhshëm. Na tregoni si ju ndihmuan mock testet tona!"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   className="min-h-[80px] bg-background/50 resize-none border-emerald-500/20 focus-visible:ring-emerald-500/30"
@@ -136,7 +136,7 @@ export function DeleteAccountModal({
                   htmlFor="allow-public"
                   className="text-sm font-normal text-muted-foreground cursor-pointer select-none leading-normal"
                 >
-                  Allow my comment to be used publicly as a testimonial.
+                  Lejo që komenti im të përdoret publikisht si dëshmi.
                 </Label>
               </div>
             </div>
@@ -147,11 +147,11 @@ export function DeleteAccountModal({
             <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300 bg-muted/50 p-4 rounded-lg border border-border">
               <div className="space-y-2">
                 <Label htmlFor="feedback" className="font-medium">
-                  We’re sorry your experience wasn’t good. Want to tell us what went wrong? <span className="text-muted-foreground font-normal text-xs">(Optional)</span>
+                  Na vjen keq që përvoja juaj nuk ishte e mirë. Doni të na tregoni çfarë shkoi keq? <span className="text-muted-foreground font-normal text-xs">(Opsionale)</span>
                 </Label>
                 <Textarea
                   id="feedback"
-                  placeholder="Your feedback helps us improve the app."
+                  placeholder="Mendimi juaj na ndihmon të përmirësojmë aplikacionin."
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   className="min-h-[80px] bg-background/50 resize-none"
@@ -168,7 +168,7 @@ export function DeleteAccountModal({
             disabled={isDeleting}
             className="w-full sm:w-auto"
           >
-            Cancel
+            Anulo
           </Button>
           <Button
             variant="destructive"
@@ -177,7 +177,7 @@ export function DeleteAccountModal({
             className="w-full sm:w-auto gap-2"
           >
             {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
-            Delete Account
+            Fshi llogarinë
           </Button>
         </DialogFooter>
       </DialogContent>

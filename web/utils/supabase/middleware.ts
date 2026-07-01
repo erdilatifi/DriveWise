@@ -1,7 +1,33 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Routes that are public AND never redirect based on auth state (i.e. we
+// don't need to know who the user is to decide what to do here). Skipping
+// the Supabase auth.getUser() network round-trip for these avoids paying
+// that latency on every visit to fully public pages like the landing page.
+const ALWAYS_PUBLIC_ROUTES = [
+  '/',
+  '/pricing',
+  '/payment/success', // Should be public to check status
+  '/payment/cancel',
+  '/privacy-policy',
+  '/terms-of-service',
+  '/refund-policy',
+  '/reset-password', // Recovery session is validated client-side via the reset link's own token
+]
+
+// Auth routes: publicly reachable, but redirect away to /dashboard if the
+// visitor turns out to already be logged in (these DO need to know `user`).
+const AUTH_ROUTES = ['/login', '/register', '/forgot-password']
+
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+  const isApiRoute = pathname.startsWith('/api')
+
+  if (isApiRoute || ALWAYS_PUBLIC_ROUTES.includes(pathname)) {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -37,23 +63,10 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Define public routes that don't require authentication
-  const publicRoutes = [
-    '/',
-    '/login',
-    '/register',
-    '/forgot-password',
-    '/reset-password',
-    '/pricing',
-    '/payment/success', // Should be public to check status
-  ]
+  const isAuthRoute = AUTH_ROUTES.includes(pathname)
 
-  // Check if the current path is exactly a public route
-  const isPublicRoute = publicRoutes.includes(request.nextUrl.pathname)
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api')
-
-  // If user is not authenticated and trying to access a protected route (anything not public and not an API)
-  if (!user && !isPublicRoute && !isApiRoute) {
+  // If user is not authenticated and trying to access a protected route (anything not public and not an auth route)
+  if (!user && !isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
@@ -61,8 +74,7 @@ export async function updateSession(request: NextRequest) {
 
   // If user IS authenticated and tries to access auth routes (login/register), redirect to dashboard
   // This prevents "double login" or accessing sign up while logged in.
-  const authRoutes = ['/login', '/register', '/forgot-password']
-  if (user && authRoutes.includes(request.nextUrl.pathname)) {
+  if (user && isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)

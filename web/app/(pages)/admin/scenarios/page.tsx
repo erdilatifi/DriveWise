@@ -204,12 +204,12 @@ export default function AdminScenariosPageOptimized() {
       setCurrentPage(page);
     } catch (error: unknown) {
       console.error('Error fetching scenarios:', error);
-      const errorMessage = (error as Error).message || 'Failed to load scenarios';
-      
+      const errorMessage = (error as Error).message || 'Ngarkimi i skenarëve dështoi';
+
       if (errorMessage.includes('42P01')) {
-        toast.error('Decision trainer table not found. Please run the database migration.');
+        toast.error('Tabela e Decision Trainer nuk u gjet. Ju lutemi ekzekutoni migrimin e bazës së të dhënave.');
       } else if (errorMessage.includes('42501')) {
-        toast.error('Permission denied. Please check your admin privileges.');
+        toast.error('Qasje e refuzuar. Ju lutemi kontrolloni privilegjet tuaja si administrator.');
       } else {
         toast.error(errorMessage);
       }
@@ -334,7 +334,7 @@ export default function AdminScenariosPageOptimized() {
     try {
       const trimmedQuestion = formData.question.trim();
       if (!trimmedQuestion) {
-        toast.error('Question is required');
+        toast.error('Pyetja është e detyrueshme');
         return;
       }
 
@@ -347,29 +347,29 @@ export default function AdminScenariosPageOptimized() {
         .filter((opt) => opt.text.length > 0);
 
       if (normalizedOptions.length < 2) {
-        toast.error('Please provide at least two answer options');
+        toast.error('Ju lutemi shtoni të paktën dy opsione përgjigjeje');
         return;
       }
 
       if (!normalizedOptions.some((opt) => opt.isCorrect)) {
-        toast.error('Please mark at least one option as correct');
+        toast.error('Ju lutemi shënoni të paktën një opsion si të saktë');
         return;
       }
 
       const trimmedCorrect = formData.correct_explanation.trim();
       if (!trimmedCorrect) {
-        toast.error('Correct explanation is required');
+        toast.error('Shpjegimi i përgjigjes së saktë është i detyrueshëm');
         return;
       }
 
       const trimmedTip = formData.real_world_tip.trim();
       if (!trimmedTip) {
-        toast.error('Real-world tip is required');
+        toast.error('Këshilla nga jeta reale është e detyrueshme');
         return;
       }
 
       if (!formData.xp || formData.xp <= 0) {
-        toast.error('XP must be greater than 0');
+        toast.error('XP duhet të jetë më i madh se 0');
         return;
       }
 
@@ -389,7 +389,7 @@ export default function AdminScenariosPageOptimized() {
 
         if (uploadError) {
           console.error('Error uploading image:', uploadError);
-          toast.error('Failed to upload image');
+          toast.error('Ngarkimi i imazhit dështoi');
           setUploading(false);
           return;
         }
@@ -419,12 +419,12 @@ export default function AdminScenariosPageOptimized() {
 
         if (error) {
           console.error('Error updating scenario:', error);
-          toast.error('Failed to update scenario');
+          toast.error('Përditësimi i skenarit dështoi');
           setUploading(false);
           return;
         }
 
-        toast.success('Scenario updated successfully');
+        toast.success('Skenari u përditësua me sukses');
       } else {
         const generatedId = `scn-${Date.now()}`;
 
@@ -446,19 +446,19 @@ export default function AdminScenariosPageOptimized() {
 
         if (error) {
           console.error('Error creating scenario:', error);
-          toast.error('Failed to create scenario');
+          toast.error('Krijimi i skenarit dështoi');
           setUploading(false);
           return;
         }
 
-        toast.success('Scenario created successfully');
+        toast.success('Skenari u krijua me sukses');
       }
 
       handleCloseForm();
       fetchScenarios(currentPage, true);
     } catch (error) {
       console.error('Error saving scenario:', error);
-      toast.error('Failed to save scenario');
+      toast.error('Ruajtja e skenarit dështoi');
     } finally {
       setUploading(false);
     }
@@ -515,18 +515,18 @@ export default function AdminScenariosPageOptimized() {
               <Button variant="ghost" asChild>
                 <Link href="/admin">
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Admin
+                  Kthehu te Administrimi
                 </Link>
               </Button>
             </div>
-            <h1 className="text-3xl font-bold">Decision Trainer Scenarios</h1>
+            <h1 className="text-3xl font-bold">Skenarët e Decision Trainer</h1>
             <p className="text-muted-foreground">
-              Manage interactive driving scenarios ({totalCount} total)
+              Menaxho skenarët interaktivë të vozitjes ({totalCount} gjithsej)
             </p>
           </div>
           <Button onClick={handleOpenCreateForm}>
             <Plus className="w-4 h-4 mr-2" />
-            Add Scenario
+            Shto Skenar
           </Button>
         </div>
 
@@ -538,7 +538,7 @@ export default function AdminScenariosPageOptimized() {
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
-                  placeholder="Search scenarios..."
+                  placeholder="Kërko skenarë..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -549,10 +549,10 @@ export default function AdminScenariosPageOptimized() {
               <div className="flex flex-wrap gap-2">
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                   <SelectTrigger className="w-40 min-w-[9rem]">
-                    <SelectValue placeholder="Category" />
+                    <SelectValue placeholder="Kategoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="all">Të Gjitha Kategoritë</SelectItem>
                     {Object.entries(CATEGORY_INFO).map(([key, info]) => (
                       <SelectItem key={key} value={key}>
                         {info.name}
@@ -563,46 +563,46 @@ export default function AdminScenariosPageOptimized() {
 
                 <Select value={levelFilter} onValueChange={setLevelFilter}>
                   <SelectTrigger className="w-32 min-w-[7rem]">
-                    <SelectValue placeholder="Level" />
+                    <SelectValue placeholder="Niveli" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Levels</SelectItem>
-                    <SelectItem value="1">Level 1</SelectItem>
-                    <SelectItem value="2">Level 2</SelectItem>
-                    <SelectItem value="3">Level 3</SelectItem>
-                    <SelectItem value="4">Level 4</SelectItem>
+                    <SelectItem value="all">Të Gjitha Nivelet</SelectItem>
+                    <SelectItem value="1">Niveli 1</SelectItem>
+                    <SelectItem value="2">Niveli 2</SelectItem>
+                    <SelectItem value="3">Niveli 3</SelectItem>
+                    <SelectItem value="4">Niveli 4</SelectItem>
                   </SelectContent>
                 </Select>
 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-32 min-w-[7rem]">
-                    <SelectValue placeholder="Status" />
+                    <SelectValue placeholder="Statusi" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="all">Të Gjitha Statuset</SelectItem>
+                    <SelectItem value="active">Aktiv</SelectItem>
+                    <SelectItem value="inactive">Joaktiv</SelectItem>
                   </SelectContent>
                 </Select>
 
                 <Select value={publishedFilter} onValueChange={setPublishedFilter}>
                   <SelectTrigger className="w-32 min-w-[7rem]">
-                    <SelectValue placeholder="Published" />
+                    <SelectValue placeholder="Publikimi" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Publish</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="all">Të Gjitha Publikimet</SelectItem>
+                    <SelectItem value="published">Publikuar</SelectItem>
+                    <SelectItem value="draft">Skicë</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            
+
             {/* Clear filters button */}
             {(searchQuery || categoryFilter !== 'all' || levelFilter !== 'all' || statusFilter !== 'all') && (
               <Button variant="outline" onClick={clearFilters}>
                 <X className="w-4 h-4 mr-2" />
-                Clear Filters
+                Pastro Filtrat
               </Button>
             )}
           </div>
@@ -614,15 +614,15 @@ export default function AdminScenariosPageOptimized() {
         ) : scenarios.length === 0 ? (
           <GlassCard className="p-12 text-center border border-border/80 bg-black/80">
             <div className="text-6xl mb-4">🎯</div>
-            <h3 className="text-xl font-bold mb-2">No scenarios found</h3>
+            <h3 className="text-xl font-bold mb-2">Nuk u gjetën skenarë</h3>
             <p className="text-muted-foreground mb-4">
               {searchQuery || categoryFilter !== 'all' || levelFilter !== 'all' || statusFilter !== 'all'
-                ? 'Try adjusting your filters or search query.'
-                : 'Get started by creating your first scenario.'}
+                ? 'Provoni të rregulloni filtrat ose kërkimin tuaj.'
+                : 'Fillo duke krijuar skenarin tënd të parë.'}
             </p>
             <Button onClick={() => setShowForm(true)}>
               <Plus className="w-4 h-4 mr-2" />
-              Add First Scenario
+              Shto Skenarin e Parë
             </Button>
           </GlassCard>
         ) : (
@@ -637,13 +637,13 @@ export default function AdminScenariosPageOptimized() {
                         {CATEGORY_INFO[scenario.category as Category]?.name || scenario.category}
                       </Badge>
                       <Badge variant="secondary">
-                        Level {scenario.level}
+                        Niveli {scenario.level}
                       </Badge>
                       <Badge variant={scenario.is_active ? "default" : "destructive"}>
-                        {scenario.is_active ? 'Active' : 'Inactive'}
+                        {scenario.is_active ? 'Aktiv' : 'Joaktiv'}
                       </Badge>
                       <Badge variant={scenario.is_published !== false ? "outline" : "destructive"}>
-                        {scenario.is_published !== false ? 'Published' : 'Draft'}
+                        {scenario.is_published !== false ? 'Publikuar' : 'Skicë'}
                       </Badge>
                     </div>
                   </div>
@@ -656,7 +656,7 @@ export default function AdminScenariosPageOptimized() {
                     <div className="mb-3">
                       <img
                         src={scenario.image_url}
-                        alt="Scenario"
+                        alt="Skenari"
                         className="w-full h-32 object-cover rounded-md"
                       />
                     </div>
@@ -714,9 +714,9 @@ export default function AdminScenariosPageOptimized() {
             {totalPages > 1 && (
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} scenarios
+                  Duke shfaqur {((currentPage - 1) * pageSize) + 1} deri {Math.min(currentPage * pageSize, totalCount)} nga {totalCount} skenarë
                 </p>
-                
+
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -725,7 +725,7 @@ export default function AdminScenariosPageOptimized() {
                     disabled={!hasPrevPage}
                   >
                     <ChevronLeft className="w-4 h-4" />
-                    Previous
+                    E Mëparshme
                   </Button>
                   
                   {/* Page numbers */}
@@ -762,7 +762,7 @@ export default function AdminScenariosPageOptimized() {
                     onClick={handleNextPage}
                     disabled={!hasNextPage}
                   >
-                    Next
+                    E Radhës
                     <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
@@ -779,7 +779,7 @@ export default function AdminScenariosPageOptimized() {
             <GlassCard className="p-6 border border-border/80 bg-black/90 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold">
-                  {editingScenario ? 'Edit Scenario' : 'Add Scenario'}
+                  {editingScenario ? 'Ndrysho Skenarin' : 'Shto Skenar'}
                 </h2>
                 <Button variant="ghost" size="icon" onClick={handleCloseForm}>
                   <X className="w-4 h-4" />
@@ -789,13 +789,13 @@ export default function AdminScenariosPageOptimized() {
               <form className="space-y-6" onSubmit={handleSubmitScenario}>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
-                    <Label className="mb-1 block">Category</Label>
+                    <Label className="mb-1 block">Kategoria</Label>
                     <Select
                       value={formData.category}
                       onValueChange={(value) => handleFormFieldChange('category', value as Category)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
+                        <SelectValue placeholder="Zgjidh kategorinë" />
                       </SelectTrigger>
                       <SelectContent>
                         {Object.entries(CATEGORY_INFO).map(([key, info]) => (
@@ -808,19 +808,19 @@ export default function AdminScenariosPageOptimized() {
                   </div>
 
                   <div>
-                    <Label className="mb-1 block">Level</Label>
+                    <Label className="mb-1 block">Niveli</Label>
                     <Select
                       value={String(formData.level)}
                       onValueChange={(value) => handleFormFieldChange('level', parseInt(value))}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select level" />
+                        <SelectValue placeholder="Zgjidh nivelin" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="1">Level 1</SelectItem>
-                        <SelectItem value="2">Level 2</SelectItem>
-                        <SelectItem value="3">Level 3</SelectItem>
-                        <SelectItem value="4">Level 4</SelectItem>
+                        <SelectItem value="1">Niveli 1</SelectItem>
+                        <SelectItem value="2">Niveli 2</SelectItem>
+                        <SelectItem value="3">Niveli 3</SelectItem>
+                        <SelectItem value="4">Niveli 4</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -836,7 +836,7 @@ export default function AdminScenariosPageOptimized() {
                   </div>
 
                   <div>
-                    <Label className="mb-1 block">Chapter (optional)</Label>
+                    <Label className="mb-1 block">Kapitulli (opsionale)</Label>
                     <Input
                       type="number"
                       min={1}
@@ -849,14 +849,14 @@ export default function AdminScenariosPageOptimized() {
                           value === '' ? null : parseInt(value, 10) || null,
                         );
                       }}
-                      placeholder="e.g. 5"
+                      placeholder="p.sh. 5"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label className="mb-1 block">Status</Label>
+                    <Label className="mb-1 block">Statusi</Label>
                     <Select
                       value={formData.is_published ? 'published' : 'draft'}
                       onValueChange={(value) =>
@@ -867,11 +867,11 @@ export default function AdminScenariosPageOptimized() {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
+                        <SelectValue placeholder="Zgjidh statusin" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="published">Published</SelectItem>
-                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="published">Publikuar</SelectItem>
+                        <SelectItem value="draft">Skicë</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -879,39 +879,39 @@ export default function AdminScenariosPageOptimized() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="block">Question</Label>
+                    <Label className="block">Pyetja</Label>
                     <Textarea
                       value={formData.question}
                       onChange={(e) => handleFormFieldChange('question', e.target.value)}
-                      placeholder="Enter the scenario question..."
+                      placeholder="Shkruaj pyetjen e skenarit..."
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="block">Correct Explanation</Label>
+                    <Label className="block">Shpjegimi i Përgjigjes së Saktë</Label>
                     <Textarea
                       value={formData.correct_explanation}
                       onChange={(e) => handleFormFieldChange('correct_explanation', e.target.value)}
-                      placeholder="Explain why the correct answer is right..."
+                      placeholder="Shpjego pse përgjigja e saktë është e drejtë..."
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <Label className="block">Real-world Tip</Label>
+                    <Label className="block">Këshillë nga Jeta Reale</Label>
                     <Textarea
                       value={formData.real_world_tip}
                       onChange={(e) => handleFormFieldChange('real_world_tip', e.target.value)}
-                      placeholder="Give a practical real-world driving tip..."
+                      placeholder="Jep një këshillë praktike vozitjeje nga jeta reale..."
                     />
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label className="block">Answer Options</Label>
+                    <Label className="block">Opsionet e Përgjigjeve</Label>
                     <span className="text-xs text-muted-foreground">
-                      Mark all correct answers (multiple correct options supported)
+                      Shëno të gjitha përgjigjet e sakta (mbështeten disa opsione të sakta)
                     </span>
                   </div>
 
@@ -920,7 +920,7 @@ export default function AdminScenariosPageOptimized() {
                       <div key={index} className="space-y-2 border rounded-lg p-3">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-xs font-medium text-muted-foreground">
-                            Option {index + 1}
+                            Opsioni {index + 1}
                           </span>
                           <Button
                             type="button"
@@ -928,16 +928,16 @@ export default function AdminScenariosPageOptimized() {
                             variant={option.isCorrect ? 'default' : 'outline'}
                             onClick={() => toggleOptionCorrect(index)}
                           >
-                            {option.isCorrect ? 'Correct' : 'Mark Correct'}
+                            {option.isCorrect ? 'I Saktë' : 'Shëno si të Saktë'}
                           </Button>
                         </div>
                         <Input
-                          placeholder="Option text"
+                          placeholder="Teksti i opsionit"
                           value={option.text}
                           onChange={(e) => handleOptionFieldChange(index, 'text', e.target.value)}
                         />
                         <Textarea
-                          placeholder="Optional explanation for this option"
+                          placeholder="Shpjegim opsional për këtë opsion"
                           value={option.explanation}
                           onChange={(e) => handleOptionFieldChange(index, 'explanation', e.target.value)}
                           className="mt-2"
@@ -948,11 +948,11 @@ export default function AdminScenariosPageOptimized() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="block">Image (optional)</Label>
+                  <Label className="block">Imazhi (opsionale)</Label>
                   <div className="flex items-center gap-4">
                     <Button type="button" variant="outline" className="flex items-center gap-2 relative overflow-hidden">
                       <ImageIcon className="w-4 h-4" />
-                      <span>Choose Image</span>
+                      <span>Zgjidh Imazhin</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -964,7 +964,7 @@ export default function AdminScenariosPageOptimized() {
                       <div className="w-24 h-16 rounded-md overflow-hidden border">
                         <img
                           src={imagePreview}
-                          alt="Preview"
+                          alt="Pamja Paraprake"
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -972,17 +972,17 @@ export default function AdminScenariosPageOptimized() {
                   </div>
                   {formData.image_url && !imagePreview && (
                     <p className="text-xs text-muted-foreground break-all">
-                      Current image: {formData.image_url}
+                      Imazhi aktual: {formData.image_url}
                     </p>
                   )}
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-2">
                   <Button type="button" variant="outline" onClick={handleCloseForm} disabled={uploading} className="w-full sm:w-auto">
-                    Cancel
+                    Anulo
                   </Button>
                   <Button type="submit" disabled={uploading} className="w-full sm:w-auto">
-                    {uploading ? 'Saving...' : editingScenario ? 'Save Changes' : 'Create Scenario'}
+                    {uploading ? 'Duke ruajtur...' : editingScenario ? 'Ruaj Ndryshimet' : 'Krijo Skenarin'}
                   </Button>
                 </div>
               </form>
@@ -995,38 +995,38 @@ export default function AdminScenariosPageOptimized() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Scenario</AlertDialogTitle>
+            <AlertDialogTitle>Fshi Skenarin</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this scenario? This action cannot be undone.
+              A jeni i sigurt që doni të fshini këtë skenar? Ky veprim nuk mund të zhbëhet.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Anulo</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
                 if (!scenarioToDelete) return;
-                
+
                 try {
                   const supabase = createClient();
                   const { error } = await supabase
                     .from('decision_trainer_scenarios')
                     .delete()
                     .eq('id', scenarioToDelete);
-                  
+
                   if (error) throw error;
-                  
-                  toast.success('Scenario deleted successfully');
+
+                  toast.success('Skenari u fshi me sukses');
                   fetchScenarios(currentPage, true);
                 } catch (error) {
                   console.error('Error deleting scenario:', error);
-                  toast.error('Failed to delete scenario');
+                  toast.error('Fshirja e skenarit dështoi');
                 } finally {
                   setDeleteDialogOpen(false);
                   setScenarioToDelete(null);
                 }
               }}
             >
-              Delete
+              Fshi
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

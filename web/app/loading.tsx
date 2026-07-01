@@ -12,8 +12,8 @@ export default function Loading() {
           <div className="absolute inset-0 w-20 h-20 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
         <div className="space-y-2">
-          <p className="text-lg font-medium text-foreground">Loading DriveWise</p>
-          <p className="text-sm text-muted-foreground">Preparing your learning experience...</p>
+          <p className="text-lg font-medium text-foreground">Duke ngarkuar DriveWise</p>
+          <p className="text-sm text-muted-foreground">Duke përgatitur përvojën tuaj të mësimit...</p>
         </div>
       </div>
     </div>

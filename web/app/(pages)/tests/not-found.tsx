@@ -9,22 +9,22 @@ export default function TestsNotFound() {
       <GlassCard className="p-8 max-w-lg text-center">
         <div className="text-6xl mb-4">📝</div>
         <h1 className="text-5xl font-bold mb-2">404</h1>
-        <h2 className="text-2xl font-semibold mb-2">Test Not Found</h2>
+        <h2 className="text-2xl font-semibold mb-2">Testi nuk u gjet</h2>
         <p className="text-muted-foreground mb-6">
-          The test you&apos;re looking for doesn&apos;t exist or has been removed.
+          Testi që po kërkoni nuk ekziston ose është hequr.
         </p>
-        
+
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button asChild size="lg">
             <Link href="/tests">
               <FileText className="w-4 h-4 mr-2" />
-              All Tests
+              Të Gjitha Testet
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
             <Link href="/dashboard">
               <Home className="w-4 h-4 mr-2" />
-              Dashboard
+              Paneli
             </Link>
           </Button>
         </div>

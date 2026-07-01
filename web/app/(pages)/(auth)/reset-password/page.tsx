@@ -28,13 +28,13 @@ export default function ResetPasswordPage() {
 
     // Validate passwords
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError('Fjalëkalimi duhet të ketë të paktën 6 karaktere');
       setLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError('Fjalëkalimet nuk përputhen');
       setLoading(false);
       return;
     }
@@ -51,8 +51,8 @@ export default function ResetPasswordPage() {
         throw error;
       }
 
-      toast.success('Password Updated', {
-        description: 'Your password has been successfully reset. Taking you to the dashboard... ',
+      toast.success('Fjalëkalimi u përditësua', {
+        description: 'Fjalëkalimi juaj u rivendos me sukses. Duke ju çuar te paneli...',
         duration: 2500,
       });
 
@@ -63,9 +63,9 @@ export default function ResetPasswordPage() {
       }, 800);
     } catch (error: unknown) {
       console.error('Caught error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to reset password';
+      const errorMessage = error instanceof Error ? error.message : 'Dështoi rivendosja e fjalëkalimit';
       setError(errorMessage);
-      toast.error('Error', {
+      toast.error('Gabim', {
         description: errorMessage,
       });
     } finally {
@@ -96,10 +96,10 @@ export default function ResetPasswordPage() {
           </div>
           <div>
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Reset Password
+              Rivendos Fjalëkalimin
             </CardTitle>
             <CardDescription className="text-base mt-2">
-              Enter your new password below
+              Shkruani fjalëkalimin tuaj të ri më poshtë
             </CardDescription>
           </div>
         </CardHeader>
@@ -112,7 +112,7 @@ export default function ResetPasswordPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
+              <Label htmlFor="password">Fjalëkalimi i Ri</Label>
               <Input
                 id="password"
                 type="password"
@@ -124,12 +124,12 @@ export default function ResetPasswordPage() {
                 minLength={6}
               />
               <p className="text-xs text-muted-foreground">
-                Must be at least 6 characters
+                Duhet të ketë të paktën 6 karaktere
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Label htmlFor="confirmPassword">Konfirmo Fjalëkalimin e Ri</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -150,10 +150,10 @@ export default function ResetPasswordPage() {
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Resetting...
+                  Duke rivendosur...
                 </>
               ) : (
-                'Reset Password'
+                'Rivendos Fjalëkalimin'
               )}
             </Button>
           </form>

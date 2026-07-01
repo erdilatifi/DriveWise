@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
@@ -255,6 +256,8 @@ export default function TestPage() {
       // Invalidate cache to show updated results
       queryClient.invalidateQueries({ queryKey: ['user-test-stats', userId] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats', userId] });
+      queryClient.invalidateQueries({ queryKey: ['test-attempts', userId] });
+      queryClient.invalidateQueries({ queryKey: ['test-history', userId] });
 
       // Check if this is the user's first test
       const {
@@ -337,13 +340,13 @@ export default function TestPage() {
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <Card className="max-w-md w-full border border-border/80 bg-card/95 backdrop-blur-xl">
           <CardHeader>
-            <CardTitle>Loading</CardTitle>
+            <CardTitle>Duke ngarkuar</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center gap-4">
               <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
               <p className="text-muted-foreground">
-                {authLoading ? 'Authenticating...' : 'Redirecting...'}
+                {authLoading ? 'Duke u autentikuar...' : 'Duke ju ridrejtuar...'}
               </p>
             </div>
           </CardContent>
@@ -651,7 +654,7 @@ export default function TestPage() {
                         setQuestions(reloaded);
                       } catch (error) {
                         console.error('Error reloading test:', error);
-                        toast.error('Could not restart test. Please try again.');
+                        toast.error('Nuk u arrit të rifillohej testi. Ju lutem provoni përsëri.');
                       } finally {
                         setLoading(false);
                       }
@@ -818,12 +821,13 @@ export default function TestPage() {
               {/* Image Section */}
               {question.image_url && (
                 <div className="flex flex-col">
-                  <div className="relative rounded-xl overflow-hidden border-2 border-border shadow-lg">
-                    <img
+                  <div className="relative rounded-xl overflow-hidden border-2 border-border shadow-lg h-[400px] bg-muted/30">
+                    <Image
                       src={question.image_url}
                       alt={t('test.questionIllustration')}
-                      className="w-full h-auto object-contain bg-muted/30"
-                      style={{ maxHeight: '400px' }}
+                      fill
+                      sizes="(min-width: 1024px) 50vw, 100vw"
+                      className="object-contain"
                     />
                   </div>
                   <p className="text-xs text-muted-foreground text-center mt-2">

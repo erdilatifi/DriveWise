@@ -23,8 +23,6 @@ export default function PaymentSuccessPage() {
   // Poll user plans
   const { data: plans, refetch, isError } = useUserPlans(user?.id);
   
-  const [isChecking, setIsChecking] = useState(true);
-  const [confirmedPlan, setConfirmedPlan] = useState(false);
   const [attempts, setAttempts] = useState(0);
 
   const hasActivePlan = plans?.some(
@@ -32,6 +30,9 @@ export default function PaymentSuccessPage() {
       p.status === 'active' &&
       isPlanCurrentlyActive({ startDate: p.start_date, endDate: p.end_date })
   );
+
+  // Still polling as long as we haven't found an active plan and haven't timed out
+  const isChecking = !hasActivePlan && attempts < 20;
 
   // Force invalidate on mount to check for fresh data immediately
   useEffect(() => {
@@ -41,34 +42,23 @@ export default function PaymentSuccessPage() {
     }
   }, [user?.id, queryClient, refetch]);
 
+  // Invalidate global premium queries once an active plan shows up
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      // If not logged in, we can't check. Redirect to login or show message?
-      // Probably redirect to login with a return url
-      return;
-    }
-
-    if (hasActivePlan) {
-      setConfirmedPlan(true);
-      setIsChecking(false);
-      // Invalidate global premium queries so other components update
+    if (user?.id && hasActivePlan) {
       queryClient.invalidateQueries({ queryKey: ['premium-status', user.id] });
-      return;
     }
+  }, [user?.id, hasActivePlan, queryClient]);
 
-    // Poll if no active plan found yet
-    if (attempts < 20) { // Poll for ~40 seconds (20 * 2s)
-      const timer = setTimeout(() => {
-        refetch();
-        setAttempts((prev) => prev + 1);
-      }, 2000);
-      return () => clearTimeout(timer);
-    } else {
-      // Stop checking after timeout
-      setIsChecking(false);
-    }
-  }, [authLoading, user, hasActivePlan, attempts, refetch, queryClient]);
+  useEffect(() => {
+    if (authLoading || !user || hasActivePlan || !isChecking) return;
+
+    // Poll for ~40 seconds (20 * 2s) while no active plan is found yet
+    const timer = setTimeout(() => {
+      refetch();
+      setAttempts((prev) => prev + 1);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [authLoading, user, hasActivePlan, isChecking, refetch]);
 
   // UI State
   let icon = <Loader2 className="w-12 h-12 text-primary animate-spin" />;
@@ -78,14 +68,14 @@ export default function PaymentSuccessPage() {
     : 'We are waiting for confirmation from the payment provider. This may take a few seconds.';
   let colorClass = 'border-primary/50 bg-primary/5';
 
-  if (confirmedPlan) {
+  if (hasActivePlan) {
     icon = <CheckCircle2 className="w-12 h-12 text-emerald-500" />;
     title = isSq ? 'Pagesa u krye me sukses!' : 'Payment successful!';
     description = isSq
       ? 'Plani juaj tani është aktiv. Mund të filloni të përdorni të gjitha veçoritë premium.'
       : 'Your plan is now active. You can start using all premium features.';
     colorClass = 'border-emerald-500/50 bg-emerald-500/5';
-  } else if (!isChecking && !confirmedPlan) {
+  } else if (!isChecking && !hasActivePlan) {
     // Timeout or error
     icon = <AlertCircle className="w-12 h-12 text-amber-500" />;
     title = isSq ? 'Pagesa është në proces' : 'Payment processing';
@@ -117,8 +107,8 @@ export default function PaymentSuccessPage() {
                 </Link>
               </Button>
               
-              {(!confirmedPlan && !isChecking) && (
-                 <Button variant="outline" onClick={() => { setAttempts(0); setIsChecking(true); refetch(); }} className="flex-1 w-full">
+              {(!hasActivePlan && !isChecking) && (
+                 <Button variant="outline" onClick={() => { setAttempts(0); refetch(); }} className="flex-1 w-full">
                     {isSq ? 'Provo përsëri' : 'Try again'}
                  </Button>
               )}

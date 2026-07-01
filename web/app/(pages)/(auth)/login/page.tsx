@@ -81,8 +81,8 @@ export default function LoginPage() {
     if (isBusy) return;
 
     if (!checkLimit()) {
-      toast.error('Too many login attempts', {
-        description: 'Please wait a minute before trying again.',
+      toast.error('Shumë tentativa hyrjeje', {
+        description: 'Ju lutem prisni një minutë para se të provoni përsëri.',
       });
       return;
     }
@@ -94,11 +94,11 @@ export default function LoginPage() {
       const { error: signInError } = await signIn(email, password);
 
       if (signInError) {
-        const errorMessage = signInError.message || 'Failed to login';
+        const errorMessage = signInError.message || 'Hyrja dështoi';
         setError(errorMessage);
 
         if (!errorMessage.toLowerCase().includes('blocked')) {
-          toast.error('Login Failed', {
+          toast.error('Hyrja dështoi', {
             description: errorMessage,
           });
         }
@@ -107,7 +107,7 @@ export default function LoginPage() {
         return;
       }
 
-      toast.success('Login successful!');
+      toast.success('Hyrja u krye me sukses!');
       
       // Refresh the router to ensure middleware/server components see the new session cookie
       router.refresh();
@@ -117,9 +117,9 @@ export default function LoginPage() {
     } catch (err) {
       console.error('Unexpected error during login:', err);
       const message =
-        err instanceof Error ? err.message : 'Unexpected error. Please try again.';
+        err instanceof Error ? err.message : 'Gabim i papritur. Ju lutem provoni përsëri.';
       setError(message);
-      toast.error('Login Failed', {
+      toast.error('Hyrja dështoi', {
         description: message,
       });
       setSubmitting(false);
@@ -140,41 +140,40 @@ export default function LoginPage() {
           <div className="space-y-2">
             <p className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-black/60 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               <span className="h-1.5 w-6 bg-gradient-to-r from-orange-500 to-amber-300 rounded-full" />
-              DriveWise Dashboard
+              Paneli DriveWise
             </p>
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
-              Log in and pick up exactly where you left off.
+              Hyni dhe vazhdoni saktësisht aty ku e latë.
             </h1>
             <p className="text-sm text-muted-foreground max-w-md">
-              See your latest scores, weak topics, and streak in one clean view inspired by exam
-              dashboards and modern analytics tools.
+              Shikoni rezultatet e fundit, temat e dobëta dhe serinë tuaj në një pamje të pastër, e frymëzuar nga panelet e provimeve dhe mjetet moderne të analitikës.
             </p>
           </div>
 
           <div className="grid gap-3 md:grid-cols-3 text-xs">
             <div className="rounded-xl border border-border/70 bg-black/70 px-3 py-3 flex flex-col gap-1">
-              <span className="text-[11px] text-muted-foreground">Weekly progress</span>
+              <span className="text-[11px] text-muted-foreground">Përparimi javor</span>
               <span className="text-lg font-semibold text-foreground">86%</span>
               <div className="mt-1 h-1.5 rounded-full bg-orange-500/10 overflow-hidden">
                 <div className="h-full w-4/5 bg-gradient-to-r from-orange-500 to-amber-300" />
               </div>
-              <span className="text-[11px] text-muted-foreground mt-1">+12% vs last week</span>
+              <span className="text-[11px] text-muted-foreground mt-1">+12% krahasuar me javën e kaluar</span>
             </div>
             <div className="rounded-xl border border-border/70 bg-black/70 px-3 py-3 flex flex-col gap-1">
-              <span className="text-[11px] text-muted-foreground">Tests completed</span>
+              <span className="text-[11px] text-muted-foreground">Teste të përfunduara</span>
               <span className="text-lg font-semibold text-foreground">42</span>
               <div className="mt-1 h-1.5 rounded-full bg-orange-500/10 overflow-hidden">
                 <div className="h-full w-2/3 bg-gradient-to-r from-orange-500 to-amber-300" />
               </div>
-              <span className="text-[11px] text-muted-foreground mt-1">History saved forever</span>
+              <span className="text-[11px] text-muted-foreground mt-1">Historia ruhet përgjithmonë</span>
             </div>
             <div className="rounded-xl border border-border/70 bg-black/70 px-3 py-3 flex flex-col gap-1">
-              <span className="text-[11px] text-muted-foreground">Daily streak</span>
-              <span className="text-lg font-semibold text-foreground">7 days</span>
+              <span className="text-[11px] text-muted-foreground">Seria ditore</span>
+              <span className="text-lg font-semibold text-foreground">7 ditë</span>
               <div className="mt-1 h-1.5 rounded-full bg-emerald-500/10 overflow-hidden">
                 <div className="h-full w-3/4 bg-gradient-to-r from-emerald-500 to-emerald-300" />
               </div>
-              <span className="text-[11px] text-muted-foreground mt-1">Keep it going</span>
+              <span className="text-[11px] text-muted-foreground mt-1">Vazhdo kështu</span>
             </div>
           </div>
         </div>
@@ -235,7 +234,7 @@ export default function LoginPage() {
                     href="/forgot-password"
                     className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
                   >
-                    Forgot password?
+                    Keni harruar fjalëkalimin?
                   </Link>
                 </div>
                 <Input

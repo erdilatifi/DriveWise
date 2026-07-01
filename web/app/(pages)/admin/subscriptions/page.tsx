@@ -88,7 +88,7 @@ export default function AdminSubscriptionsPage() {
       });
 
       if (!res.ok) {
-        let message = 'Failed to grant plan';
+        let message = 'Dështoi dhënia e planit';
         try {
           const data = await res.json();
           if (data?.error) message = data.error;
@@ -110,15 +110,15 @@ export default function AdminSubscriptionsPage() {
       const profile = data?.profiles?.find((p) => p.id === vars.userId);
       const planDef = BILLING_CONFIG.plans[vars.planTier];
 
-      const userLabel = profile?.full_name || profile?.email || 'user';
+      const userLabel = profile?.full_name || profile?.email || 'përdoruesi';
 
       toast.success(
-        `Granted ${planDef.label} plan (${vars.planTier}) for category ${vars.category} to ${userLabel}.`,
+        `U dha plani ${planDef.label} (${vars.planTier}) për kategorinë ${vars.category} për ${userLabel}.`,
       );
     },
     onError: (err: any) => {
       console.error(err);
-      toast.error('Failed to grant plan. Please try again.');
+      toast.error('Dështoi dhënia e planit. Ju lutem provoni përsëri.');
     },
   });
 
@@ -152,7 +152,7 @@ export default function AdminSubscriptionsPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Authenticating...</p>
+          <p className="text-muted-foreground">Duke u autentikuar...</p>
         </div>
       </div>
     );
@@ -165,13 +165,13 @@ export default function AdminSubscriptionsPage() {
         <div className="container mx-auto px-4 pt-28 pb-12 max-w-4xl">
           <GlassCard className="p-8 border border-border/80 bg-black/85 text-center space-y-4">
             <div>
-              <h1 className="text-xl font-semibold mb-1">Admin access required</h1>
+              <h1 className="text-xl font-semibold mb-1">Kërkohet qasje admini</h1>
               <p className="text-sm text-muted-foreground">
-                This page is only available to admins. If you believe this is a mistake,
-                please contact the owner.
+                Kjo faqe është e disponueshme vetëm për administratorët. Nëse mendoni se ky
+                është një gabim, ju lutem kontaktoni pronarin.
               </p>
             </div>
-            <Button onClick={() => router.push('/dashboard')}>Back to dashboard</Button>
+            <Button onClick={() => router.push('/dashboard')}>Kthehu te paneli</Button>
           </GlassCard>
         </div>
       </div>
@@ -185,7 +185,7 @@ export default function AdminSubscriptionsPage() {
         <div className="container mx-auto px-4 pt-28 pb-12 max-w-5xl flex flex-col items-center justify-center gap-3">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           <p className="text-xs text-muted-foreground">
-            Loading subscription overview…
+            Duke ngarkuar pasqyrën e abonimeve…
           </p>
         </div>
       </div>
@@ -199,11 +199,11 @@ export default function AdminSubscriptionsPage() {
         <div className="container mx-auto px-4 pt-28 pb-12 max-w-5xl">
           <GlassCard className="p-6 border border-border/80 bg-black/85 space-y-2">
             <p className="text-sm font-semibold text-destructive">
-              Failed to load subscriptions
+              Dështoi ngarkimi i abonimeve
             </p>
             <p className="text-xs text-muted-foreground break-words">
-              Something went wrong while loading subscription data. Please try again
-              later.
+              Diçka shkoi keq gjatë ngarkimit të të dhënave të abonimeve. Ju lutem provoni
+              përsëri më vonë.
             </p>
           </GlassCard>
         </div>
@@ -219,7 +219,7 @@ export default function AdminSubscriptionsPage() {
         <Button variant="ghost" asChild className="pl-0 hover:bg-transparent hover:text-primary">
           <Link href="/admin">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Admin Dashboard
+            Kthehu në Panelin Admin
           </Link>
         </Button>
 
@@ -231,25 +231,25 @@ export default function AdminSubscriptionsPage() {
                 Admin
               </p>
               <Badge variant="outline" className="border-primary/70 text-primary text-[10px]">
-                Using mock payments
+                Duke përdorur pagesa test
               </Badge>
             </div>
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
-              Subscription overview
+              Pasqyra e abonimeve
             </h1>
             <p className="text-sm text-muted-foreground max-w-xl">
-              See all users, their plans by category, and quickly grant or extend access
-              while payments are in testing.
+              Shiko të gjithë përdoruesit, planet e tyre sipas kategorive, dhe jep ose zgjato
+              shpejt qasjen ndërsa pagesat janë në testim.
             </p>
             <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
               <span>
-                Total users:&nbsp;
+                Përdorues gjithsej:&nbsp;
                 <span className="font-semibold text-foreground">
                   {profiles.length}
                 </span>
               </span>
               <span>
-                Paying users (at least one plan):{' '}
+                Përdorues me pagesë (të paktën një plan):{' '}
                 <span className="font-semibold text-foreground">
                   {totalPaidUsers}
                 </span>
@@ -260,7 +260,7 @@ export default function AdminSubscriptionsPage() {
           <div className="flex flex-col items-end gap-2">
             <div className="flex flex-col items-end gap-1">
               <label className="text-[11px] text-muted-foreground">
-                Plan used for grants
+                Plani i përdorur për dhënie
               </label>
               <select
                 className="text-[11px] bg-black/70 border border-border/70 rounded-md px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/60"
@@ -280,7 +280,7 @@ export default function AdminSubscriptionsPage() {
               className="text-xs"
               onClick={() => router.push('/profile')}
             >
-              Open account page
+              Hap faqen e llogarisë
             </Button>
           </div>
         </GlassCard>
@@ -289,17 +289,17 @@ export default function AdminSubscriptionsPage() {
         <GlassCard className="p-4 md:p-5 border border-border/80 bg-black/85 overflow-x-auto">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-medium text-foreground">
-              Users &amp; license categories
+              Përdoruesit &amp; kategoritë e patentës
             </h2>
             <p className="text-[11px] text-muted-foreground">
-              Click &ldquo;Grant free plan&rdquo; to create or extend access.
+              Kliko &ldquo;Jep plan falas&rdquo; për të krijuar ose zgjatur qasjen.
             </p>
           </div>
 
           {profiles.length === 0 ? (
             <div className="py-10 text-center">
               <p className="text-sm text-muted-foreground">
-                No users found yet. New users will appear here automatically.
+                Ende nuk ka përdorues. Përdoruesit e rinj do të shfaqen këtu automatikisht.
               </p>
             </div>
           ) : (
@@ -307,7 +307,7 @@ export default function AdminSubscriptionsPage() {
               <thead>
                 <tr className="border-b border-border/60 bg-black/70">
                   <th className="py-2 pr-3 text-left font-medium text-muted-foreground sticky top-0 bg-black/80 backdrop-blur z-10">
-                    User
+                    Përdoruesi
                   </th>
                   <th className="py-2 pr-3 text-left font-medium text-muted-foreground hidden md:table-cell sticky top-0 bg-black/80 backdrop-blur z-10">
                     Email
@@ -317,7 +317,7 @@ export default function AdminSubscriptionsPage() {
                       key={cat}
                       className="py-2 px-2 text-left font-medium text-muted-foreground whitespace-nowrap sticky top-0 bg-black/80 backdrop-blur z-10"
                     >
-                      Cat {cat}
+                      Kat. {cat}
                     </th>
                   ))}
                 </tr>
@@ -330,7 +330,7 @@ export default function AdminSubscriptionsPage() {
                     const row = userPlans.find((p) => p.category === category);
                     if (!row) {
                       return {
-                        label: 'Free',
+                        label: 'Falas',
                         detail: '',
                         isActive: false,
                         isExpired: false,
@@ -355,9 +355,9 @@ export default function AdminSubscriptionsPage() {
                     );
 
                     return {
-                      label: active ? row.plan_tier : `${row.plan_tier} (expired)`,
+                      label: active ? row.plan_tier : `${row.plan_tier} (skaduar)`,
                       detail: active
-                        ? `${remainingDays}d left`
+                        ? `${remainingDays} ditë të mbetura`
                         : endDate.toLocaleDateString(),
                       isActive: active,
                       isExpired: !active,
@@ -372,13 +372,13 @@ export default function AdminSubscriptionsPage() {
                       <td className="py-2 pr-3 align-top">
                         <div className="flex flex-col">
                           <span className="font-medium text-foreground">
-                            {profile.full_name || profile.email || 'Unknown user'}
+                            {profile.full_name || profile.email || 'Përdorues i panjohur'}
                           </span>
                           <span className="md:hidden text-[11px] text-muted-foreground">
                             {profile.email || ''}
                           </span>
                           <span className="text-[10px] text-muted-foreground mt-0.5">
-                            Joined:{' '}
+                            Regjistruar:{' '}
                             {new Date(profile.created_at).toLocaleDateString()}
                           </span>
                         </div>
@@ -424,7 +424,7 @@ export default function AdminSubscriptionsPage() {
                                   })
                                 }
                               >
-                                {planCell.isActive ? 'Extend (free)' : 'Grant free plan'}
+                                {planCell.isActive ? 'Zgjato (falas)' : 'Jep plan falas'}
                               </Button>
                             </div>
                           </td>

@@ -107,7 +107,7 @@ export default function NewQuestionPage() {
 
     if (!validationResult.success) {
       const issues = validationResult.error.issues;
-      const firstError = issues[0]?.message || "Validation error";
+      const firstError = issues[0]?.message || "Gabim vlefshmërie";
       toast.error(firstError);
       console.error('Validation errors:', issues);
       return;
@@ -135,7 +135,7 @@ export default function NewQuestionPage() {
         imageUrl = publicUrl;
       } catch (error) {
         console.error('Image upload error:', error);
-        toast.error('Failed to upload image');
+        toast.error('Ngarkimi i imazhit dështoi');
         setUploading(false);
         return;
       }
@@ -170,38 +170,38 @@ export default function NewQuestionPage() {
       
       const result = await createQuestion.mutateAsync(questionData);
       console.log('Question created successfully:', result);
-      toast.success('Question created successfully!');
-      
+      toast.success('Pyetja u krijua me sukses!');
+
       // Small delay to show success message
       setTimeout(() => {
         router.push('/admin/questions');
       }, 500);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error(`Failed to create question: ${message}`);
+      const message = error instanceof Error ? error.message : 'Ndodhi një gabim i panjohur';
+      toast.error(`Krijimi i pyetjes dështoi: ${message}`);
       console.error('Error creating question:', error, { formData });
     }
   };
 
   const handleJsonImport = async () => {
     if (!jsonInput.trim()) {
-      toast.error('Please enter JSON data');
+      toast.error('Ju lutem shkruani të dhëna JSON');
       return;
     }
 
     setImporting(true);
     try {
       const questions = JSON.parse(jsonInput) as unknown;
-      
+
       if (!Array.isArray(questions)) {
-        toast.error('JSON must be an array of questions');
+        toast.error('JSON duhet të jetë një varg (array) pyetjesh');
         return;
       }
 
       // Validate and insert questions
       const validQuestions = (questions as ImportedQuestionJson[]).map((q) => {
         if (!q.category || !q.test_number || !q.question_text || !q.option_a || !q.option_b || !q.option_c || !q.correct_answer) {
-          throw new Error('Each question must have: category, test_number, question_text, option_a, option_b, option_c, correct_answer');
+          throw new Error('Çdo pyetje duhet të ketë: category, test_number, question_text, option_a, option_b, option_c, correct_answer');
         }
         return {
           category: q.category.toUpperCase(),
@@ -221,16 +221,16 @@ export default function NewQuestionPage() {
 
       if (error) {
         console.error('Error importing questions:', error);
-        toast.error(`Failed to import questions: ${error.message}`);
+        toast.error(`Importimi i pyetjeve dështoi: ${error.message}`);
         return;
       }
 
-      toast.success(`Successfully imported ${validQuestions.length} questions`);
+      toast.success(`U importuan me sukses ${validQuestions.length} pyetje`);
       setJsonInput('');
       setJsonImportOpen(false);
       router.push('/admin/questions');
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Invalid JSON format';
+      const message = error instanceof Error ? error.message : 'Format JSON i pavlefshëm';
       toast.error(message);
       console.error(error);
     } finally {
@@ -243,7 +243,7 @@ export default function NewQuestionPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">Duke ngarkuar...</p>
         </div>
       </div>
     );
@@ -269,47 +269,47 @@ export default function NewQuestionPage() {
             <Button variant="ghost" asChild>
               <Link href="/admin">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Admin Dashboard
+                Kthehu në Panelin Admin
               </Link>
             </Button>
             <span className="text-muted-foreground">/</span>
             <Button variant="ghost" asChild>
               <Link href="/admin/questions">
-                Questions
+                Pyetjet
               </Link>
             </Button>
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold">Add New Question</h1>
-              <p className="text-sm text-muted-foreground">Create a new quiz question or import multiple via JSON</p>
+              <h1 className="text-3xl font-bold">Shto Pyetje të Re</h1>
+              <p className="text-sm text-muted-foreground">Krijo një pyetje të re testi ose importo disa përmes JSON</p>
             </div>
             <Dialog open={jsonImportOpen} onOpenChange={setJsonImportOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="shadow-lg shadow-primary/20">
                   <FileJson className="w-4 h-4 mr-2" />
-                  Import JSON
+                  Importo JSON
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Import Questions from JSON</DialogTitle>
+                  <DialogTitle>Importo Pyetje nga JSON</DialogTitle>
                   <DialogDescription>
-                    Paste JSON array of questions. Image URL is optional.
+                    Ngjit një varg (array) JSON me pyetje. URL-ja e imazhit është opsionale.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">Example format:</p>
+                    <p className="text-sm text-muted-foreground mb-2">Formati shembull:</p>
                     <pre className="bg-muted p-3 rounded-lg text-xs overflow-x-auto">
 {`[
   {
     "category": "B",
     "test_number": 1,
-    "question_text": "What does a red light mean?",
-    "option_a": "Stop",
-    "option_b": "Go",
-    "option_c": "Slow down",
+    "question_text": "Çfarë do të thotë drita e kuqe?",
+    "option_a": "Ndalo",
+    "option_b": "Vazhdo",
+    "option_c": "Ngadalëso",
     "correct_answer": "A",
     "image_url": "https://example.com/image.jpg"
   }
@@ -317,7 +317,7 @@ export default function NewQuestionPage() {
                     </pre>
                   </div>
                   <Textarea
-                    placeholder="Paste your JSON here..."
+                    placeholder="Ngjit JSON-in tënd këtu..."
                     value={jsonInput}
                     onChange={(e) => setJsonInput(e.target.value)}
                     className="min-h-[300px] font-mono text-sm"
@@ -328,13 +328,13 @@ export default function NewQuestionPage() {
                       onClick={() => setJsonImportOpen(false)}
                       disabled={importing}
                     >
-                      Cancel
+                      Anulo
                     </Button>
                     <Button
                       onClick={handleJsonImport}
                       disabled={importing}
                     >
-                      {importing ? 'Importing...' : 'Import Questions'}
+                      {importing ? 'Duke importuar...' : 'Importo Pyetjet'}
                     </Button>
                   </div>
                 </div>
@@ -349,7 +349,7 @@ export default function NewQuestionPage() {
             {/* Category and Test Number */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="category">Category *</Label>
+                <Label htmlFor="category">Kategoria *</Label>
                 <Select
                   value={formData.category}
                   onValueChange={(value) => setFormData({ ...formData, category: value })}
@@ -358,16 +358,16 @@ export default function NewQuestionPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="A">Category A</SelectItem>
-                    <SelectItem value="B">Category B</SelectItem>
-                    <SelectItem value="C">Category C</SelectItem>
-                    <SelectItem value="D">Category D</SelectItem>
+                    <SelectItem value="A">Kategoria A</SelectItem>
+                    <SelectItem value="B">Kategoria B</SelectItem>
+                    <SelectItem value="C">Kategoria C</SelectItem>
+                    <SelectItem value="D">Kategoria D</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="test_number">Test Number *</Label>
+                <Label htmlFor="test_number">Numri i Testit *</Label>
                 <Input
                   id="test_number"
                   type="number"
@@ -383,13 +383,13 @@ export default function NewQuestionPage() {
             {/* Question Text */}
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="question_text">Question Text *</Label>
+                <Label htmlFor="question_text">Teksti i Pyetjes *</Label>
                 <Textarea
                   id="question_text"
                   rows={4}
                   value={formData.question_text}
                   onChange={(e) => setFormData({ ...formData, question_text: e.target.value })}
-                  placeholder="Enter the question text..."
+                  placeholder="Shkruaj tekstin e pyetjes..."
                 />
               </div>
             </div>
@@ -397,47 +397,47 @@ export default function NewQuestionPage() {
             {/* Options */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label>Answer Options</Label>
+                <Label>Opsionet e Përgjigjes</Label>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setHasOptionC(!hasOptionC)}
                 >
-                  {hasOptionC ? 'Remove Option C' : 'Add Option C'}
+                  {hasOptionC ? 'Hiq Opsionin C' : 'Shto Opsionin C'}
                 </Button>
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="option_a" className="text-sm text-muted-foreground">Option A *</Label>
+                <Label htmlFor="option_a" className="text-sm text-muted-foreground">Opsioni A *</Label>
                 <Input
                   id="option_a"
                   value={formData.option_a}
                   onChange={(e) => setFormData({ ...formData, option_a: e.target.value })}
-                  placeholder="Enter option A..."
+                  placeholder="Shkruaj opsionin A..."
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="option_b" className="text-sm text-muted-foreground">Option B *</Label>
+                <Label htmlFor="option_b" className="text-sm text-muted-foreground">Opsioni B *</Label>
                 <Input
                   id="option_b"
                   value={formData.option_b}
                   onChange={(e) => setFormData({ ...formData, option_b: e.target.value })}
-                  placeholder="Enter option B..."
+                  placeholder="Shkruaj opsionin B..."
                   required
                 />
               </div>
 
               {hasOptionC && (
                 <div className="space-y-2">
-                  <Label htmlFor="option_c" className="text-sm text-muted-foreground">Option C *</Label>
+                  <Label htmlFor="option_c" className="text-sm text-muted-foreground">Opsioni C *</Label>
                   <Input
                     id="option_c"
                     value={formData.option_c || ''}
                     onChange={(e) => setFormData({ ...formData, option_c: e.target.value })}
-                    placeholder="Enter option C..."
+                    placeholder="Shkruaj opsionin C..."
                     required={hasOptionC}
                   />
                 </div>
@@ -448,9 +448,9 @@ export default function NewQuestionPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label className="text-base font-semibold">Correct Answer *</Label>
+                  <Label className="text-base font-semibold">Përgjigja e Saktë *</Label>
                   <p className="text-sm text-muted-foreground">
-                    {multipleAnswers ? 'Select all correct answers' : 'Select which option is the correct answer'}
+                    {multipleAnswers ? 'Zgjidh të gjitha përgjigjet e sakta' : 'Zgjidh cili opsion është përgjigja e saktë'}
                   </p>
                 </div>
                 <Button
@@ -465,13 +465,13 @@ export default function NewQuestionPage() {
                   }}
                 >
                   <CheckSquare className="w-4 h-4 mr-2" />
-                  {multipleAnswers ? 'Single Answer' : 'Multiple Answers'}
+                  {multipleAnswers ? 'Përgjigje e Vetme' : 'Përgjigje të Shumëfishta'}
                 </Button>
               </div>
 
               {multipleAnswers ? (
                 <div className="flex flex-col gap-3">
-                  {(['A', 'B', ...(hasOptionC ? ['C'] : [])] as const).map((option) => (
+                  {(hasOptionC ? (['A', 'B', 'C'] as const) : (['A', 'B'] as const)).map((option) => (
                     <div
                       key={option}
                       className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
@@ -499,12 +499,12 @@ export default function NewQuestionPage() {
                         )}
                       </div>
                       <Label className="cursor-pointer flex-1 font-medium">
-                        Option {option} {selectedAnswers.has(option) && <span className="text-primary ml-2">✓ Selected</span>}
+                        Opsioni {option} {selectedAnswers.has(option) && <span className="text-primary ml-2">✓ E zgjedhur</span>}
                       </Label>
                     </div>
                   ))}
                   <p className="text-xs text-muted-foreground">
-                    Selected: {selectedAnswers.size > 0 ? Array.from(selectedAnswers).join(', ') : 'None'}
+                    Të zgjedhura: {selectedAnswers.size > 0 ? Array.from(selectedAnswers).join(', ') : 'Asnjë'}
                   </p>
                 </div>
               ) : (
@@ -518,20 +518,20 @@ export default function NewQuestionPage() {
                   <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/50 transition-colors">
                     <RadioGroupItem value="A" id="correct_a" />
                     <Label htmlFor="correct_a" className="cursor-pointer flex-1 font-medium">
-                      Option A {formData.correct_answer === 'A' && <span className="text-primary ml-2">✓ Selected</span>}
+                      Opsioni A {formData.correct_answer === 'A' && <span className="text-primary ml-2">✓ E zgjedhur</span>}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/50 transition-colors">
                     <RadioGroupItem value="B" id="correct_b" />
                     <Label htmlFor="correct_b" className="cursor-pointer flex-1 font-medium">
-                      Option B {formData.correct_answer === 'B' && <span className="text-primary ml-2">✓ Selected</span>}
+                      Opsioni B {formData.correct_answer === 'B' && <span className="text-primary ml-2">✓ E zgjedhur</span>}
                     </Label>
                   </div>
                   {hasOptionC && (
                     <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/50 transition-colors">
                       <RadioGroupItem value="C" id="correct_c" />
                       <Label htmlFor="correct_c" className="cursor-pointer flex-1 font-medium">
-                        Option C {formData.correct_answer === 'C' && <span className="text-primary ml-2">✓ Selected</span>}
+                        Opsioni C {formData.correct_answer === 'C' && <span className="text-primary ml-2">✓ E zgjedhur</span>}
                       </Label>
                     </div>
                   )}
@@ -541,15 +541,15 @@ export default function NewQuestionPage() {
 
             {/* Image Upload (Optional) */}
             <div className="space-y-3">
-              <Label>Question Image (Optional)</Label>
-              <p className="text-sm text-muted-foreground">Upload an image or provide a URL</p>
+              <Label>Imazhi i Pyetjes (Opsionale)</Label>
+              <p className="text-sm text-muted-foreground">Ngarko një imazh ose jep një URL</p>
               
               {/* Image Preview */}
               {(imagePreview || formData.image_url) && (
                 <div className="relative inline-block">
                   <img
                     src={imagePreview || formData.image_url}
-                    alt="Preview"
+                    alt="Parapamje"
                     className="max-w-sm h-auto rounded-lg border-2 border-border"
                   />
                   <Button
@@ -577,7 +577,7 @@ export default function NewQuestionPage() {
                   className="flex-1"
                 >
                   <Upload className="w-4 h-4 mr-2" />
-                  Upload Image
+                  Ngarko Imazhin
                 </Button>
                 <input
                   id="image-upload"
@@ -601,7 +601,7 @@ export default function NewQuestionPage() {
                   <span className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Or use URL</span>
+                  <span className="bg-background px-2 text-muted-foreground">Ose përdor URL</span>
                 </div>
               </div>
               
@@ -628,17 +628,17 @@ export default function NewQuestionPage() {
                 {uploading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Uploading Image...
+                    Duke ngarkuar imazhin...
                   </>
                 ) : createQuestion.isPending ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Creating...
+                    Duke krijuar...
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4 mr-2" />
-                    Create Question
+                    Krijo Pyetjen
                   </>
                 )}
               </Button>
@@ -648,7 +648,7 @@ export default function NewQuestionPage() {
                 onClick={() => router.push('/admin/questions')}
                 disabled={createQuestion.isPending}
               >
-                Cancel
+                Anulo
               </Button>
             </div>
           </GlassCard>

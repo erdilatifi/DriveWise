@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
   images: {
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+    remotePatterns: [
+      // Supabase Storage (question/material/scenario/sign images)
+      { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' },
+      // Stock photos used in some decision-trainer scenario content
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+    ],
   },
   
   // Compiler optimizations

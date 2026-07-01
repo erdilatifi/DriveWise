@@ -82,17 +82,17 @@ export default function NewMaterialPage() {
     const errors: string[] = [];
 
     if (!formData.title.trim()) {
-      errors.push('Title is required');
+      errors.push('Titulli është i detyrueshëm');
     }
     if (!formData.chapter_id || formData.chapter_id < 1 || formData.chapter_id > 20) {
-      errors.push('Chapter must be between 1 and 20');
+      errors.push('Kapitulli duhet të jetë mes 1 dhe 20');
     }
     if (!formData.order_index) {
-      errors.push('Order index is required');
+      errors.push('Indeksi i renditjes është i detyrueshëm');
     }
 
     if (usedChapterIds.has(formData.chapter_id)) {
-      errors.push('A material for this chapter already exists. Please edit it instead.');
+      errors.push('Për këtë kapitull ekziston tashmë një material. Ju lutem ndryshojeni atë.');
     }
 
     let content: Record<string, unknown> = {};
@@ -100,7 +100,7 @@ export default function NewMaterialPage() {
     try {
       content = JSON.parse(formData.content_text || '{}');
     } catch {
-      errors.push('Content must be valid JSON');
+      errors.push('Përmbajtja duhet të jetë JSON e vlefshme');
     }
 
     if (errors.length > 0) {
@@ -133,15 +133,15 @@ export default function NewMaterialPage() {
         }
       }
 
-      toast.success('Material created successfully!');
+      toast.success('Materiali u krijua me sukses!');
 
       setTimeout(() => {
         router.push(`/admin/materials/${result.id}/edit`);
       }, 500);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to create material';
+      const message = error instanceof Error ? error.message : 'Dështoi krijimi i materialit';
       if (message.includes('23505')) {
-        toast.error('A material for this chapter already exists. Please edit it instead.');
+        toast.error('Për këtë kapitull ekziston tashmë një material. Ju lutem ndryshojeni atë.');
       } else {
         toast.error(message);
       }
@@ -151,7 +151,7 @@ export default function NewMaterialPage() {
 
   const handleAddImageToQueue = () => {
     if (!imageFile) {
-      toast.error('Please select an image file');
+      toast.error('Ju lutem zgjidhni një skedar imazhi');
       return;
     }
 
@@ -179,7 +179,7 @@ export default function NewMaterialPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">Duke ngarkuar...</p>
         </div>
       </div>
     );
@@ -205,13 +205,13 @@ export default function NewMaterialPage() {
             <Button variant="ghost" asChild>
               <Link href="/admin">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Admin Dashboard
+                Kthehu në Panelin Admin
               </Link>
             </Button>
           </div>
-          <h1 className="text-3xl font-bold">Add Study Material</h1>
+          <h1 className="text-3xl font-bold">Shto Material Mësimor</h1>
           <p className="text-sm text-muted-foreground">
-            Create a new study material entry for a specific chapter
+            Krijo një material të ri mësimor për një kapitull të caktuar
           </p>
         </div>
 
@@ -221,7 +221,7 @@ export default function NewMaterialPage() {
             {/* Chapter, Category and Order */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="chapter_id">Chapter *</Label>
+                <Label htmlFor="chapter_id">Kapitulli *</Label>
                 <Select
                   value={String(formData.chapter_id)}
                   onValueChange={(value) => {
@@ -242,7 +242,7 @@ export default function NewMaterialPage() {
                       if (usedChapterIds.has(chapter)) return null;
                       return (
                         <SelectItem key={chapter} value={String(chapter)}>
-                          Chapter {chapter}
+                          Kapitulli {chapter}
                         </SelectItem>
                       );
                     })}
@@ -251,7 +251,7 @@ export default function NewMaterialPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category">Category *</Label>
+                <Label htmlFor="category">Kategoria *</Label>
                 <Select
                   value={formData.category}
                   onValueChange={(value) =>
@@ -265,16 +265,16 @@ export default function NewMaterialPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="A">Category A</SelectItem>
-                    <SelectItem value="B">Category B</SelectItem>
-                    <SelectItem value="C">Category C</SelectItem>
-                    <SelectItem value="D">Category D</SelectItem>
+                    <SelectItem value="A">Kategoria A</SelectItem>
+                    <SelectItem value="B">Kategoria B</SelectItem>
+                    <SelectItem value="C">Kategoria C</SelectItem>
+                    <SelectItem value="D">Kategoria D</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="order_index">Order Index *</Label>
+                <Label htmlFor="order_index">Indeksi i Renditjes *</Label>
                 <Input
                   id="order_index"
                   type="number"
@@ -293,12 +293,12 @@ export default function NewMaterialPage() {
 
             {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="title">Titulli *</Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="e.g. 1. Basic Traffic Rules"
+                placeholder="p.sh. 1. Rregullat bazë të trafikut"
                 required
               />
             </div>
@@ -306,18 +306,18 @@ export default function NewMaterialPage() {
             {/* Content JSON */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="content_text">Content (JSON) *</Label>
+                <Label htmlFor="content_text">Përmbajtja (JSON) *</Label>
                 <Textarea
                   id="content_text"
                   rows={10}
                   value={formData.content_text}
                   onChange={(e) => setFormData({ ...formData, content_text: e.target.value })}
-                  placeholder="Paste or write the content as a JSON object (keys and arrays)."
+                  placeholder="Ngjit ose shkruaj përmbajtjen si objekt JSON (çelësa dhe vargje)."
                   className="font-mono text-xs"
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  Example: {'{"section_key": ["Point 1", "Point 2"]}'}
+                  Shembull: {'{"section_key": ["Pika 1", "Pika 2"]}'}
                 </p>
               </div>
             </div>
@@ -333,20 +333,20 @@ export default function NewMaterialPage() {
                 }
               />
               <Label htmlFor="is_published" className="text-sm">
-                Published (visible to users)
+                Publikuar (i dukshëm për përdoruesit)
               </Label>
             </div>
 
             <div className="space-y-4 pt-4 border-t border-border">
               <div className="flex items-center gap-2">
                 <ImagePlus className="w-4 h-4" />
-                <h2 className="text-lg font-semibold">Material Images</h2>
+                <h2 className="text-lg font-semibold">Imazhet e Materialit</h2>
               </div>
 
               <div className="grid gap-6 md:grid-cols-[minmax(0,2fr),minmax(0,3fr)]">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="image_file">Add Image</Label>
+                    <Label htmlFor="image_file">Shto Imazh</Label>
                     <input
                       id="image_file"
                       type="file"
@@ -357,17 +357,17 @@ export default function NewMaterialPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="image_caption">Caption</Label>
+                    <Label htmlFor="image_caption">Titra</Label>
                     <Input
                       id="image_caption"
                       value={imageCaption}
                       onChange={(e) => setImageCaption(e.target.value)}
-                      placeholder="Optional caption"
+                      placeholder="Titra opsionale"
                     />
                   </div>
 
                   <div className="space-y-2 max-w-xs">
-                    <Label htmlFor="image_order_index">Order Index</Label>
+                    <Label htmlFor="image_order_index">Indeksi i Renditjes</Label>
                     <Input
                       id="image_order_index"
                       type="number"
@@ -377,11 +377,11 @@ export default function NewMaterialPage() {
                         const value = e.target.value;
                         setImageOrderIndex(value === '' ? '' : parseInt(value, 10) || '');
                       }}
-                      placeholder="Leave empty to append automatically"
+                      placeholder="Lëreni bosh për renditje automatike"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Images are uploaded after the material is created and shown above the chapter
-                      content.
+                      Imazhet ngarkohen pasi materiali të krijohet dhe shfaqen mbi përmbajtjen e
+                      kapitullit.
                     </p>
                   </div>
 
@@ -392,15 +392,15 @@ export default function NewMaterialPage() {
                     disabled={!imageFile}
                   >
                     <ImagePlus className="w-4 h-4 mr-2" />
-                    Add Image to Queue
+                    Shto Imazhin në Radhë
                   </Button>
                 </div>
 
                 <div className="space-y-3">
-                  <p className="text-sm font-medium">Images queued for upload</p>
+                  <p className="text-sm font-medium">Imazhet në radhë për ngarkim</p>
                   {pendingImages.length === 0 ? (
                     <p className="text-xs text-muted-foreground">
-                      No images queued yet. You can add images now or later on the edit page.
+                      Ende asnjë imazh në radhë. Mund të shtoni imazhe tani ose më vonë në faqen e ndryshimit.
                     </p>
                   ) : (
                     <div className="space-y-2 text-xs">
@@ -413,7 +413,7 @@ export default function NewMaterialPage() {
                             <p className="font-medium truncate">{img.file.name}</p>
                             {img.order_index && (
                               <p className="text-[10px] text-muted-foreground">
-                                Order: {img.order_index}
+                                Renditja: {img.order_index}
                               </p>
                             )}
                           </div>
@@ -448,12 +448,12 @@ export default function NewMaterialPage() {
                 {createMaterial.isPending ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Creating...
+                    Duke krijuar...
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4 mr-2" />
-                    Create Material
+                    Krijo Materialin
                   </>
                 )}
               </Button>
@@ -463,7 +463,7 @@ export default function NewMaterialPage() {
                 onClick={() => router.push('/admin/materials')}
                 disabled={createMaterial.isPending}
               >
-                Cancel
+                Anulo
               </Button>
             </div>
           </GlassCard>

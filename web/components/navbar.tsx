@@ -142,7 +142,7 @@ export function Navbar() {
             {authLoading ? (
               <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-primary/5 border border-primary/10">
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                <span className="text-sm text-muted-foreground">Loading...</span>
+                <span className="text-sm text-muted-foreground">Duke ngarkuar...</span>
               </div>
             ) : user ? (
               <>
@@ -299,7 +299,7 @@ export function Navbar() {
               {authLoading ? (
                 <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/5 border border-primary/10">
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                  <span className="text-sm text-muted-foreground">Loading...</span>
+                  <span className="text-sm text-muted-foreground">Duke ngarkuar...</span>
                 </div>
               ) : user ? (
                 <Button variant="outline" size="sm" onClick={handleLogout} className="w-full justify-start border-border/50 hover:border-primary/50">

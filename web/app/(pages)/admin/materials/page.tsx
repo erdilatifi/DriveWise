@@ -77,12 +77,12 @@ export default function MaterialsPage() {
 
     try {
       await deleteMaterial.mutateAsync(materialToDelete.id);
-      toast.success('Material deleted successfully');
+      toast.success('Materiali u fshi me sukses');
       setDeleteDialogOpen(false);
       setMaterialToDelete(null);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error(`Failed to delete material: ${message}`);
+      const message = error instanceof Error ? error.message : 'Ndodhi një gabim i panjohur';
+      toast.error(`Dështoi fshirja e materialit: ${message}`);
       console.error('Error deleting material:', error);
     }
   };
@@ -92,7 +92,7 @@ export default function MaterialsPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading materials...</p>
+          <p className="text-muted-foreground">Duke ngarkuar materialet...</p>
         </div>
       </div>
     );
@@ -108,7 +108,7 @@ export default function MaterialsPage() {
         <Navbar />
         <div className="container mx-auto px-6 py-8 max-w-7xl">
           <GlassCard className="p-6 border border-border/80 bg-black/80">
-            <p className="text-destructive">Error loading materials: {error.message}</p>
+            <p className="text-destructive">Gabim gjatë ngarkimit të materialeve: {error.message}</p>
           </GlassCard>
         </div>
       </div>
@@ -129,7 +129,7 @@ export default function MaterialsPage() {
         <Button variant="ghost" asChild className="mb-4">
           <Link href="/admin">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Admin Dashboard
+            Kthehu në Panelin Admin
           </Link>
         </Button>
 
@@ -138,16 +138,16 @@ export default function MaterialsPage() {
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <BookOpen className="w-7 h-7 text-primary" />
-              Study Materials
+              Materialet Mësimore
             </h1>
             <p className="text-sm text-muted-foreground">
-              Manage study materials for each chapter ({totalMaterials} total)
+              Menaxho materialet mësimore për secilin kapitull ({totalMaterials} gjithsej)
             </p>
           </div>
           <Button asChild className="shadow-lg shadow-primary/20">
             <Link href="/admin/materials/new">
               <Plus className="w-4 h-4 mr-2" />
-              Add Material
+              Shto Material
             </Link>
           </Button>
         </div>
@@ -158,7 +158,7 @@ export default function MaterialsPage() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search by title..."
+                placeholder="Kërko sipas titullit..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -170,15 +170,15 @@ export default function MaterialsPage() {
                 onValueChange={(value) => setChapterFilter(value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="All Chapters" />
+                  <SelectValue placeholder="Të gjithë kapitujt" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Chapters</SelectItem>
+                  <SelectItem value="all">Të gjithë kapitujt</SelectItem>
                   {Array.from({ length: 13 }).map((_, index) => {
                     const chapter = index + 1;
                     return (
                       <SelectItem key={chapter} value={String(chapter)}>
-                        Chapter {chapter}
+                        Kapitulli {chapter}
                       </SelectItem>
                     );
                   })}
@@ -193,12 +193,12 @@ export default function MaterialsPage() {
           {materials.length === 0 && (
             <GlassCard className="p-12 text-center border border-border/80 bg-black/80">
               <p className="text-muted-foreground mb-4">
-                No materials found. Add your first study material.
+                Nuk u gjet asnjë material. Shto materialin tënd të parë mësimor.
               </p>
               <Button asChild>
                 <Link href="/admin/materials/new">
                   <Plus className="w-4 h-4 mr-2" />
-                  Add First Material
+                  Shto Materialin e Parë
                 </Link>
               </Button>
             </GlassCard>
@@ -212,7 +212,7 @@ export default function MaterialsPage() {
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   <span className="px-2 py-1 rounded-lg bg-primary/10 text-primary text-xs font-semibold">
-                    Chapter {material.chapter_id}
+                    Kapitulli {material.chapter_id}
                   </span>
                   <span
                     className={`px-2 py-1 rounded-lg text-xs font-semibold ${
@@ -221,7 +221,7 @@ export default function MaterialsPage() {
                         : 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300'
                     }`}
                   >
-                    {material.is_published ? 'Published' : 'Draft'}
+                    {material.is_published ? 'Publikuar' : 'Skicë'}
                   </span>
                 </div>
                 <h3 className="text-lg font-semibold mb-1">
@@ -231,7 +231,7 @@ export default function MaterialsPage() {
                   {/* Render a preview of content if needed, or just remove description */}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Last updated: {new Date(material.updated_at).toLocaleString()}
+                  Përditësuar më: {new Date(material.updated_at).toLocaleString()}
                 </p>
               </div>
 
@@ -244,7 +244,7 @@ export default function MaterialsPage() {
                 >
                   <Link href={`/admin/materials/${material.id}/edit`}>
                     <Edit className="w-4 h-4 md:mr-2" />
-                    <span className="hidden md:inline">Edit</span>
+                    <span className="hidden md:inline">Ndrysho</span>
                   </Link>
                 </Button>
                 <Button
@@ -255,7 +255,7 @@ export default function MaterialsPage() {
                   className="flex-1 md:flex-none text-destructive hover:text-destructive"
                 >
                   <Trash2 className="w-4 h-4 md:mr-2" />
-                  <span className="hidden md:inline">Delete</span>
+                  <span className="hidden md:inline">Fshi</span>
                 </Button>
               </div>
             </GlassCard>
@@ -266,8 +266,8 @@ export default function MaterialsPage() {
         {totalPages > 1 && (
           <div className="mt-8 flex flex-col items-center gap-3">
             <p className="text-xs text-muted-foreground">
-              Showing {(currentPage - 1) * itemsPerPage + 1}{' '}
-              - {Math.min(currentPage * itemsPerPage, totalMaterials)} of {totalMaterials} materials
+              Duke shfaqur {(currentPage - 1) * itemsPerPage + 1}{' '}
+              - {Math.min(currentPage * itemsPerPage, totalMaterials)} nga {totalMaterials} materiale
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -276,10 +276,10 @@ export default function MaterialsPage() {
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               >
-                Previous
+                E mëparshme
               </Button>
               <span className="text-xs text-muted-foreground">
-                Page {currentPage} of {totalPages}
+                Faqja {currentPage} nga {totalPages}
               </span>
               <Button
                 variant="outline"
@@ -287,7 +287,7 @@ export default function MaterialsPage() {
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               >
-                Next
+                E radhës
               </Button>
             </div>
           </div>
@@ -298,29 +298,29 @@ export default function MaterialsPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Material</AlertDialogTitle>
+            <AlertDialogTitle>Fshi Materialin</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this material?
+              A jeni i sigurt që doni të fshini këtë material?
               <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-sm font-medium text-foreground line-clamp-2">
-                  Chapter {materialToDelete?.chapter_id}: {materialToDelete?.title}
+                  Kapitulli {materialToDelete?.chapter_id}: {materialToDelete?.title}
                 </p>
               </div>
               <p className="mt-3 text-destructive font-medium">
-                This action cannot be undone.
+                Ky veprim nuk mund të zhbëhet.
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
-              Cancel
+              Anulo
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleteMaterial.isPending}
               className="bg-destructive hover:bg-destructive/90"
             >
-              {deleteMaterial.isPending ? 'Deleting...' : 'Delete'}
+              {deleteMaterial.isPending ? 'Duke fshirë...' : 'Fshi'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

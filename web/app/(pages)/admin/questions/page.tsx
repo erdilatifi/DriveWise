@@ -76,12 +76,12 @@ export default function QuestionsPage() {
 
     try {
       await deleteQuestion.mutateAsync(questionToDelete.id);
-      toast.success('Question deleted successfully');
+      toast.success('Pyetja u fshi me sukses');
       setDeleteDialogOpen(false);
       setQuestionToDelete(null);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error(`Failed to delete question: ${message}`);
+      const message = error instanceof Error ? error.message : 'Ndodhi një gabim i panjohur';
+      toast.error(`Fshirja e pyetjes dështoi: ${message}`);
       console.error('Error deleting question:', error);
     }
   };
@@ -113,7 +113,7 @@ export default function QuestionsPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading questions...</p>
+          <p className="text-muted-foreground">Duke ngarkuar pyetjet...</p>
         </div>
       </div>
     );
@@ -129,7 +129,7 @@ export default function QuestionsPage() {
         <Navbar />
         <div className="container mx-auto px-6 py-8 max-w-7xl">
           <GlassCard className="p-6 border border-border/80 bg-black/80">
-            <p className="text-destructive">Error loading questions: {error.message}</p>
+            <p className="text-destructive">Gabim gjatë ngarkimit të pyetjeve: {error.message}</p>
           </GlassCard>
         </div>
       </div>
@@ -150,29 +150,29 @@ export default function QuestionsPage() {
         <Button variant="ghost" asChild className="mb-4">
           <Link href="/admin">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Admin Dashboard
+            Kthehu në Panelin Admin
           </Link>
         </Button>
 
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Quiz Questions</h1>
+            <h1 className="text-3xl font-bold">Pyetjet e Testit</h1>
             <p className="text-sm text-muted-foreground">
-              Manage all quiz questions ({totalQuestions} total)
+              Menaxho të gjitha pyetjet e testit ({totalQuestions} gjithsej)
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <Button asChild variant="outline" className="shadow-sm">
               <Link href="/admin/translations">
                 <Filter className="w-4 h-4 mr-2" />
-                Translation mode
+                Modaliteti i përkthimit
               </Link>
             </Button>
             <Button asChild className="shadow-lg shadow-primary/20">
               <Link href="/admin/questions/new">
                 <Plus className="w-4 h-4 mr-2" />
-                Add Question
+                Shto Pyetje
               </Link>
             </Button>
           </div>
@@ -184,7 +184,7 @@ export default function QuestionsPage() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search questions..."
+                placeholder="Kërko pyetje..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -193,14 +193,14 @@ export default function QuestionsPage() {
             <div className="w-full md:w-48">
               <Select value={categoryFilter || 'all'} onValueChange={(value) => setCategoryFilter(value === 'all' ? '' : value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All Categories" />
+                  <SelectValue placeholder="Të gjitha Kategoritë" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="A">Category A</SelectItem>
-                  <SelectItem value="B">Category B</SelectItem>
-                  <SelectItem value="C">Category C</SelectItem>
-                  <SelectItem value="D">Category D</SelectItem>
+                  <SelectItem value="all">Të gjitha Kategoritë</SelectItem>
+                  <SelectItem value="A">Kategoria A</SelectItem>
+                  <SelectItem value="B">Kategoria B</SelectItem>
+                  <SelectItem value="C">Kategoria C</SelectItem>
+                  <SelectItem value="D">Kategoria D</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -223,9 +223,9 @@ export default function QuestionsPage() {
                     <span className="text-xl font-bold text-primary">{category}</span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold">Category {category}</h3>
+                    <h3 className="text-lg font-semibold">Kategoria {category}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {questionsByCategory?.[category]?.length || 0} question{questionsByCategory?.[category]?.length !== 1 ? 's' : ''}
+                      {questionsByCategory?.[category]?.length || 0} pyetje
                     </p>
                   </div>
                 </div>
@@ -242,7 +242,7 @@ export default function QuestionsPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-3">
                             <span className="px-2 py-1 rounded-lg bg-muted text-muted-foreground text-xs font-semibold">
-                              Test #{question.test_number}
+                              Testi #{question.test_number}
                             </span>
                             <span
                               className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${
@@ -251,7 +251,7 @@ export default function QuestionsPage() {
                                   : 'bg-amber-500/10 text-amber-600 border border-amber-500/30'
                               }`}
                             >
-                              {question.is_published !== false ? 'Published' : 'Draft'}
+                              {question.is_published !== false ? 'Publikuar' : 'Skicë'}
                             </span>
                           </div>
                           <p className="text-sm font-medium mb-3">{question.question_text}</p>
@@ -276,7 +276,7 @@ export default function QuestionsPage() {
                           >
                             <Link href={`/admin/questions/${question.id}/edit`}>
                               <Edit className="w-4 h-4 md:mr-2" />
-                              <span className="hidden md:inline">Edit</span>
+                              <span className="hidden md:inline">Ndrysho</span>
                             </Link>
                           </Button>
                           <Button
@@ -287,7 +287,7 @@ export default function QuestionsPage() {
                             className="flex-1 md:flex-none text-destructive hover:text-destructive"
                           >
                             <Trash2 className="w-4 h-4 md:mr-2" />
-                            <span className="hidden md:inline">Delete</span>
+                            <span className="hidden md:inline">Fshi</span>
                           </Button>
                         </div>
                       </div>
@@ -300,11 +300,11 @@ export default function QuestionsPage() {
 
         {categories.length === 0 && (
           <GlassCard className="p-12 text-center border border-border/80 bg-black/80">
-            <p className="text-muted-foreground">No questions found. Add your first question to get started.</p>
+            <p className="text-muted-foreground">Nuk u gjet asnjë pyetje. Shto pyetjen tënde të parë për të filluar.</p>
             <Button asChild className="mt-4">
               <Link href="/admin/questions/new">
                 <Plus className="w-4 h-4 mr-2" />
-                Add First Question
+                Shto Pyetjen e Parë
               </Link>
             </Button>
           </GlassCard>
@@ -382,7 +382,7 @@ export default function QuestionsPage() {
 
               {/* Jump to Page Input */}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground whitespace-nowrap">Go to</span>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">Shko te</span>
                 <Input
                   className="w-16 h-8 text-xs"
                   type="number"
@@ -405,7 +405,7 @@ export default function QuestionsPage() {
             </div>
             
             <p className="text-xs text-muted-foreground">
-              Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, totalQuestions)} of {totalQuestions} questions
+              Duke shfaqur {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, totalQuestions)} nga {totalQuestions} pyetje
             </p>
           </div>
         )}
@@ -415,29 +415,29 @@ export default function QuestionsPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Question</AlertDialogTitle>
+            <AlertDialogTitle>Fshi Pyetjen</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this question?
+              A jeni i sigurt që doni të fshini këtë pyetje?
               <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-sm font-medium text-foreground line-clamp-3">
                   {questionToDelete?.text}
                 </p>
               </div>
               <p className="mt-3 text-destructive font-medium">
-                This action cannot be undone.
+                Ky veprim nuk mund të zhbëhet.
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
-              Cancel
+              Anulo
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleteQuestion.isPending}
               className="bg-destructive hover:bg-destructive/90"
             >
-              {deleteQuestion.isPending ? 'Deleting...' : 'Delete'}
+              {deleteQuestion.isPending ? 'Duke fshirë...' : 'Fshi'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -141,15 +141,15 @@ export default function StatsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('User deleted successfully');
+      toast.success('Përdoruesi u fshi me sukses');
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
       setDeleteDialogOpen(false);
       setSelectedUser(null);
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      toast.error(`Failed to delete user: ${message}`);
+      const message = error instanceof Error ? error.message : 'Gabim i panjohur';
+      toast.error(`Dështoi fshirja e përdoruesit: ${message}`);
     },
   });
 
@@ -164,14 +164,14 @@ export default function StatsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('User status updated');
+      toast.success('Statusi i përdoruesit u përditësua');
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       setBlockDialogOpen(false);
       setSelectedUser(null);
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      toast.error(`Failed to update user: ${message}`);
+      const message = error instanceof Error ? error.message : 'Gabim i panjohur';
+      toast.error(`Dështoi përditësimi i përdoruesit: ${message}`);
     },
   });
 
@@ -207,7 +207,7 @@ export default function StatsPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading statistics...</p>
+          <p className="text-muted-foreground">Duke ngarkuar statistikat...</p>
         </div>
       </div>
     );
@@ -231,20 +231,20 @@ export default function StatsPage() {
         <Button variant="ghost" asChild className="mb-4">
           <Link href="/admin">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Admin Dashboard
+            Kthehu në Panelin Admin
           </Link>
         </Button>
 
         {/* Header */}
         <div className="mb-8 space-y-2">
-          <h1 className="text-3xl font-bold">Statistics & User Management</h1>
+          <h1 className="text-3xl font-bold">Statistika &amp; Menaxhimi i Përdoruesve</h1>
           <p className="text-sm text-muted-foreground">
-            System overview, metrics, and user administration
+            Përmbledhje e sistemit, metrika dhe administrimi i përdoruesve
           </p>
           <p className="text-xs text-muted-foreground">
-            Need to adjust plans?{' '}
+            Doni të rregulloni planet?{' '}
             <Link href="/admin/subscriptions" className="underline underline-offset-2">
-              Open subscriptions admin
+              Hap administrimin e abonimeve
             </Link>
             .
           </p>
@@ -261,7 +261,7 @@ export default function StatsPage() {
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <p className="text-3xl font-bold mb-1">{stats?.totalUsers || 0}</p>
-              <p className="text-sm text-muted-foreground">Total Users</p>
+              <p className="text-sm text-muted-foreground">Përdorues Gjithsej</p>
             </GlassCard>
           </motion.div>
 
@@ -274,7 +274,7 @@ export default function StatsPage() {
                 <BarChart3 className="w-5 h-5 text-primary" />
               </div>
               <p className="text-3xl font-bold mb-1">{stats?.totalQuestions || 0}</p>
-              <p className="text-sm text-muted-foreground">Total Questions</p>
+              <p className="text-sm text-muted-foreground">Pyetje Gjithsej</p>
             </GlassCard>
           </motion.div>
 
@@ -287,7 +287,7 @@ export default function StatsPage() {
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <p className="text-3xl font-bold mb-1">{stats?.totalAttempts || 0}</p>
-              <p className="text-sm text-muted-foreground">Test Attempts</p>
+              <p className="text-sm text-muted-foreground">Përpjekje Testesh</p>
             </GlassCard>
           </motion.div>
 
@@ -299,7 +299,7 @@ export default function StatsPage() {
                 </div>
               </div>
               <p className="text-3xl font-bold mb-1 text-green-500">{stats?.passedAttempts || 0}</p>
-              <p className="text-sm text-muted-foreground">Passed Tests</p>
+              <p className="text-sm text-muted-foreground">Teste të Kaluara</p>
             </GlassCard>
           </motion.div>
 
@@ -311,7 +311,7 @@ export default function StatsPage() {
                 </div>
               </div>
               <p className="text-3xl font-bold mb-1 text-red-500">{stats?.failedAttempts || 0}</p>
-              <p className="text-sm text-muted-foreground">Failed Tests</p>
+              <p className="text-sm text-muted-foreground">Teste të Dështuara</p>
             </GlassCard>
           </motion.div>
 
@@ -325,19 +325,19 @@ export default function StatsPage() {
               <p className="text-3xl font-bold mb-1">
                 {stats?.totalAttempts ? Math.round((stats.passedAttempts / stats.totalAttempts) * 100) : 0}%
               </p>
-              <p className="text-sm text-muted-foreground">Pass Rate</p>
+              <p className="text-sm text-muted-foreground">Përqindja e Kalimit</p>
             </GlassCard>
           </motion.div>
         </div>
 
         {/* Questions by Category */}
         <GlassCard className="p-6 border border-border/80 bg-black/90">
-          <h2 className="text-lg font-semibold mb-6">Questions by Category</h2>
+          <h2 className="text-lg font-semibold mb-6">Pyetjet sipas Kategorisë</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {Object.entries((stats?.categoryCounts || {}) as Record<string, number>).map(([category, count]) => (
               <div key={category} className="text-center p-4 rounded-xl bg-black/80 border border-border/80">
                 <p className="text-2xl font-bold text-primary mb-1">{count}</p>
-                <p className="text-sm text-muted-foreground">Category {category}</p>
+                <p className="text-sm text-muted-foreground">Kategoria {category}</p>
               </div>
             ))}
           </div>
@@ -348,9 +348,9 @@ export default function StatsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Questions per test */}
             <div>
-              <h2 className="text-lg font-semibold mb-3">Theory Test Coverage</h2>
+              <h2 className="text-lg font-semibold mb-3">Mbulimi i Testit të Teorisë</h2>
               <p className="text-xs text-muted-foreground mb-3">
-                Questions per category/test. Cells with low counts help you see where more questions are needed.
+                Pyetje për çdo kategori/test. Qelizat me numra të ulët ju ndihmojnë të shihni ku nevojiten më shumë pyetje.
               </p>
               <div className="space-y-1 text-xs">
                 {Object.entries((stats?.questionsPerTest || {}) as Record<string, number>)
@@ -365,52 +365,52 @@ export default function StatsPage() {
                           low ? 'bg-amber-500/15 border border-amber-500/50' : 'bg-black/60 border border-border/70'
                         }`}
                       >
-                        <span className="font-medium">Cat {category} · Test {testNumber}</span>
+                        <span className="font-medium">Kat {category} · Testi {testNumber}</span>
                         <span className={low ? 'text-amber-600 font-semibold' : 'text-muted-foreground'}>
-                          {count} questions
+                          {count} pyetje
                         </span>
                       </div>
                     );
                   })}
                 {Object.keys(stats?.questionsPerTest || {}).length === 0 && (
-                  <p className="text-xs text-muted-foreground">No theory questions found.</p>
+                  <p className="text-xs text-muted-foreground">Nuk u gjetën pyetje teorie.</p>
                 )}
               </div>
             </div>
 
             {/* Decision Trainer scenarios coverage */}
             <div>
-              <h2 className="text-lg font-semibold mb-3">Decision Trainer Coverage</h2>
+              <h2 className="text-lg font-semibold mb-3">Mbulimi i Decision Trainer</h2>
               <p className="text-xs text-muted-foreground mb-3">
-                Scenarios by category and level to spot gaps in practical training content.
+                Skenarë sipas kategorisë dhe nivelit për të identifikuar boshllëqet në përmbajtjen praktike të trajnimit.
               </p>
               <div className="space-y-3 text-xs">
                 <div>
-                  <p className="font-semibold mb-1">By Category</p>
+                  <p className="font-semibold mb-1">Sipas Kategorisë</p>
                   <div className="space-y-1">
                     {Object.entries((stats?.scenarioCategoryCounts || {}) as Record<string, number>).map(([category, count]) => (
                       <div key={category} className="flex items-center justify-between px-2 py-1 rounded bg-black/60 border border-border/70">
-                        <span className="font-medium">Category {category}</span>
-                        <span className="text-muted-foreground">{count} scenarios</span>
+                        <span className="font-medium">Kategoria {category}</span>
+                        <span className="text-muted-foreground">{count} skenarë</span>
                       </div>
                     ))}
                     {Object.keys(stats?.scenarioCategoryCounts || {}).length === 0 && (
-                      <p className="text-xs text-muted-foreground">No Decision Trainer scenarios found.</p>
+                      <p className="text-xs text-muted-foreground">Nuk u gjetën skenarë të Decision Trainer.</p>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <p className="font-semibold mb-1">By Level</p>
+                  <p className="font-semibold mb-1">Sipas Nivelit</p>
                   <div className="flex flex-wrap gap-2">
                     {Object.entries((stats?.scenarioLevelCounts || {}) as Record<string, number>).map(([level, count]) => (
                       <div key={level} className="px-2 py-1 rounded-full bg-black/60 border border-border/70">
-                        <span className="font-medium mr-1">L{level}</span>
+                        <span className="font-medium mr-1">N{level}</span>
                         <span className="text-muted-foreground">{count}</span>
                       </div>
                     ))}
                     {Object.keys(stats?.scenarioLevelCounts || {}).length === 0 && (
-                      <p className="text-xs text-muted-foreground">No scenarios by level yet.</p>
+                      <p className="text-xs text-muted-foreground">Ende nuk ka skenarë sipas nivelit.</p>
                     )}
                   </div>
                 </div>
@@ -419,9 +419,9 @@ export default function StatsPage() {
 
             {/* Study materials coverage */}
             <div>
-              <h2 className="text-lg font-semibold mb-3">Study Materials Coverage</h2>
+              <h2 className="text-lg font-semibold mb-3">Mbulimi i Materialeve Mësimore</h2>
               <p className="text-xs text-muted-foreground mb-3">
-                Materials per chapter and publication status. Chapters with no or few materials are highlighted.
+                Materiale për çdo kapitull dhe statusi i publikimit. Kapitujt pa ose me pak materiale janë theksuar.
               </p>
               <div className="space-y-1 text-xs">
                 {Array.from({ length: 13 }).map((_, idx) => {
@@ -436,9 +436,9 @@ export default function StatsPage() {
                         low ? 'bg-red-500/15 border border-red-500/50' : 'bg-black/60 border border-border/70'
                       }`}
                     >
-                      <span className="font-medium">Chapter {chapterId}</span>
+                      <span className="font-medium">Kapitulli {chapterId}</span>
                       <span className={low ? 'text-red-600 font-semibold' : 'text-muted-foreground'}>
-                        {chapterStats.published}/{chapterStats.total} published
+                        {chapterStats.published}/{chapterStats.total} publikuar
                       </span>
                     </div>
                   );
@@ -455,23 +455,23 @@ export default function StatsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="w-5 h-5" />
-              Delete User Account
+              Fshi Llogarinë e Përdoruesit
             </DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete <strong>{selectedUser?.email}</strong>? 
-              This action cannot be undone. All their test history will be permanently deleted.
+              A jeni i sigurt që doni të fshini <strong>{selectedUser?.email}</strong>?
+              Ky veprim nuk mund të zhbëhet. I gjithë historiku i tyre i testeve do të fshihet përgjithmonë.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Cancel
+              Anulo
             </Button>
             <Button
               variant="destructive"
               onClick={confirmDelete}
               disabled={deleteUserMutation.isPending}
             >
-              {deleteUserMutation.isPending ? 'Deleting...' : 'Delete User'}
+              {deleteUserMutation.isPending ? 'Duke fshirë...' : 'Fshi Përdoruesin'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -482,24 +482,24 @@ export default function StatsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {selectedUser?.is_blocked ? 'Unblock' : 'Block'} User
+              {selectedUser?.is_blocked ? 'Zhblloko' : 'Blloko'} Përdoruesin
             </DialogTitle>
             <DialogDescription>
               {selectedUser?.is_blocked
-                ? `Are you sure you want to unblock ${selectedUser?.email}? They will regain access to their account.`
-                : `Are you sure you want to block ${selectedUser?.email}? They will not be able to access their account.`
+                ? `A jeni i sigurt që doni të zhbllokoni ${selectedUser?.email}? Ata do të rifitojnë qasje në llogarinë e tyre.`
+                : `A jeni i sigurt që doni të bllokoni ${selectedUser?.email}? Ata nuk do të mund të qasen në llogarinë e tyre.`
               }
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>
-              Cancel
+              Anulo
             </Button>
             <Button
               onClick={confirmBlock}
               disabled={blockUserMutation.isPending}
             >
-              {blockUserMutation.isPending ? 'Updating...' : (selectedUser?.is_blocked ? 'Unblock User' : 'Block User')}
+              {blockUserMutation.isPending ? 'Duke përditësuar...' : (selectedUser?.is_blocked ? 'Zhblloko Përdoruesin' : 'Blloko Përdoruesin')}
             </Button>
           </DialogFooter>
         </DialogContent>

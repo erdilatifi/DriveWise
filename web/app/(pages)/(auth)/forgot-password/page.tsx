@@ -48,15 +48,15 @@ export default function ForgotPasswordPage() {
     
     // Check if still in cooldown
     if (cooldown > 0) {
-      toast.error('Please Wait', {
-        description: `You can request another reset link in ${cooldown} seconds.`,
+      toast.error('Ju lutem prisni', {
+        description: `Mund të kërkoni një link tjetër rivendosjeje pas ${cooldown} sekondash.`,
       });
       return;
     }
 
     if (!checkLimit()) {
-      toast.error('Too many requests', {
-        description: 'Please wait a minute before trying again.',
+      toast.error('Shumë kërkesa', {
+        description: 'Ju lutem prisni një minutë para se të provoni përsëri.',
       });
       return;
     }
@@ -80,8 +80,8 @@ export default function ForgotPasswordPage() {
           const seconds = match ? parseInt(match[1]) : 60;
           
           setCooldown(seconds);
-          toast.error('Rate Limit', {
-            description: `Please wait ${seconds} seconds before requesting another reset link.`,
+          toast.error('Kufizim kërkesash', {
+            description: `Ju lutem prisni ${seconds} sekonda para se të kërkoni një link tjetër rivendosjeje.`,
             duration: 5000,
           });
         } else {
@@ -93,15 +93,15 @@ export default function ForgotPasswordPage() {
       // Set cooldown after successful send (60 seconds)
       setCooldown(60);
       setSent(true);
-      toast.success('Reset Link Sent', {
-        description: 'Check your email for the password reset link. If you don\'t see it, check your spam folder.',
+      toast.success('Linku u dërgua', {
+        description: 'Kontrolloni email-in tuaj për linkun e rivendosjes së fjalëkalimit. Nëse nuk e shihni, kontrolloni dosjen e spam-it.',
         duration: 5000,
       });
     } catch (error: unknown) {
       console.error('Caught error:', error);
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      toast.error('Error', {
-        description: message || 'Failed to send reset email. Please try again.',
+      const message = error instanceof Error ? error.message : 'Gabim i panjohur';
+      toast.error('Gabim', {
+        description: message || 'Dështoi dërgimi i email-it. Ju lutem provoni përsëri.',
       });
     } finally {
       setLoading(false);
@@ -131,12 +131,12 @@ export default function ForgotPasswordPage() {
           </div>
           <div>
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Forgot Password?
+              Keni harruar fjalëkalimin?
             </CardTitle>
             <CardDescription className="text-base mt-2">
-              {sent 
-                ? "We've sent you a reset link"
-                : "Enter your email to receive a password reset link"
+              {sent
+                ? "Ju kemi dërguar një link rivendosjeje"
+                : "Shkruani email-in tuaj për të marrë një link rivendosjeje fjalëkalimi"
               }
             </CardDescription>
           </div>
@@ -146,20 +146,20 @@ export default function ForgotPasswordPage() {
             <div className="space-y-4">
               <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
                 <p className="text-sm text-green-500">
-                  Check your email inbox for the password reset link. If you don't see it, check your spam folder.
+                  Kontrolloni kutinë tuaj postare për linkun e rivendosjes së fjalëkalimit. Nëse nuk e shihni, kontrolloni dosjen e spam-it.
                 </p>
               </div>
               <Button asChild className="w-full" variant="outline">
                 <Link href="/login">
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Login
+                  Kthehu te Hyrja
                 </Link>
               </Button>
             </div>
           ) : (
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">Adresa e Email-it</Label>
                 <Input
                   id="email"
                   type="email"
@@ -179,25 +179,25 @@ export default function ForgotPasswordPage() {
                 {loading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Sending...
+                    Duke dërguar...
                   </>
                 ) : cooldown > 0 ? (
-                  `Wait ${cooldown}s`
+                  `Prisni ${cooldown}s`
                 ) : (
-                  'Send Reset Link'
+                  'Dërgo Linkun e Rivendosjes'
                 )}
               </Button>
-              
+
               {cooldown > 0 && (
                 <p className="text-xs text-center text-muted-foreground">
-                  You can request another reset link in {cooldown} seconds
+                  Mund të kërkoni një link tjetër rivendosjeje pas {cooldown} sekondash
                 </p>
               )}
 
               <Button asChild className="w-full" variant="outline">
                 <Link href="/login">
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Login
+                  Kthehu te Hyrja
                 </Link>
               </Button>
             </form>

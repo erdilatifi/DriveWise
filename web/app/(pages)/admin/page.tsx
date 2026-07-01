@@ -28,7 +28,7 @@ export default function AdminPage() {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-muted-foreground">
-            {loading ? 'Loading...' : 'Authenticating...'}
+            {loading ? 'Duke ngarkuar...' : 'Duke u autentikuar...'}
           </p>
         </div>
       </div>

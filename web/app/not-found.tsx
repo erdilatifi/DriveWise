@@ -12,41 +12,41 @@ export default function NotFound() {
         <div className="mb-6">
           <AlertTriangle className="w-20 h-20 mx-auto mb-4 text-yellow-500" />
           <h1 className="text-5xl font-bold mb-2">404</h1>
-          <h2 className="text-2xl font-semibold mb-2">Page Not Found</h2>
+          <h2 className="text-2xl font-semibold mb-2">Faqja nuk u gjet</h2>
           <p className="text-muted-foreground mb-6">
-            The page you&apos;re looking for doesn&apos;t exist or has been moved.
+            Faqja që po kërkoni nuk ekziston ose është zhvendosur.
           </p>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button asChild size="lg">
             <Link href="/dashboard">
               <Home className="w-4 h-4 mr-2" />
-              Go to Dashboard
+              Shko te Paneli
             </Link>
           </Button>
           <Button variant="outline" size="lg" onClick={() => window.history.back()}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Go Back
+            Kthehu Mbrapa
           </Button>
         </div>
-        
+
         <div className="mt-8 pt-6 border-t border-border">
           <p className="text-sm text-muted-foreground mb-4">
-            Looking for something specific?
+            Po kërkoni diçka specifike?
           </p>
           <div className="flex flex-wrap gap-2 justify-center">
             <Button asChild variant="ghost" size="sm">
-              <Link href="/">Home</Link>
+              <Link href="/">Ballina</Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
-              <Link href="/dashboard">Dashboard</Link>
+              <Link href="/dashboard">Paneli</Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
               <Link href="/decision-trainer">Decision Trainer</Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
-              <Link href="/tests">Practice Tests</Link>
+              <Link href="/tests">Teste Provuese</Link>
             </Button>
           </div>
         </div>

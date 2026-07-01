@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Navbar } from '@/components/navbar';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Input } from '@/components/ui/input';
@@ -61,19 +62,14 @@ export default function MaterialsPage() {
   }, [userPlans, isAdmin]);
 
   const [selectedCategory, setSelectedCategory] = useState<LicenseCategory | undefined>(undefined);
-
-  // Auto-select first allowed category
-  useEffect(() => {
-    if (!selectedCategory && allowedCategories.length > 0) {
-      setSelectedCategory(allowedCategories[0]);
-    }
-  }, [allowedCategories, selectedCategory]);
+  // Fall back to the first allowed category until the user explicitly picks one
+  const effectiveCategory = selectedCategory ?? allowedCategories[0];
 
   const { data: listData, isLoading: listLoading, error } = useMaterials({
     pageSize: 100, // Fetch more items since they are lightweight
-    category: selectedCategory,
+    category: effectiveCategory,
     fields: 'id,chapter_id,category,title,order_index,is_published', // Explicitly exclude content
-    enabled: !!selectedCategory,
+    enabled: !!effectiveCategory,
   });
 
   const materialsList = (listData?.materials ?? []) as Material[];
@@ -112,11 +108,6 @@ export default function MaterialsPage() {
     page: signsPage,
     pageSize: 50,
   });
-
-  // Reset page when category changes
-  useEffect(() => {
-    setSignsPage(1);
-  }, [signsCategory]);
 
   const [search, setSearch] = useState<string>(() => {
     const searchParam = searchParams.get('search') || searchParams.get('q');
@@ -388,7 +379,7 @@ export default function MaterialsPage() {
                   <div className="grid grid-cols-4 gap-2">
                     {ALL_CATEGORIES.map((cat) => {
                       const isAllowed = allowedCategories.includes(cat);
-                      const isSelected = selectedCategory === cat;
+                      const isSelected = effectiveCategory === cat;
                       
                       return (
                         <button
@@ -502,7 +493,7 @@ export default function MaterialsPage() {
             {/* Main content */}
             <main className="flex-1 min-w-0">
               <GlassCard className="p-6 md:p-10 border border-border/80 bg-black/85 min-h-[80vh]">
-                {!selectedCategory ? (
+                {!effectiveCategory ? (
                   <div className="flex flex-col items-center justify-center h-full py-20 text-center">
                     <BookOpen className="w-16 h-16 text-orange-400 mx-auto mb-6" />
                     <h1 className="text-2xl font-bold mb-3">
@@ -541,7 +532,10 @@ export default function MaterialsPage() {
                       {['all', 'danger', 'prohibition', 'mandatory', 'info'].map((cat) => (
                         <button
                           key={cat}
-                          onClick={() => setSignsCategory(cat)}
+                          onClick={() => {
+                            setSignsCategory(cat);
+                            setSignsPage(1);
+                          }}
                           className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                             signsCategory === cat
                               ? 'bg-orange-500 text-black'
@@ -573,11 +567,12 @@ export default function MaterialsPage() {
                           >
                             <div className="aspect-square p-4 bg-black/20 flex items-center justify-center relative">
                               {sign.image_url && (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
+                                <Image
                                   src={sign.image_url}
                                   alt={sign.name}
-                                  className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
+                                  fill
+                                  sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                                  className="object-contain p-2 transition-transform duration-300 group-hover:scale-110"
                                 />
                               )}
                             </div>
@@ -666,12 +661,13 @@ export default function MaterialsPage() {
                         key={img.id}
                         className="overflow-hidden rounded-xl border border-border/60 bg-black/40 shadow-lg group"
                       >
-                        <div className="overflow-hidden">
-                            <img
+                        <div className="relative overflow-hidden h-56">
+                            <Image
                             src={img.image_url}
                             alt={img.caption || sectionTitle}
-                            loading="lazy"
-                            className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-105"
+                            fill
+                            sizes="(min-width: 768px) 50vw, 100vw"
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
                             />
                         </div>
                         {img.caption && (

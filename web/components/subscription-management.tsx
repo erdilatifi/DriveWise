@@ -17,6 +17,7 @@ export function SubscriptionManagement({ subscriptionId, category }: Subscriptio
   const [subscription, setSubscription] = useState<PaddleSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [canceling, setCanceling] = useState(false);
 
   useEffect(() => {
     if (!subscriptionId) return;
@@ -37,7 +38,7 @@ export function SubscriptionManagement({ subscriptionId, category }: Subscriptio
         const data = await res.json();
         setSubscription(data.subscription);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Could not load subscription details';
+        const message = err instanceof Error ? err.message : 'Nuk mund të ngarkoheshin detajet e abonimit';
         
         // Only log unexpected errors. 404 'Subscription not found' is expected in some cases.
         if (message !== 'Subscription not found') {
@@ -65,7 +66,7 @@ export function SubscriptionManagement({ subscriptionId, category }: Subscriptio
     return (
       <div className="p-4 text-sm text-red-400 bg-red-500/10 rounded-lg border border-red-500/20 flex items-center gap-2">
         <AlertCircle className="h-4 w-4" />
-        {error || 'Subscription unavailable'}
+        {error || 'Abonimi nuk është i disponueshëm'}
       </div>
     );
   }
@@ -78,15 +79,22 @@ export function SubscriptionManagement({ subscriptionId, category }: Subscriptio
     trialing: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
   };
 
+  const statusLabels: Record<string, string> = {
+    active: 'Aktiv',
+    paused: 'I pezulluar',
+    canceled: 'I anuluar',
+    past_due: 'Vonesë pagese',
+    trialing: 'Periudhë provë',
+  };
+
   const isCanceled = subscription.status === 'canceled' || !!subscription.canceled_at;
   const nextBillDate = subscription.next_billed_at ? new Date(subscription.next_billed_at) : null;
   const endDate = subscription.current_billing_period?.ends_at ? new Date(subscription.current_billing_period.ends_at) : null;
   const cancelUrl = subscription.management_urls?.cancel;
   const updatePaymentUrl = subscription.management_urls?.update_payment_method;
-  const [canceling, setCanceling] = useState(false);
 
   const handleCancel = async () => {
-    if (!confirm('Are you sure you want to turn off auto-renew? You will keep access until the end of the current billing period.')) {
+    if (!confirm('Jeni i sigurt që doni të fikni rinovimin automatik? Do të mbani qasje deri në fund të periudhës aktuale të faturimit.')) {
       return;
     }
 
@@ -95,22 +103,22 @@ export function SubscriptionManagement({ subscriptionId, category }: Subscriptio
       const res = await fetch(`/api/paddle/subscription/${subscriptionId}`, {
         method: 'POST',
       });
-      
+
       if (!res.ok) {
          const errData = await res.json();
-         throw new Error(errData.error || 'Failed to cancel');
+         throw new Error(errData.error || 'Anulimi dështoi');
       }
 
-      toast.success('Auto-renew turned off', {
-        description: 'Your subscription will end at the current billing period.'
+      toast.success('Rinovimi automatik u fik', {
+        description: 'Abonimi juaj do të përfundojë në fund të periudhës aktuale të faturimit.'
       });
-      
+
       // Reload subscription to update UI
-      window.location.reload(); 
+      window.location.reload();
     } catch (err) {
       console.error(err);
-      toast.error('Could not cancel subscription', {
-         description: err instanceof Error ? err.message : 'Please try again'
+      toast.error('Anulimi i abonimit dështoi', {
+         description: err instanceof Error ? err.message : 'Ju lutem provoni përsëri'
       });
     } finally {
       setCanceling(false);
@@ -123,13 +131,13 @@ export function SubscriptionManagement({ subscriptionId, category }: Subscriptio
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium flex items-center gap-2">
             <CreditCard className="h-4 w-4 text-orange-400" />
-            Subscription {category && `(${category})`}
+            Abonimi {category && `(${category})`}
           </CardTitle>
           <Badge 
             variant="outline" 
             className={`capitalize border ${statusColors[subscription.status] || 'bg-zinc-500/10 text-zinc-400'}`}
           >
-            {subscription.status.replace('_', ' ')}
+            {statusLabels[subscription.status] || subscription.status.replace('_', ' ')}
           </Badge>
         </div>
         <CardDescription className="text-xs">
@@ -144,22 +152,22 @@ export function SubscriptionManagement({ subscriptionId, category }: Subscriptio
              <div className="rounded-md bg-zinc-900/50 p-3 border border-zinc-800">
                 <div className="flex items-center gap-2 text-amber-400 mb-1">
                    <AlertCircle className="h-4 w-4" />
-                   <span className="font-medium">Auto-renew disabled</span>
+                   <span className="font-medium">Rinovimi automatik është i çaktivizuar</span>
                 </div>
                 <p className="text-muted-foreground text-xs">
-                   Your access remains active until {endDate ? endDate.toLocaleDateString() : 'the period ends'}. You will not be charged again.
+                   Qasja juaj mbetet aktive deri më {endDate ? endDate.toLocaleDateString() : 'përfundimin e periudhës'}. Nuk do të tarifoheni sërish.
                 </p>
              </div>
           ) : (
              <div className="grid grid-cols-2 gap-4">
                 <div>
-                   <p className="text-xs text-muted-foreground mb-0.5">Next Billing Date</p>
+                   <p className="text-xs text-muted-foreground mb-0.5">Data e faturimit të radhës</p>
                    <p className="font-medium text-foreground">
                       {nextBillDate ? nextBillDate.toLocaleDateString() : 'N/A'}
                    </p>
                 </div>
                 <div>
-                   <p className="text-xs text-muted-foreground mb-0.5">Amount</p>
+                   <p className="text-xs text-muted-foreground mb-0.5">Shuma</p>
                    <p className="font-medium text-foreground">
                       {/* Assuming single item for simplicity, loop if needed */}
                       {subscription.items[0]?.price.unit_price.amount} {subscription.currency_code}
@@ -182,11 +190,11 @@ export function SubscriptionManagement({ subscriptionId, category }: Subscriptio
              {canceling ? (
                 <>
                   <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                  Updating...
+                  Duke përditësuar...
                 </>
              ) : (
                 <>
-                  Turn off auto-renew
+                  Fik rinovimin automatik
                   <ExternalLink className="h-3 w-3 ml-2" />
                 </>
              )}
@@ -201,7 +209,7 @@ export function SubscriptionManagement({ subscriptionId, category }: Subscriptio
              asChild
           >
              <a href={updatePaymentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                Update Payment Method
+                Përditëso mënyrën e pagesës
                 <ExternalLink className="h-3 w-3" />
              </a>
           </Button>
@@ -211,7 +219,7 @@ export function SubscriptionManagement({ subscriptionId, category }: Subscriptio
            <div className="w-full text-center sm:text-left">
               <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                 No further charges scheduled.
+                 Nuk ka tarifime të tjera të planifikuara.
               </p>
            </div>
         )}

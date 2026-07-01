@@ -80,7 +80,7 @@ export default function UsersPage() {
   const handleBlockUser = async (userId: string, isBlocked: boolean) => {
     try {
       await updateUser.mutateAsync({ id: userId, is_blocked: isBlocked });
-      toast.success(isBlocked ? 'User blocked successfully' : t('admin.statusUpdated'));
+      toast.success(isBlocked ? 'Përdoruesi u bllokua me sukses' : t('admin.statusUpdated'));
     } catch (error) {
       toast.error(t('admin.statusUpdateError'));
     }
@@ -102,7 +102,7 @@ export default function UsersPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading users...</p>
+          <p className="text-muted-foreground">Duke ngarkuar përdoruesit...</p>
         </div>
       </div>
     );
@@ -199,7 +199,7 @@ export default function UsersPage() {
                   <tr key={user.id} className="hover:bg-white/5 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="font-medium text-white">{user.full_name || 'Unnamed User'}</span>
+                        <span className="font-medium text-white">{user.full_name || 'Përdorues pa Emër'}</span>
                         <span className="text-sm text-muted-foreground">{user.email}</span>
                       </div>
                     </td>
@@ -251,7 +251,7 @@ export default function UsersPage() {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
+                            <span className="sr-only">Hap menunë</span>
                             <div className="h-4 w-4 flex flex-col gap-0.5 items-center justify-center">
                               <span className="w-1 h-1 bg-current rounded-full" />
                               <span className="w-1 h-1 bg-current rounded-full" />
@@ -302,9 +302,9 @@ export default function UsersPage() {
         {totalPages > 1 && (
           <div className="mt-8 flex flex-col items-center gap-3">
             <p className="text-xs text-muted-foreground">
-              Showing {(currentPage - 1) * itemsPerPage + 1}
+              Duke shfaqur {(currentPage - 1) * itemsPerPage + 1}
               {' '}
-              - {Math.min(currentPage * itemsPerPage, totalUsers)} of {totalUsers} users
+              - {Math.min(currentPage * itemsPerPage, totalUsers)} nga {totalUsers} përdorues
             </p>
             <Pagination>
               <PaginationContent>

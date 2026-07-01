@@ -80,8 +80,9 @@ export function useTestAttempts(userId?: string) {
       return attempts || [];
     },
     enabled: !!userId,
-    staleTime: 0,
-    refetchOnMount: 'always',
+    // Freshness after submitting a test is handled via invalidateQueries
+    // in useSubmitTestAttempt, so this can use the default cache behavior.
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -384,8 +385,9 @@ export function useTestHistory(userId?: string, page: number = 1, pageSize: numb
       };
     },
     enabled: !!userId,
-    staleTime: 0,
-    refetchOnMount: 'always',
+    // Freshness after submitting/deleting a test is handled via
+    // invalidateQueries, so this can use the default cache behavior.
+    staleTime: 2 * 60 * 1000,
   });
 }
 
