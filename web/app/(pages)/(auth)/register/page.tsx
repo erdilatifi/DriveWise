@@ -2,13 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { IconInput } from '@/components/ui/icon-input';
+import { PasswordInput } from '@/components/ui/password-input';
+import { PasswordStrength } from '@/components/ui/password-strength';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { AlertCircle, ArrowLeft, CheckCircle2, Mail, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
 import { useRateLimit } from '@/hooks/use-rate-limit';
@@ -44,7 +48,7 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!checkLimit()) {
       toast.error('Shumë tentativa regjistrimi', {
         description: 'Ju lutem prisni një minutë para se të provoni përsëri.',
@@ -91,6 +95,8 @@ export default function RegisterPage() {
     setLoading(false);
   };
 
+  const isDisabled = loading || status === 'success';
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10 relative overflow-hidden">
       {/* Premium background effects */}
@@ -101,7 +107,12 @@ export default function RegisterPage() {
 
       <div className="relative z-10 w-full max-w-5xl grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] items-center">
         {/* Left: benefits / bullet points */}
-        <div className="hidden lg:flex flex-col gap-6 text-sm text-muted-foreground">
+        <motion.div
+          initial={{ opacity: 0, x: -24 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="hidden lg:flex flex-col gap-6 text-sm text-muted-foreground"
+        >
           <div className="space-y-2">
             <p className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-black/60 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               <span className="h-1.5 w-6 bg-gradient-to-r from-orange-500 to-amber-300 rounded-full" />
@@ -129,13 +140,19 @@ export default function RegisterPage() {
               <span>Rishiko çdo përgjigje me shpjegime dhe lidhje me materialet mësimore.</span>
             </li>
           </ul>
-        </div>
+        </motion.div>
 
         {/* Right: register card */}
-        <Card className="w-full max-w-md justify-self-center relative border border-border/80 bg-black/80 backdrop-blur-xl shadow-2xl shadow-primary/10">
+        <motion.div
+          initial={{ opacity: 0, y: 24, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md justify-self-center"
+        >
+        <Card className="relative border border-border/80 bg-black/80 backdrop-blur-xl shadow-2xl shadow-primary/10">
           <CardHeader className="text-center space-y-4">
             <div className="relative mx-auto w-20 h-20">
-              <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full" />
+              <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full animate-pulse" />
               <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-primary/30 shadow-xl shadow-primary/20">
                 <Image
                   src="/logo-white.png"
@@ -159,69 +176,76 @@ export default function RegisterPage() {
             <form onSubmit={handleRegister} className="space-y-4" autoComplete="on">
               {status !== 'idle' && statusMessage && (
                 <div
-                  className={`p-3 rounded-md border text-sm ${{
+                  className={`flex items-start gap-2 p-3 rounded-md border text-sm ${{
                     success: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/40',
                     error: 'bg-destructive/10 text-destructive border-destructive/40',
                     loading: 'bg-muted/10 text-muted-foreground border-border/60',
                     idle: '',
                   }[status]}`}
                 >
-                  {statusMessage}
+                  {status === 'success' ? (
+                    <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  )}
+                  <span>{statusMessage}</span>
                 </div>
               )}
 
               <div className="space-y-2">
                 <Label htmlFor="fullName">{t('auth.fullName')}</Label>
-                <Input
+                <IconInput
                   id="fullName"
                   type="text"
+                  icon={<User />}
                   placeholder="John Doe"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
-                  disabled={loading || status === 'success'}
+                  disabled={isDisabled}
                   autoComplete="name"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">{t('auth.email')}</Label>
-                <Input
+                <IconInput
                   id="email"
                   type="email"
+                  icon={<Mail />}
                   placeholder="your@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  disabled={loading || status === 'success'}
+                  disabled={isDisabled}
                   autoComplete="email"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password">{t('auth.password')}</Label>
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  disabled={loading || status === 'success'}
+                  disabled={isDisabled}
                   autoComplete="new-password"
+                  minLength={6}
                 />
+                <PasswordStrength password={password} />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
-                <Input
+                <PasswordInput
                   id="confirmPassword"
-                  type="password"
                   placeholder="••••••••"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  disabled={loading || status === 'success'}
+                  disabled={isDisabled}
                   autoComplete="new-password"
                 />
               </div>
@@ -229,7 +253,7 @@ export default function RegisterPage() {
               <Button
                 type="submit"
                 className="w-full shadow-lg shadow-primary/20 h-12 text-base font-semibold"
-                disabled={loading || status === 'success'}
+                disabled={isDisabled}
               >
                 {status === 'success'
                   ? 'Kontrollo email-in tënd'
@@ -238,7 +262,19 @@ export default function RegisterPage() {
                   : t('auth.signUp')}
               </Button>
 
-              <div className="text-center text-sm pt-4">
+              <p className="text-center text-[11px] text-muted-foreground leading-relaxed">
+                Duke krijuar llogari, pranon{' '}
+                <Link href="/terms-of-service" className="text-primary hover:text-primary/80 transition-colors">
+                  Kushtet e Shërbimit
+                </Link>{' '}
+                dhe{' '}
+                <Link href="/privacy-policy" className="text-primary hover:text-primary/80 transition-colors">
+                  Politikën e Privatësisë
+                </Link>
+                .
+              </p>
+
+              <div className="text-center text-sm pt-2">
                 <span className="text-muted-foreground">{t('auth.alreadyHaveAccount')} </span>
                 <Link
                   href="/login"
@@ -251,16 +287,17 @@ export default function RegisterPage() {
               <div className="text-center pt-2">
                 <Link
                   href="/"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  ← {t('auth.backToHome')}
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  {t('auth.backToHome')}
                 </Link>
               </div>
             </form>
           </CardContent>
         </Card>
+        </motion.div>
       </div>
     </div>
   );
 }
-
