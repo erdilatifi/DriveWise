@@ -11,3 +11,9 @@ export * from './hooks/use-subscriptions';
 export * from './utils/subscriptions';
 export * from './hooks/use-leaderboard';
 
+// `Question` is ambiguous between types/database.ts (a legacy row shape
+// used only internally by that file's Database schema mapping) and
+// hooks/use-questions.ts (aliased to AdminQuestion, the type actually
+// used throughout the app). Explicitly re-export the latter to win.
+export type { Question } from './hooks/use-questions';
+
