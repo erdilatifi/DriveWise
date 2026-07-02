@@ -7,7 +7,15 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { Check, ArrowLeft, Crown, Sparkles, Info } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Check, ArrowLeft, Crown, Sparkles, Info, FlaskConical, ExternalLink } from 'lucide-react';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
 import { BILLING_CONFIG, isPlanCurrentlyActive, type PaidPlanTier } from '@/lib/subscriptions';
 import { useAuth } from '@/contexts/auth-context';
@@ -50,6 +58,7 @@ export default function PricingPage() {
   const [selectedCategory, setSelectedCategory] = useState<LicenseCategory | null>(initialCategory);
   const [selectedPlan, setSelectedPlan] = useState<PaidPlanTier | null>(initialPlan);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showDemoNotice, setShowDemoNotice] = useState(false);
 
   const { data: existingPlans } = useUserPlans(user?.id || undefined);
   const { hasAnyActivePlan } = useGlobalPremium(user?.id, isAdmin);
@@ -110,6 +119,19 @@ export default function PricingPage() {
             : 'You can purchase a new plan for this category after the current one expires.',
         },
       );
+      return;
+    }
+
+    // Show the demo-project disclaimer before ever touching the real
+    // Paddle checkout — this app is a portfolio/demo project, not a real
+    // commercial product, and users should know that before continuing.
+    setShowDemoNotice(true);
+  };
+
+  const proceedToCheckout = async () => {
+    setShowDemoNotice(false);
+
+    if (!user || !selectedCategory || !selectedPlan) {
       return;
     }
 
@@ -698,6 +720,58 @@ export default function PricingPage() {
           </div>
         </div>
       </div>
+
+      {/* Demo project disclaimer — shown before any redirect to the real
+          Paddle checkout, since this app is a portfolio/demo project. */}
+      <Dialog open={showDemoNotice} onOpenChange={(open) => !isProcessing && setShowDemoNotice(open)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-orange-400">
+              <FlaskConical className="h-5 w-5" />
+              {isSq ? 'Ky është një projekt demo' : 'This is a demo project'}
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3 pt-2 text-left text-sm text-foreground/90">
+                <p>
+                  {isSq
+                    ? 'DriveWise është një projekt portofoli/demonstrimi, jo një produkt real komercial. Është ndërtuar për të treguar aftësi zhvillimi (frontend, backend, integrime pagesash), jo për të ofruar shërbim real klientësh.'
+                    : 'DriveWise is a portfolio/demo project, not a real commercial product. It was built to demonstrate development skills (frontend, backend, payment integration), not to provide a real customer-facing service.'}
+                </p>
+                <p>
+                  {isSq
+                    ? 'Nëse vazhdoni, do të drejtoheni te faqja e pagesës e Paddle. Ju lutem mos përdorni të dhëna reale të kartës suaj bankare përveç nëse e kuptoni dhe pranoni se ky është vetëm një demonstrim teknik.'
+                    : 'If you continue, you will be redirected to Paddle’s checkout page. Please do not enter real card details unless you understand and accept that this is only a technical demonstration.'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {isSq
+                    ? 'Nuk do të merrni asnjë shërbim real, akses provimi apo mbështetje klientësh si rezultat i kësaj pagese.'
+                    : 'You will not receive any real service, exam access, or customer support as a result of this payment.'}
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowDemoNotice(false)}
+              disabled={isProcessing}
+            >
+              {isSq ? 'Anulo' : 'Cancel'}
+            </Button>
+            <Button
+              type="button"
+              onClick={proceedToCheckout}
+              disabled={isProcessing}
+              className="gap-2"
+            >
+              {isSq ? 'E kuptoj, vazhdo' : 'I understand, continue'}
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

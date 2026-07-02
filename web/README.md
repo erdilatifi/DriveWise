@@ -2,6 +2,8 @@
 
 ![DriveWise App Preview](public/DriveWiseApp.png)
 
+> This is the web-app-specific reference doc. For the full picture — mobile app, setup, environment variables, security notes, and Vercel deployment steps — see the [repository root README](../README.md).
+
 DriveWise is a modern, full-stack web application designed to help students master driving theory through interactive tests, gamified scenarios, and intelligent analytics. Built with Next.js and Supabase, it focuses on performance, scalability, and a superior user experience.
 
 ## 🚀 Key Features
@@ -52,7 +54,7 @@ DriveWise is a modern, full-stack web application designed to help students mast
 
 ## 🏗️ Tech Stack
 
-*   **Framework**: [Next.js 14](https://nextjs.org/) (App Router, Server Components)
+*   **Framework**: [Next.js 16](https://nextjs.org/) (App Router, Turbopack, Server Components)
 *   **Database**: [Supabase](https://supabase.com/) (PostgreSQL)
 *   **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 *   **UI Components**: Shadcn/UI, Radix Primitives, Framer Motion (Animations)

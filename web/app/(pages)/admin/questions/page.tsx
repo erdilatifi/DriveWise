@@ -92,10 +92,16 @@ export default function QuestionsPage() {
   // Pagination calculations
   const totalPages = Math.ceil(totalQuestions / itemsPerPage);
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
+  // Reset to page 1 when filters change (adjusted during render, not in an effect)
+  const [prevFilters, setPrevFilters] = useState({ searchQuery, categoryFilter, statusFilter });
+  if (
+    prevFilters.searchQuery !== searchQuery ||
+    prevFilters.categoryFilter !== categoryFilter ||
+    prevFilters.statusFilter !== statusFilter
+  ) {
+    setPrevFilters({ searchQuery, categoryFilter, statusFilter });
     setCurrentPage(1);
-  }, [searchQuery, categoryFilter, statusFilter]);
+  }
 
   // Group questions by category
   const questionsByCategory = paginatedQuestions?.reduce((acc, question) => {

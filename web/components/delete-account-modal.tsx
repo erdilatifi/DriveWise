@@ -98,6 +98,7 @@ export function DeleteAccountModal({
                         onChange={(e) => setCustomReason(e.target.value)}
                         className="mt-2 h-8 text-sm"
                         autoFocus
+                        maxLength={2000}
                       />
                     )}
                   </div>
@@ -119,6 +120,7 @@ export function DeleteAccountModal({
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   className="min-h-[80px] bg-background/50 resize-none border-emerald-500/20 focus-visible:ring-emerald-500/30"
+                  maxLength={2000}
                 />
               </div>
 
@@ -155,6 +157,7 @@ export function DeleteAccountModal({
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   className="min-h-[80px] bg-background/50 resize-none"
+                  maxLength={2000}
                 />
               </div>
             </div>

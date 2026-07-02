@@ -175,6 +175,7 @@ export default function AdminSignsPage() {
                             value={editingSign.name}
                             onChange={(e) => setEditingSign({ ...editingSign, name: e.target.value })}
                             className="w-full px-3 py-2 rounded bg-black/20 border border-border focus:border-primary outline-none text-sm"
+                            maxLength={200}
                           />
                         </div>
                         <div>
@@ -183,6 +184,7 @@ export default function AdminSignsPage() {
                             value={editingSign.description}
                             onChange={(e) => setEditingSign({ ...editingSign, description: e.target.value })}
                             className="w-full px-3 py-2 rounded bg-black/20 border border-border focus:border-primary outline-none text-sm min-h-[80px]"
+                            maxLength={2000}
                           />
                         </div>
                       </div>

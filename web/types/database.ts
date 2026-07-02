@@ -142,7 +142,7 @@ export interface PaymentTransaction {
   provider_status: string;
   amount_cents: number;
   currency: string;
-  raw_payload: any;
+  raw_payload: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }

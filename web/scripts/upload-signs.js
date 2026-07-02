@@ -7,12 +7,12 @@ const dotenv = require('dotenv');
 dotenv.config({ path: path.join(__dirname, '../.env.local') });
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-// Prefer Service Role Key for admin tasks to bypass RLS, otherwise fallback to Anon Key
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Prefer Service Role Key for admin tasks to bypass RLS, otherwise fallback to the publishable key
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error('Error: Missing Supabase environment variables.');
-  console.error('Please ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY) are set in web/.env.local');
+  console.error('Please ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) are set in web/.env.local');
   process.exit(1);
 }
 

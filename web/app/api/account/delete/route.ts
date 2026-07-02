@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/utils/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { deleteAccountFeedbackSchema } from '@/lib/validations/account';
 
 export async function DELETE(_req: Request) {
   try {
@@ -32,11 +33,14 @@ export async function DELETE(_req: Request) {
     });
 
     // Parse optional feedback from body
-    let feedback = null;
+    let feedback: ReturnType<typeof deleteAccountFeedbackSchema.parse> | null = null;
     try {
       const body = await _req.json();
       if (body && body.reason) {
-        feedback = body;
+        const parsed = deleteAccountFeedbackSchema.safeParse(body);
+        if (parsed.success) {
+          feedback = parsed.data;
+        }
       }
     } catch {
       // Body might be empty if no feedback provided

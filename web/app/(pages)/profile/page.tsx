@@ -91,6 +91,10 @@ export default function ProfilePage() {
       toast.error(t('profile.nameEmpty'));
       return;
     }
+    if (trimmed.length > 100) {
+      toast.error('Emri mund të ketë deri në 100 karaktere.');
+      return;
+    }
 
     setSavingName(true);
     try {
@@ -298,6 +302,7 @@ export default function ProfilePage() {
                           value={fullNameInput}
                           onChange={(e) => setFullNameInput(e.target.value)}
                           className="text-sm bg-black/50 border-border/60 focus:ring-orange-500/50"
+                          maxLength={100}
                         />
                         <Button
                           size="sm"

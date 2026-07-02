@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/utils/supabase/client';
+import { sanitizeSearchTerm } from '@/lib/validations/common';
 
 export interface TrafficSign {
   id: string;
@@ -44,7 +45,8 @@ export function useTrafficSigns(params: TrafficSignsQueryParams = {}) {
       }
 
       if (search) {
-        query = query.or(`name.ilike.%${search}%,code.ilike.%${search}%`);
+        const term = sanitizeSearchTerm(search);
+        query = query.or(`name.ilike.%${term}%,code.ilike.%${term}%`);
       }
 
       const from = (page - 1) * pageSize;
@@ -54,7 +56,7 @@ export function useTrafficSigns(params: TrafficSignsQueryParams = {}) {
 
       if (error) throw error;
 
-      const signsWithUrls = (data || []).map((sign: any) => {
+      const signsWithUrls = (data || []).map((sign: TrafficSign) => {
         if (sign.image_url && !sign.image_url.startsWith('http')) {
           const { data: { publicUrl } } = supabase.storage
             .from('signs')

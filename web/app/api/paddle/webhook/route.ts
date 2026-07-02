@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
       // Extract Email & Custom Data
       // We check multiple places because Paddle's payload structure can vary based on how the checkout was initiated
-      let customData: any = data.custom_data || {};
+      let customData = data.custom_data || {};
       let customDataSource = 'transaction';
 
       // 1. Try Transaction custom_data (parsed or string)
@@ -111,9 +111,8 @@ export async function POST(req: NextRequest) {
       }
 
       // 4. If empty, try Passthrough (Legacy/Classic)
-      // Note: TypeScript might complain if passthrough isn't in the type definition, so we access it safely
-      if (Object.keys(customData).length === 0 && (data as any).passthrough) {
-         customData = (data as any).passthrough;
+      if (Object.keys(customData).length === 0 && data.passthrough) {
+         customData = data.passthrough;
          customDataSource = 'passthrough';
          if (typeof customData === 'string') {
             try { customData = JSON.parse(customData); customDataSource = 'passthrough_string'; } catch (e) { customData = {}; }
@@ -154,7 +153,7 @@ export async function POST(req: NextRequest) {
 
       let category = getCustomDataValue('category');
       const planFromCustomData = getCustomDataValue('plan') || getCustomDataValue('plan_tier');
-      let userIdFromCustomData = getCustomDataValue('user_id') || getCustomDataValue('userId');
+      const userIdFromCustomData = getCustomDataValue('user_id') || getCustomDataValue('userId');
 
       const transactionId = data.id;
       const currency = data.currency_code || 'EUR';
@@ -190,15 +189,11 @@ export async function POST(req: NextRequest) {
       }
 
       // Normalize Category (A, B, C, D)
-      if (category) {
-        category = category.toString().trim().toUpperCase();
-        if (!['A', 'B', 'C', 'D'].includes(category)) {
-           console.warn(`⚠️ Invalid category received: ${category}. Keeping as is for investigation.`);
-        }
-      } else {
-        console.error(`❌ Missing category in custom_data. Transaction ID: ${transactionId}`);
-        // Defaulting to UNKNOWN to avoid data corruption
-        category = 'UNKNOWN';
+      category = category ? category.toString().trim().toUpperCase() : '';
+
+      if (!['A', 'B', 'C', 'D'].includes(category)) {
+        console.error(`❌ Invalid or missing category in custom_data: "${category}". Transaction ID: ${transactionId}. Refusing to provision an order for an unknown category.`);
+        return NextResponse.json({ received: true });
       }
 
       // Determine Plan Tier
@@ -382,19 +377,21 @@ export async function POST(req: NextRequest) {
         }
 
         console.log('🎉 Plan Activated Successfully!');
-      } catch (dbError: any) {
+      } catch (dbError: unknown) {
         console.error('❌ Database Operation Failed:', dbError);
-        return NextResponse.json({ error: 'Database Error', details: dbError.message }, { status: 500 });
+        const message = dbError instanceof Error ? dbError.message : String(dbError);
+        return NextResponse.json({ error: 'Database Error', details: message }, { status: 500 });
       }
     }
 
     // Return success
     return NextResponse.json({ received: true });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Webhook Error:', error);
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: 'Internal Server Error', details: error.message },
+      { error: 'Internal Server Error', details: message },
       { status: 500 }
     );
   }

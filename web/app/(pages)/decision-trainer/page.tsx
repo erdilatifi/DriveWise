@@ -416,13 +416,17 @@ export default function DecisionTrainerPage() {
     return () => clearInterval(interval);
   }, [selectedCategory, currentScenarioIndex, showResult, currentScenario]);
 
-  // When time runs out, auto-submit
+  // When time runs out, auto-submit.
+  // Intentionally reacts to the `timeLeft` countdown reaching zero (an
+  // external-clock event) rather than deriving render state, so the
+  // direct setState call here is safe despite the lint rule below.
   useEffect(() => {
     if (!selectedCategory || !currentScenario || showResult) return;
     if (timeLeft > 0) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     handleTimeUp();
-  }, [timeLeft, selectedCategory, currentScenario, showResult]); // Added handleTimeUp to dependencies effectively? No, it's stable enough if defined in scope.
+  }, [timeLeft, selectedCategory, currentScenario, showResult]);
 
   // --- EARLY RETURNS START HERE ---
   

@@ -63,9 +63,12 @@ export default function MaterialsPage() {
   const materials = data?.materials || [];
   const totalPages = Math.ceil(totalMaterials / itemsPerPage) || 1;
 
-  useEffect(() => {
+  // Reset to page 1 when filters change (adjusted during render, not in an effect)
+  const [prevFilters, setPrevFilters] = useState({ searchQuery, chapterFilter });
+  if (prevFilters.searchQuery !== searchQuery || prevFilters.chapterFilter !== chapterFilter) {
+    setPrevFilters({ searchQuery, chapterFilter });
     setCurrentPage(1);
-  }, [searchQuery, chapterFilter]);
+  }
 
   const openDeleteDialog = (material: Material) => {
     setMaterialToDelete(material);

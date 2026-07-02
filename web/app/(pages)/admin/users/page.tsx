@@ -63,10 +63,16 @@ export default function UsersPage() {
     }
   }, [user, isAdmin, authLoading, router]);
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
+  // Reset to page 1 when filters change (adjusted during render, not in an effect)
+  const [prevFilters, setPrevFilters] = useState({ searchQuery, roleFilter, premiumFilter });
+  if (
+    prevFilters.searchQuery !== searchQuery ||
+    prevFilters.roleFilter !== roleFilter ||
+    prevFilters.premiumFilter !== premiumFilter
+  ) {
+    setPrevFilters({ searchQuery, roleFilter, premiumFilter });
     setCurrentPage(1);
-  }, [searchQuery, roleFilter, premiumFilter]);
+  }
 
   const handleRoleUpdate = async (userId: string, updates: { is_admin?: boolean }) => {
     try {
@@ -154,7 +160,10 @@ export default function UsersPage() {
               />
             </div>
             <div className="w-full md:w-48">
-              <Select value={roleFilter} onValueChange={(value: any) => setRoleFilter(value)}>
+              <Select
+                value={roleFilter}
+                onValueChange={(value: string) => setRoleFilter(value as 'all' | 'admin' | 'user')}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder={t('admin.allRoles')} />
                 </SelectTrigger>

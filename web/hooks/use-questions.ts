@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/utils/supabase/client';
+import { sanitizeSearchTerm } from '@/lib/validations/common';
 
 export interface Question {
   id: string;
@@ -70,7 +71,7 @@ export function useQuestions({ category, search, status = 'all', page, pageSize 
       }
 
       if (search && search.trim()) {
-        const term = search.trim();
+        const term = sanitizeSearchTerm(search);
         query = query.or(`question_text.ilike.%${term}%,category.ilike.%${term}%`);
       }
 

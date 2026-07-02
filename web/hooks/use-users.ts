@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/utils/supabase/client';
 import { UserProfile } from '@/types/database';
+import { sanitizeSearchTerm } from '@/lib/validations/common';
 
 export interface UsersQueryParams {
   search?: string;
@@ -32,7 +33,7 @@ export function useUsers({ search, role = 'all', isPremium, page, pageSize }: Us
         .order('created_at', { ascending: false });
 
       if (search && search.trim()) {
-        const term = search.trim();
+        const term = sanitizeSearchTerm(search);
         query = query.or(`email.ilike.%${term}%,full_name.ilike.%${term}%`);
       }
 

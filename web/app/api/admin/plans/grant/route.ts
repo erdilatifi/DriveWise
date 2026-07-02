@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/utils/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
-import { BILLING_CONFIG, type PaidPlanTier } from '@/lib/subscriptions';
-import type { LicenseCategory } from '@/types/database';
-
-interface GrantBody {
-  userId: string;
-  category: LicenseCategory;
-  planTier: PaidPlanTier;
-}
+import { BILLING_CONFIG } from '@/lib/subscriptions';
+import { grantPlanSchema } from '@/lib/validations/admin';
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,16 +26,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const { userId, category, planTier } = (await req.json()) as Partial<GrantBody>;
-
-    if (!userId || !category || !planTier) {
-      return NextResponse.json({ error: 'Missing userId, category or planTier' }, { status: 400 });
+    const parsed = grantPlanSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', details: parsed.error.flatten().fieldErrors },
+        { status: 400 },
+      );
     }
+    const { userId, category, planTier } = parsed.data;
 
-    const planDef = BILLING_CONFIG.plans[planTier as PaidPlanTier];
-    if (!planDef) {
-      return NextResponse.json({ error: 'Invalid plan tier' }, { status: 400 });
-    }
+    const planDef = BILLING_CONFIG.plans[planTier];
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
