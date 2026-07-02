@@ -157,8 +157,10 @@ export function useGlobalDailyStreak(userId?: string) {
       return { currentStreak, bestStreak };
     },
     enabled: !!userId,
-    staleTime: 0,
-    refetchOnMount: 'always',
+    // Freshness after submitting a test/scenario is handled via
+    // invalidateQueries in the relevant mutations, so this can use the
+    // default cache behavior instead of refetching on every mount.
+    staleTime: 2 * 60 * 1000,
   });
 }
 

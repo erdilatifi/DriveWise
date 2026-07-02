@@ -36,15 +36,6 @@ import {
   BookOpen,
   ArrowRight,
 } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
 import { FaApple, FaGooglePlay } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -418,59 +409,7 @@ export default function HomePage() {
                       </span>
                     </div>
                     <div className="h-52 w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart
-                          data={weeklyData}
-                          margin={{ top: 8, left: -20, right: 10 }}
-                        >
-                          <CartesianGrid
-                            stroke="#27272a"
-                            strokeDasharray="3 3"
-                            vertical={false}
-                          />
-                          <XAxis
-                            dataKey="day"
-                            tickLine={false}
-                            axisLine={false}
-                            tick={{ fill: "#a1a1aa", fontSize: 10 }}
-                          />
-                          <YAxis
-                            tickLine={false}
-                            axisLine={false}
-                            tick={{ fill: "#71717a", fontSize: 10 }}
-                            tickFormatter={(v) => `${v}%`}
-                            domain={[40, 100]}
-                          />
-                          <Tooltip
-                            cursor={{ stroke: "#3f3f46", strokeWidth: 1 }}
-                            contentStyle={{
-                              backgroundColor: "#020617",
-                              border: "1px solid #27272a",
-                              borderRadius: "0.5rem",
-                              padding: "0.35rem 0.5rem",
-                            }}
-                            labelStyle={{ color: "#e5e5e5", fontSize: 11 }}
-                            itemStyle={{ color: "#fed7aa", fontSize: 11 }}
-                            formatter={(value) => [
-                              `${value}%`,
-                              "Score",
-                            ]}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="score"
-                            stroke="#fb923c"
-                            strokeWidth={2}
-                            dot={{
-                              r: 3,
-                              strokeWidth: 1,
-                              stroke: "#fde68a",
-                              fill: "#fb923c",
-                            }}
-                            activeDot={{ r: 4 }}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
+                      <WeeklySparkline data={weeklyData} />
                     </div>
                   </div>
 
@@ -1437,6 +1376,95 @@ export default function HomePage() {
 }
 
 /* Small components */
+
+// Decorative demo chart with static fake data — a hand-rolled SVG sparkline
+// instead of pulling in recharts, since this is the highest-traffic page.
+function WeeklySparkline({
+  data,
+}: {
+  data: { day: string; score: number }[];
+}) {
+  const width = 560;
+  const height = 200;
+  const padY = 16;
+  const min = 40;
+  const max = 100;
+
+  const points = data.map((d, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y =
+      height -
+      padY -
+      ((d.score - min) / (max - min)) * (height - padY * 2);
+    return { x, y, ...d };
+  });
+
+  const linePath = points
+    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`)
+    .join(" ");
+
+  const areaPath = `${linePath} L${width},${height} L0,${height} Z`;
+
+  const gridLines = [40, 70, 100];
+
+  return (
+    <div className="flex h-full w-full flex-col">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="w-full flex-1"
+        preserveAspectRatio="none"
+        aria-hidden
+      >
+        <defs>
+          <linearGradient id="sparkline-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#fb923c" stopOpacity={0.28} />
+            <stop offset="100%" stopColor="#fb923c" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        {gridLines.map((v) => {
+          const y = height - padY - ((v - min) / (max - min)) * (height - padY * 2);
+          return (
+            <line
+              key={v}
+              x1={0}
+              x2={width}
+              y1={y}
+              y2={y}
+              stroke="#27272a"
+              strokeWidth={1}
+              strokeDasharray="4 4"
+            />
+          );
+        })}
+        <path d={areaPath} fill="url(#sparkline-fill)" />
+        <path
+          d={linePath}
+          fill="none"
+          stroke="#fb923c"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {points.map((p) => (
+          <circle
+            key={p.day}
+            cx={p.x}
+            cy={p.y}
+            r={3}
+            fill="#fb923c"
+            stroke="#fde68a"
+            strokeWidth={1}
+          />
+        ))}
+      </svg>
+      <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
+        {data.map((d) => (
+          <span key={d.day}>{d.day}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function CountUp({ to, suffix = "" }: { to: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement | null>(null);

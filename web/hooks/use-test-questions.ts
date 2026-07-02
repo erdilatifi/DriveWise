@@ -203,6 +203,7 @@ export function useSubmitTestAttempt() {
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['test-attempts', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['test-history', variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ['global-daily-streak', variables.userId] });
     },
   });
 }
