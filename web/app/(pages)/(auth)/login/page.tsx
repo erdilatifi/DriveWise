@@ -3,11 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { IconInput } from '@/components/ui/icon-input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
+import { AlertCircle, ArrowLeft, Mail, TrendingUp, Flame, ListChecks } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
@@ -108,10 +111,10 @@ export default function LoginPage() {
       }
 
       toast.success('Hyrja u krye me sukses!');
-      
+
       // Refresh the router to ensure middleware/server components see the new session cookie
       router.refresh();
-      
+
       // Do NOT setSubmitting(false) here. Keep it true while we redirect.
       router.push('/dashboard');
     } catch (err) {
@@ -136,7 +139,12 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-5xl grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] items-center">
         {/* Left: benefits / snapshot */}
-        <div className="hidden lg:flex flex-col gap-6 text-sm text-muted-foreground">
+        <motion.div
+          initial={{ opacity: 0, x: -24 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="hidden lg:flex flex-col gap-6 text-sm text-muted-foreground"
+        >
           <div className="space-y-2">
             <p className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-black/60 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               <span className="h-1.5 w-6 bg-gradient-to-r from-orange-500 to-amber-300 rounded-full" />
@@ -152,7 +160,10 @@ export default function LoginPage() {
 
           <div className="grid gap-3 md:grid-cols-3 text-xs">
             <div className="rounded-xl border border-border/70 bg-black/70 px-3 py-3 flex flex-col gap-1">
-              <span className="text-[11px] text-muted-foreground">Përparimi javor</span>
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <TrendingUp className="w-3 h-3 text-orange-400" />
+                <span>Përparimi javor</span>
+              </div>
               <span className="text-lg font-semibold text-foreground">86%</span>
               <div className="mt-1 h-1.5 rounded-full bg-orange-500/10 overflow-hidden">
                 <div className="h-full w-4/5 bg-gradient-to-r from-orange-500 to-amber-300" />
@@ -160,7 +171,10 @@ export default function LoginPage() {
               <span className="text-[11px] text-muted-foreground mt-1">+12% krahasuar me javën e kaluar</span>
             </div>
             <div className="rounded-xl border border-border/70 bg-black/70 px-3 py-3 flex flex-col gap-1">
-              <span className="text-[11px] text-muted-foreground">Teste të përfunduara</span>
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <ListChecks className="w-3 h-3 text-orange-400" />
+                <span>Teste të përfunduara</span>
+              </div>
               <span className="text-lg font-semibold text-foreground">42</span>
               <div className="mt-1 h-1.5 rounded-full bg-orange-500/10 overflow-hidden">
                 <div className="h-full w-2/3 bg-gradient-to-r from-orange-500 to-amber-300" />
@@ -168,7 +182,10 @@ export default function LoginPage() {
               <span className="text-[11px] text-muted-foreground mt-1">Historia ruhet përgjithmonë</span>
             </div>
             <div className="rounded-xl border border-border/70 bg-black/70 px-3 py-3 flex flex-col gap-1">
-              <span className="text-[11px] text-muted-foreground">Seria ditore</span>
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <Flame className="w-3 h-3 text-emerald-400" />
+                <span>Seria ditore</span>
+              </div>
               <span className="text-lg font-semibold text-foreground">7 ditë</span>
               <div className="mt-1 h-1.5 rounded-full bg-emerald-500/10 overflow-hidden">
                 <div className="h-full w-3/4 bg-gradient-to-r from-emerald-500 to-emerald-300" />
@@ -176,13 +193,19 @@ export default function LoginPage() {
               <span className="text-[11px] text-muted-foreground mt-1">Vazhdo kështu</span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Right: login card */}
-        <Card className="w-full max-w-md justify-self-center relative border border-border/80 bg-black/80 backdrop-blur-xl shadow-2xl shadow-primary/10">
+        <motion.div
+          initial={{ opacity: 0, y: 24, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md justify-self-center"
+        >
+        <Card className="relative border border-border/80 bg-black/80 backdrop-blur-xl shadow-2xl shadow-primary/10">
           <CardHeader className="text-center space-y-4">
             <div className="relative mx-auto w-20 h-20">
-              <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full" />
+              <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full animate-pulse" />
               <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-primary/30 shadow-xl shadow-primary/20">
                 <Image
                   src="/logo-white.png"
@@ -206,18 +229,20 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} className="space-y-4" autoComplete="on">
               {error && (
                 <div
-                  className="p-3 rounded-md bg-destructive/10 text-destructive text-sm"
+                  className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm"
                   aria-live="polite"
                 >
-                  {error}
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{error}</span>
                 </div>
               )}
 
               <div className="space-y-2">
                 <Label htmlFor="email">{t('auth.email')}</Label>
-                <Input
+                <IconInput
                   id="email"
                   type="email"
+                  icon={<Mail />}
                   placeholder="your@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -237,9 +262,8 @@ export default function LoginPage() {
                     Keni harruar fjalëkalimin?
                   </Link>
                 </div>
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -271,14 +295,16 @@ export default function LoginPage() {
               <div className="text-center pt-2">
                 <Link
                   href="/"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  ← {t('auth.backToHome')}
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  {t('auth.backToHome')}
                 </Link>
               </div>
             </form>
           </CardContent>
         </Card>
+        </motion.div>
       </div>
     </div>
   );
