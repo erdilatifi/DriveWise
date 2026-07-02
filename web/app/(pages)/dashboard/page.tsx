@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
@@ -18,18 +19,6 @@ import {
 } from 'lucide-react';
 import { Navbar } from '@/components/navbar';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
 import { motion } from 'framer-motion';
@@ -40,6 +29,17 @@ import {
 } from '@/hooks/use-test-attempts';
 import { useDecisionTrainerStats } from '@/hooks/use-decision-trainer';
 import { CATEGORY_INFO, type LicenseCategory } from '@/types/database';
+
+// Code-split recharts out of the main dashboard bundle — it's not needed
+// until the data has loaded and the charts are actually painted.
+const WeeklyProgressChart = dynamic(
+  () => import('@/components/dashboard/charts').then((m) => m.WeeklyProgressChart),
+  { ssr: false, loading: () => <Skeleton className="h-full w-full rounded-xl" /> }
+);
+const PassRatePieChart = dynamic(
+  () => import('@/components/dashboard/charts').then((m) => m.PassRatePieChart),
+  { ssr: false, loading: () => <Skeleton className="h-full w-full rounded-xl" /> }
+);
 
 export default function DashboardPage() {
   const { t, language } = useLanguage();
@@ -548,99 +548,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="relative w-full flex-1 min-h-[250px]">
                       {progressData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart
-                            data={progressData}
-                            margin={{
-                              top: 10,
-                              right: 10,
-                              left: -20,
-                              bottom: 0,
-                            }}
-                          >
-                            <defs>
-                              <linearGradient
-                                id="colorScore"
-                                x1="0"
-                                y1="0"
-                                x2="0"
-                                y2="1"
-                              >
-                                <stop
-                                  offset="5%"
-                                  stopColor="#f97316"
-                                  stopOpacity={0.3}
-                                />
-                                <stop
-                                  offset="95%"
-                                  stopColor="#f97316"
-                                  stopOpacity={0}
-                                />
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid
-                              stroke="#ffffff10"
-                              strokeDasharray="3 3"
-                              vertical={false}
-                            />
-                            <XAxis
-                              dataKey="date"
-                              tickLine={false}
-                              axisLine={false}
-                              tick={{ fill: '#a1a1aa', fontSize: 11 }}
-                              dy={10}
-                            />
-                            <YAxis
-                              tickLine={false}
-                              axisLine={false}
-                              tick={{ fill: '#a1a1aa', fontSize: 11 }}
-                              tickFormatter={(v) => `${v}%`}
-                            />
-                            <Tooltip
-                              cursor={{ stroke: '#ffffff20', strokeWidth: 1 }}
-                              contentStyle={{
-                                backgroundColor: '#09090b',
-                                border: '1px solid #27272a',
-                                borderRadius: '0.75rem',
-                                padding: '0.5rem 0.75rem',
-                                boxShadow:
-                                  '0 10px 30px -10px rgba(0,0,0,0.5)',
-                              }}
-                              labelStyle={{
-                                color: '#e5e5e5',
-                                fontSize: 12,
-                                marginBottom: 4,
-                              }}
-                              itemStyle={{
-                                color: '#fdba74',
-                                fontSize: 12,
-                                fontWeight: 600,
-                              }}
-                              formatter={(value) => [
-                                `${value}%`,
-                                'Score',
-                              ]}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="score"
-                              stroke="#f97316"
-                              strokeWidth={3}
-                              dot={{
-                                r: 4,
-                                strokeWidth: 2,
-                                stroke: '#000',
-                                fill: '#f97316',
-                              }}
-                              activeDot={{
-                                r: 6,
-                                strokeWidth: 0,
-                                fill: '#fff',
-                              }}
-                              fill="url(#colorScore)"
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
+                        <WeeklyProgressChart data={progressData} />
                       ) : (
                         <div className="relative flex flex-col items-center justify-center h-full text-center space-y-2 rounded-xl border border-white/5 bg-white/[0.02] overflow-hidden">
                           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-orange-500/[0.02]" />
@@ -858,51 +766,10 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="relative w-full flex-1 min-h-[250px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={pieData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={90}
-                            paddingAngle={stats.totalTests > 0 ? 5 : 0}
-                            dataKey="value"
-                            stroke="none"
-                          >
-                            {pieData.map((entry, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                fill={entry.color}
-                                stroke={
-                                  entry.color === '#27272a'
-                                    ? 'rgba(255,255,255,0.05)'
-                                    : 'none'
-                                }
-                                strokeWidth={entry.color === '#27272a' ? 1 : 0}
-                              />
-                            ))}
-                          </Pie>
-                          {stats.totalTests > 0 && (
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: '#09090b',
-                                border: '1px solid #27272a',
-                                borderRadius: '12px',
-                                padding: '8px 12px',
-                                boxShadow:
-                                  '0 10px 30px -10px rgba(0,0,0,0.5)',
-                              }}
-                              labelStyle={{ color: '#fff', fontWeight: 600 }}
-                              itemStyle={{ color: '#fff' }}
-                              formatter={(value) => [
-                                `${value}`,
-                                'Count',
-                              ]}
-                            />
-                          )}
-                        </PieChart>
-                      </ResponsiveContainer>
+                      <PassRatePieChart
+                        pieData={pieData}
+                        showTooltip={stats.totalTests > 0}
+                      />
 
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="text-center">

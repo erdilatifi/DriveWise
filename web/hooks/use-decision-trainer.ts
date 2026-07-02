@@ -253,6 +253,7 @@ export function useSubmitScenarioAttempt() {
       queryClient.invalidateQueries({ queryKey: ['decision-trainer-progress', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['decision-trainer-stats', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      queryClient.invalidateQueries({ queryKey: ['global-daily-streak', variables.userId] });
     },
   });
 }
@@ -374,6 +375,7 @@ export function useCompleteCategory() {
       queryClient.invalidateQueries({ queryKey: ['decision-trainer-progress', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['decision-trainer-stats', variables.userId] });
       queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      queryClient.invalidateQueries({ queryKey: ['global-daily-streak', variables.userId] });
     },
   });
 }

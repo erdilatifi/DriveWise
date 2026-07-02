@@ -70,10 +70,12 @@ export function Navbar() {
 
   return (
     <nav className={`fixed left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${
-      scrolled ? 'top-0 w-full' : 'top-4 w-[90%]'
+      scrolled ? 'top-4 w-[90%]' : 'top-0 w-full'
     }`}>
-      <div className={`bg-card/95 backdrop-blur-xl border border-border/40 shadow-lg shadow-black/20 transition-all duration-300 ${
-        scrolled ? 'rounded-none border-t-0 border-x-0' : 'rounded-2xl'
+      <div className={`transition-all duration-300 ${
+        scrolled
+          ? 'rounded-2xl bg-card/95 backdrop-blur-xl border border-border/40 shadow-lg shadow-black/20'
+          : 'rounded-none border-t-0 border-x-0 bg-transparent border-transparent shadow-none'
       }`}>
       <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">

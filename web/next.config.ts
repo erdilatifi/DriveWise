@@ -4,7 +4,19 @@ import path from "path";
 const nextConfig: NextConfig = {
   // Performance optimizations
   experimental: {
-    optimizePackageImports: ['recharts', 'framer-motion'],
+    optimizePackageImports: [
+      'recharts',
+      'framer-motion',
+      'lucide-react',
+      'react-icons',
+      '@radix-ui/react-avatar',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-radio-group',
+      '@radix-ui/react-select',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-tooltip',
+    ],
   },
   
   // Image optimization
