@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
+import { sanitizeSearchTerm } from '@/lib/validations/common';
 
 export interface ScenarioFilters {
   search?: string;
@@ -56,7 +57,8 @@ export function useScenarios(filters: ScenarioFilters = {}, pagination: Paginati
       
       // Apply search filter
       if (filters.search?.trim()) {
-        query = query.or(`question.ilike.%${filters.search}%,correct_explanation.ilike.%${filters.search}%,real_world_tip.ilike.%${filters.search}%`);
+        const term = sanitizeSearchTerm(filters.search);
+        query = query.or(`question.ilike.%${term}%,correct_explanation.ilike.%${term}%,real_world_tip.ilike.%${term}%`);
       }
       
       // Apply category filter

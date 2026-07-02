@@ -272,7 +272,7 @@ export function useDashboardStats(userId?: string) {
         };
 
         // Calculate streak
-        const testDates = (streakRes.data || []).map((test: any) => {
+        const testDates = (streakRes.data || []).map((test: { completed_at: string }) => {
           const date = new Date(test.completed_at);
           return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
         });
@@ -309,7 +309,9 @@ export function useDashboardStats(userId?: string) {
           const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD
           const dayLabel = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()];
           
-          const dayStat = dbProgress.find((p: any) => p.attempt_date === dateStr);
+          const dayStat = dbProgress.find(
+            (p: { attempt_date: string; daily_avg_score: number }) => p.attempt_date === dateStr
+          );
           
           progressData.push({
             date: dayLabel,
@@ -318,7 +320,13 @@ export function useDashboardStats(userId?: string) {
         }
 
         // Format recent tests
-        const recentTests: RecentTest[] = (recentRes.data || []).map((test: any) => ({
+        const recentTests: RecentTest[] = (recentRes.data || []).map((test: {
+          id: string;
+          category: string;
+          test_number: string | null;
+          percentage: number;
+          completed_at: string;
+        }) => ({
           id: test.id,
           category: test.category,
           testNumber: test.test_number || '1',

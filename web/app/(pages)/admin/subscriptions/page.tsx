@@ -116,7 +116,7 @@ export default function AdminSubscriptionsPage() {
         `U dha plani ${planDef.label} (${vars.planTier}) për kategorinë ${vars.category} për ${userLabel}.`,
       );
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       console.error(err);
       toast.error('Dështoi dhënia e planit. Ju lutem provoni përsëri.');
     },

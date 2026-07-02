@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { bugReportSchema } from '@/lib/validations/bug-report';
 
 export async function POST(req: Request) {
   try {
@@ -10,8 +11,14 @@ export async function POST(req: Request) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    // 2. Parse body
-    const body = await req.json();
+    // 2. Parse and validate body
+    const parsed = bugReportSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid bug report.', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
     const {
       title,
       description,
@@ -19,14 +26,7 @@ export async function POST(req: Request) {
       location,
       deviceBrowser,
       contactEmail,
-    } = body;
-
-    if (!title || !description) {
-      return NextResponse.json(
-        { error: 'Title and description are required.' },
-        { status: 400 }
-      );
-    }
+    } = parsed.data;
 
     // 3. Setup Admin Client for privileged insert (bypassing strict RLS if necessary, or just ensuring reliability)
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

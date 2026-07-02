@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { getPaddleSubscription, cancelPaddleSubscription } from '@/lib/paddle-api';
+import { paddleIdSchema } from '@/lib/validations/common';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  
+
+  const idCheck = paddleIdSchema.safeParse(id);
+  if (!idCheck.success) {
+    return NextResponse.json({ error: 'Invalid subscription id' }, { status: 400 });
+  }
+
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -37,7 +43,12 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  
+
+  const idCheck = paddleIdSchema.safeParse(id);
+  if (!idCheck.success) {
+    return NextResponse.json({ error: 'Invalid subscription id' }, { status: 400 });
+  }
+
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -71,6 +82,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  const idCheck = paddleIdSchema.safeParse(id);
+  if (!idCheck.success) {
+    return NextResponse.json({ error: 'Invalid subscription id' }, { status: 400 });
+  }
+
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 

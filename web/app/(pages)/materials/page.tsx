@@ -183,7 +183,7 @@ export default function MaterialsPage() {
   }
 
   // Try to interpret content as a structured chapter JSON as described in the schema
-  const chapter = (currentSectionContent as any)?.chapter as
+  const chapter = currentSectionContent?.chapter as
     | {
         code?: string;
         title?: string;

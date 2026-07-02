@@ -84,11 +84,17 @@ export default function NewMaterialPage() {
     if (!formData.title.trim()) {
       errors.push('Titulli është i detyrueshëm');
     }
+    if (formData.title.length > 200) {
+      errors.push('Titulli mund të ketë deri në 200 karaktere');
+    }
     if (!formData.chapter_id || formData.chapter_id < 1 || formData.chapter_id > 20) {
       errors.push('Kapitulli duhet të jetë mes 1 dhe 20');
     }
     if (!formData.order_index) {
       errors.push('Indeksi i renditjes është i detyrueshëm');
+    }
+    if (formData.content_text.length > 200000) {
+      errors.push('Përmbajtja është shumë e gjatë (maksimumi ~200,000 karaktere)');
     }
 
     if (usedChapterIds.has(formData.chapter_id)) {
@@ -300,6 +306,7 @@ export default function NewMaterialPage() {
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="p.sh. 1. Rregullat bazë të trafikut"
                 required
+                maxLength={200}
               />
             </div>
 

@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
 import { CATEGORY_INFO, type Category } from '@/data/scenarios';
+import { sanitizeSearchTerm } from '@/lib/validations/common';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -165,7 +166,8 @@ export default function AdminScenariosPageOptimized() {
       
       // Apply filters
       if (searchQuery.trim()) {
-        query = query.or(`question.ilike.%${searchQuery}%,correct_explanation.ilike.%${searchQuery}%,real_world_tip.ilike.%${searchQuery}%`);
+        const term = sanitizeSearchTerm(searchQuery);
+        query = query.or(`question.ilike.%${term}%,correct_explanation.ilike.%${term}%,real_world_tip.ilike.%${term}%`);
       }
       
       if (categoryFilter !== 'all') {
@@ -337,6 +339,10 @@ export default function AdminScenariosPageOptimized() {
         toast.error('Pyetja është e detyrueshme');
         return;
       }
+      if (trimmedQuestion.length > 2000) {
+        toast.error('Pyetja mund të ketë deri në 2000 karaktere');
+        return;
+      }
 
       const normalizedOptions = formData.options
         .map((opt) => ({
@@ -351,6 +357,11 @@ export default function AdminScenariosPageOptimized() {
         return;
       }
 
+      if (normalizedOptions.some((opt) => opt.text.length > 500 || opt.explanation.length > 1000)) {
+        toast.error('Një opsion ose shpjegim i tij është shumë i gjatë');
+        return;
+      }
+
       if (!normalizedOptions.some((opt) => opt.isCorrect)) {
         toast.error('Ju lutemi shënoni të paktën një opsion si të saktë');
         return;
@@ -361,10 +372,18 @@ export default function AdminScenariosPageOptimized() {
         toast.error('Shpjegimi i përgjigjes së saktë është i detyrueshëm');
         return;
       }
+      if (trimmedCorrect.length > 3000) {
+        toast.error('Shpjegimi mund të ketë deri në 3000 karaktere');
+        return;
+      }
 
       const trimmedTip = formData.real_world_tip.trim();
       if (!trimmedTip) {
         toast.error('Këshilla nga jeta reale është e detyrueshme');
+        return;
+      }
+      if (trimmedTip.length > 2000) {
+        toast.error('Këshilla mund të ketë deri në 2000 karaktere');
         return;
       }
 

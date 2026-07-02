@@ -19,7 +19,7 @@ export interface PaddleSubscription {
   next_billed_at: string | null;
   paused_at: string | null;
   canceled_at: string | null;
-  discount: any | null;
+  discount: Record<string, unknown> | null;
   collection_mode: 'automatic' | 'manual';
   billing_cycle: {
     interval: 'day' | 'week' | 'month' | 'year';
@@ -29,8 +29,8 @@ export interface PaddleSubscription {
     starts_at: string;
     ends_at: string;
   } | null;
-  billing_details: any | null;
-  scheduled_change: any | null;
+  billing_details: Record<string, unknown> | null;
+  scheduled_change: Record<string, unknown> | null;
   management_urls: {
     update_payment_method: string | null;
     cancel: string | null;
@@ -51,9 +51,9 @@ export interface PaddleSubscription {
     updated_at: string;
     previously_billed_at: string | null;
     next_billed_at: string | null;
-    trial_dates: any | null;
+    trial_dates: Record<string, unknown> | null;
   }>;
-  custom_data?: Record<string, any> | null;
+  custom_data?: Record<string, unknown> | null;
 }
 
 export async function getPaddleSubscription(subscriptionId: string): Promise<PaddleSubscription | null> {
@@ -63,7 +63,7 @@ export async function getPaddleSubscription(subscriptionId: string): Promise<Pad
   }
 
   try {
-    const response = await fetch(`${PADDLE_API_URL}/subscriptions/${subscriptionId}`, {
+    const response = await fetch(`${PADDLE_API_URL}/subscriptions/${encodeURIComponent(subscriptionId)}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${PADDLE_API_KEY}`,
@@ -93,7 +93,7 @@ export async function cancelPaddleSubscription(subscriptionId: string, effective
   if (!PADDLE_API_KEY) return { error: 'Configuration error' };
 
   try {
-    const response = await fetch(`${PADDLE_API_URL}/subscriptions/${subscriptionId}/cancel`, {
+    const response = await fetch(`${PADDLE_API_URL}/subscriptions/${encodeURIComponent(subscriptionId)}/cancel`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${PADDLE_API_KEY}`,

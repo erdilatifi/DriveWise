@@ -74,18 +74,19 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
     }
   }, [user, isAdmin, authLoading, router]);
 
-  useEffect(() => {
-    if (material) {
-      setFormData({
-        chapter_id: material.chapter_id,
-        category: (material.category as LicenseCategory) || 'B',
-        order_index: material.order_index,
-        title: material.title,
-        content_text: JSON.stringify(material.content || {}, null, 2),
-        is_published: material.is_published,
-      });
-    }
-  }, [material]);
+  // Populate the form once the material loads (adjusted during render, not in an effect)
+  const [prevMaterial, setPrevMaterial] = useState(material);
+  if (material && material !== prevMaterial) {
+    setPrevMaterial(material);
+    setFormData({
+      chapter_id: material.chapter_id,
+      category: (material.category as LicenseCategory) || 'B',
+      order_index: material.order_index,
+      title: material.title,
+      content_text: JSON.stringify(material.content || {}, null, 2),
+      is_published: material.is_published,
+    });
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,11 +96,17 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
     if (!formData.title.trim()) {
       errors.push('Titulli është i detyrueshëm');
     }
+    if (formData.title.length > 200) {
+      errors.push('Titulli mund të ketë deri në 200 karaktere');
+    }
     if (!formData.chapter_id || formData.chapter_id < 1 || formData.chapter_id > 20) {
       errors.push('Kapitulli duhet të jetë mes 1 dhe 20');
     }
     if (!formData.order_index) {
       errors.push('Indeksi i renditjes është i detyrueshëm');
+    }
+    if (formData.content_text.length > 200000) {
+      errors.push('Përmbajtja është shumë e gjatë (maksimumi ~200,000 karaktere)');
     }
 
     let content: Record<string, unknown> = {};
@@ -286,6 +293,7 @@ export default function EditMaterialPage({ params }: EditMaterialPageProps) {
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
+                maxLength={200}
               />
             </div>
 

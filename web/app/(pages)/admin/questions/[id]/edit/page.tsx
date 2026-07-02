@@ -22,6 +22,7 @@ import { useQuestion, useUpdateQuestion, QuestionInput } from '@/hooks/use-quest
 import { toast } from 'sonner';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
+import { questionSchema } from '@/lib/validations/question';
 
 interface EditQuestionPageProps {
   params: Promise<{
@@ -55,22 +56,23 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
     }
   }, [user, isAdmin, authLoading, router]);
 
-  useEffect(() => {
-    if (question) {
-      setHasOptionC(!!question.option_c);
-      setFormData({
-        category: question.category,
-        test_number: question.test_number,
-        question_text: question.question_text,
-        option_a: question.option_a,
-        option_b: question.option_b,
-        option_c: question.option_c,
-        correct_answer: question.correct_answer,
-        image_url: question.image_url || '',
-        is_published: question.is_published,
-      });
-    }
-  }, [question]);
+  // Populate the form once the question loads (adjusted during render, not in an effect)
+  const [prevQuestion, setPrevQuestion] = useState(question);
+  if (question && question !== prevQuestion) {
+    setPrevQuestion(question);
+    setHasOptionC(!!question.option_c);
+    setFormData({
+      category: question.category,
+      test_number: question.test_number,
+      question_text: question.question_text,
+      option_a: question.option_a,
+      option_b: question.option_b,
+      option_c: question.option_c,
+      correct_answer: question.correct_answer,
+      image_url: question.image_url || '',
+      is_published: question.is_published,
+    });
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,37 +86,19 @@ export default function EditQuestionPage({ params }: EditQuestionPageProps) {
       finalCorrectAnswer = 'A'; // Default back to A
     }
 
-    // Comprehensive validation
-    const errors: string[] = [];
+    // Zod validation (same schema used by the create form, so length caps
+    // and format rules can't diverge between create and edit)
+    const validationResult = questionSchema.safeParse({
+      ...formData,
+      option_c: finalOptionC,
+      correct_answer: finalCorrectAnswer,
+    });
 
-    if (!formData.question_text) {
-      errors.push('Teksti i pyetjes është i detyrueshëm');
-    }
-    if (!formData.option_a) {
-      errors.push('Opsioni A është i detyrueshëm');
-    }
-    if (!formData.option_b) {
-      errors.push('Opsioni B është i detyrueshëm');
-    }
-    if (hasOptionC && !formData.option_c) {
-      errors.push('Opsioni C është i detyrueshëm');
-    }
-    if (!formData.correct_answer) {
-      errors.push('Ju lutem zgjidhni përgjigjen e saktë');
-    }
-    if (!['A', 'B', 'C'].includes(formData.correct_answer)) {
-      errors.push('Përgjigja e saktë duhet të jetë A, B ose C');
-    }
-    if (!formData.category) {
-      errors.push('Kategoria është e detyrueshme');
-    }
-    if (!formData.test_number || formData.test_number < 1 || formData.test_number > 10) {
-      errors.push('Numri i testit duhet të jetë ndërmjet 1 dhe 10');
-    }
-
-    if (errors.length > 0) {
-      toast.error(errors[0]);
-      console.error('Validation errors:', errors);
+    if (!validationResult.success) {
+      const issues = validationResult.error.issues;
+      const firstError = issues[0]?.message || 'Gabim vlefshmërie';
+      toast.error(firstError);
+      console.error('Validation errors:', issues);
       return;
     }
 

@@ -99,6 +99,7 @@ export function BugReportModal({ isOpen, onClose, onSubmit }: BugReportModalProp
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
+              maxLength={200}
             />
           </div>
 
@@ -112,6 +113,7 @@ export function BugReportModal({ isOpen, onClose, onSubmit }: BugReportModalProp
               onChange={(e) => setDescription(e.target.value)}
               className="min-h-[80px]"
               required
+              maxLength={5000}
             />
           </div>
 
@@ -124,6 +126,7 @@ export function BugReportModal({ isOpen, onClose, onSubmit }: BugReportModalProp
               value={stepsToReproduce}
               onChange={(e) => setStepsToReproduce(e.target.value)}
               className="min-h-[80px]"
+              maxLength={5000}
             />
           </div>
 
@@ -153,6 +156,7 @@ export function BugReportModal({ isOpen, onClose, onSubmit }: BugReportModalProp
                 placeholder="p.sh. iPhone + Safari"
                 value={deviceBrowser}
                 onChange={(e) => setDeviceBrowser(e.target.value)}
+                maxLength={300}
               />
             </div>
           </div>
@@ -166,6 +170,7 @@ export function BugReportModal({ isOpen, onClose, onSubmit }: BugReportModalProp
               placeholder="emaili-juaj@email.com"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
+              maxLength={320}
             />
           </div>
 
