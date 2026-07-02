@@ -616,7 +616,7 @@ export default function DashboardPage() {
                                 fontSize: 12,
                                 fontWeight: 600,
                               }}
-                              formatter={(value: number) => [
+                              formatter={(value) => [
                                 `${value}%`,
                                 'Score',
                               ]}
@@ -895,7 +895,7 @@ export default function DashboardPage() {
                               }}
                               labelStyle={{ color: '#fff', fontWeight: 600 }}
                               itemStyle={{ color: '#fff' }}
-                              formatter={(value: number) => [
+                              formatter={(value) => [
                                 `${value}`,
                                 'Count',
                               ]}

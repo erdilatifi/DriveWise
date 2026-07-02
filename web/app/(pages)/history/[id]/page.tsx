@@ -63,10 +63,6 @@ export default function ReviewPage() {
     isAdmin,
   );
 
-  useEffect(() => {
-    fetchTestDetails();
-  }, [testId]);
-
   const fetchTestDetails = async () => {
     setLoading(true);
     try {
@@ -130,6 +126,13 @@ export default function ReviewPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // fetchTestDetails sets loading state synchronously as it starts —
+    // the standard "fetch data on dependency change" effect pattern.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchTestDetails();
+  }, [testId]);
 
   const isLoading = loading || (!!testInfo && entitlementsLoading);
 

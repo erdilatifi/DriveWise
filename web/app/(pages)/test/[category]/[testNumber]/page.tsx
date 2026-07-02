@@ -62,7 +62,7 @@ export default function TestPage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [startTime, setStartTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(() => Date.now());
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [lastTestAttemptId, setLastTestAttemptId] = useState<string | null>(null);
 
