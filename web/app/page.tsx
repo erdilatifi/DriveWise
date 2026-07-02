@@ -451,7 +451,7 @@ export default function HomePage() {
                             }}
                             labelStyle={{ color: "#e5e5e5", fontSize: 11 }}
                             itemStyle={{ color: "#fed7aa", fontSize: 11 }}
-                            formatter={(value: number) => [
+                            formatter={(value) => [
                               `${value}%`,
                               "Score",
                             ]}

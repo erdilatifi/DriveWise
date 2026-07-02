@@ -52,6 +52,25 @@ interface Scenario {
   is_published?: boolean;
 }
 
+// Loading skeleton — module-scoped so it isn't recreated (and remounted) on every render
+function LoadingSkeleton({ count }: { count: number }) {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="p-4 border rounded-lg">
+          <Skeleton className="h-4 w-3/4 mb-2" />
+          <Skeleton className="h-3 w-1/2 mb-4" />
+          <Skeleton className="h-20 w-full mb-2" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-16" />
+            <Skeleton className="h-8 w-16" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminScenariosPageOptimized() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -140,11 +159,16 @@ export default function AdminScenariosPageOptimized() {
   const hasNextPage = currentPage < totalPages;
   const hasPrevPage = currentPage > 1;
 
-  // Image preview when selecting a new file
+  // Image preview when selecting a new file.
+  // This syncs `imagePreview` state with an external browser resource (a
+  // Blob URL) that must be revoked on cleanup — `imagePreview` also gets
+  // set independently elsewhere (resetting the form, loading an existing
+  // scenario's image), so it can't be a pure useMemo derivation of imageFile.
   useEffect(() => {
     if (!imageFile) return;
 
     const url = URL.createObjectURL(imageFile);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setImagePreview(url);
 
     return () => URL.revokeObjectURL(url);
@@ -232,10 +256,30 @@ export default function AdminScenariosPageOptimized() {
     return () => clearTimeout(timeoutId);
   }, [searchQuery, fetchScenarios, user]);
 
-  // Filter change effect
+  // Reset to page 1 when filters change (adjusted during render, not in an effect)
+  const [prevFilters, setPrevFilters] = useState({
+    categoryFilter,
+    levelFilter,
+    statusFilter,
+    publishedFilter,
+  });
+  if (
+    prevFilters.categoryFilter !== categoryFilter ||
+    prevFilters.levelFilter !== levelFilter ||
+    prevFilters.statusFilter !== statusFilter ||
+    prevFilters.publishedFilter !== publishedFilter
+  ) {
+    setPrevFilters({ categoryFilter, levelFilter, statusFilter, publishedFilter });
+    setCurrentPage(1);
+  }
+
+  // Filter change effect.
+  // fetchScenarios sets loading state synchronously as it starts (standard
+  // "fetch data on dependency change" pattern) — that's the canonical use
+  // of an effect, not a derived-state anti-pattern.
   useEffect(() => {
     if (user) {
-      setCurrentPage(1);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchScenarios(1, true);
     }
   }, [categoryFilter, levelFilter, statusFilter, publishedFilter, fetchScenarios, user]);
@@ -245,6 +289,7 @@ export default function AdminScenariosPageOptimized() {
     if (!authLoading && !user) {
       router.push('/login');
     } else if (user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchScenarios(1, true);
     }
   }, [user, authLoading, router, fetchScenarios]);
@@ -483,23 +528,6 @@ export default function AdminScenariosPageOptimized() {
     }
   };
 
-  // Loading skeleton component
-  const LoadingSkeleton = () => (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: pageSize }).map((_, i) => (
-        <div key={i} className="p-4 border rounded-lg">
-          <Skeleton className="h-4 w-3/4 mb-2" />
-          <Skeleton className="h-3 w-1/2 mb-4" />
-          <Skeleton className="h-20 w-full mb-2" />
-          <div className="flex gap-2">
-            <Skeleton className="h-8 w-16" />
-            <Skeleton className="h-8 w-16" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -512,7 +540,7 @@ export default function AdminScenariosPageOptimized() {
             </div>
             <Skeleton className="h-10 w-32" />
           </div>
-          <LoadingSkeleton />
+          <LoadingSkeleton count={pageSize} />
         </div>
       </div>
     );
@@ -629,7 +657,7 @@ export default function AdminScenariosPageOptimized() {
 
         {/* Scenarios Grid */}
         {loading ? (
-          <LoadingSkeleton />
+          <LoadingSkeleton count={pageSize} />
         ) : scenarios.length === 0 ? (
           <GlassCard className="p-12 text-center border border-border/80 bg-black/80">
             <div className="text-6xl mb-4">🎯</div>

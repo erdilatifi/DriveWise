@@ -99,9 +99,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [router, supabase, queryClient]);
 
-  // 2. React to blocked status
+  // 2. React to blocked status.
+  // handleBlockedAccount synchronously clears local auth state as it
+  // starts, then cleans up the server session in the background — this is
+  // an intentional immediate reaction to a security-relevant state change,
+  // not a derived-state anti-pattern.
   useEffect(() => {
     if (isBlocked) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       handleBlockedAccount();
     }
   }, [isBlocked, handleBlockedAccount]);
