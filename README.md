@@ -4,7 +4,7 @@
 
 ![DriveWise App Preview](web/public/DriveWiseApp.png)
 
-> **⚠️ Portfolio / demo project.** DriveWise is a demonstration product built to showcase full-stack engineering work — real-time analytics, gamified learning, a working payments integration, and a mobile companion app. It is **not** a commercially operated service. The checkout flow shows a clear "this is a demo" notice before any payment attempt, on purpose. See [Demo project & payments disclaimer](#-demo-project--payments-disclaimer) below.
+> **Portfolio and demo project.** DriveWise is a demonstration product built to showcase full-stack engineering work — real-time analytics, gamified learning, a working payments integration, and a mobile companion app. It is **not** a commercially operated service. The checkout flow shows a clear "this is a demo" notice before any payment attempt, on purpose. See [Demo project and payments disclaimer](#demo-project-and-payments-disclaimer) below.
 
 ---
 
@@ -29,7 +29,7 @@
 - [Environment variables](#environment-variables)
 - [Deploying the web app to Vercel](#deploying-the-web-app-to-vercel)
 - [Scripts reference](#scripts-reference)
-- [Demo project & payments disclaimer](#-demo-project--payments-disclaimer)
+- [Demo project and payments disclaimer](#demo-project-and-payments-disclaimer)
 - [License](#license)
 
 ---
@@ -85,7 +85,7 @@ DriveWise helps learner drivers in Kosovo prepare for the official driving theor
 - **Paddle Hosted Checkout** — the actual card entry happens entirely on Paddle's hosted, PCI-compliant page; DriveWise never touches raw card data.
 - **Signature-verified provisioning** — a webhook (HMAC-SHA256 verified) listens for completed transactions and provisions the purchase into `orders`, `payment_transactions`, and `user_plans` — the plan activates automatically, with no manual admin step.
 - **Subscription management** — learners can view their active plan and days remaining, and cancel auto-renewal (for recurring products) directly from their profile.
-- **Demo disclaimer built into the flow** — because this is a portfolio project, the checkout button doesn't jump straight to Paddle. It first shows a clear "this is a demo, not a real product" modal that the user has to actively acknowledge. See [below](#-demo-project--payments-disclaimer).
+- **Demo disclaimer built into the flow** — because this is a portfolio project, the checkout button doesn't jump straight to Paddle. It first shows a clear "this is a demo, not a real product" modal that the user has to actively acknowledge. See [below](#demo-project-and-payments-disclaimer).
 
 ### 6. Account, profile & trust features
 
@@ -170,8 +170,7 @@ An internal npm workspace package consumed by `mobile/` (and progressively adopt
 │   ├── hooks/               #   TanStack Query hooks (mirrors packages/core, being consolidated)
 │   ├── lib/                 #   Business logic: subscriptions, paddle-api, validations/*
 │   ├── contexts/            #   Auth + language React contexts
-│   ├── utils/supabase/      #   Client/server/admin/middleware Supabase clients
-│   └── database/            #   Local SQL working copy (git-ignored, see below)
+│   └── utils/supabase/      #   Client/server/admin/middleware Supabase clients
 ├── mobile/                 # Expo React Native app
 │   └── src/
 │       ├── screens/         #   auth/, main/, test/, literature/, subscription/, admin/
@@ -180,20 +179,15 @@ An internal npm workspace package consumed by `mobile/` (and progressively adopt
 │       └── contexts/        #   Auth + category selection contexts
 ├── packages/
 │   └── core/                # @drivewise/core — shared types, contexts, and query hooks
-├── database/                # SQL scripts to set up the Supabase project from scratch
-│   ├── 01_schema.sql        #   Tables, enums, indexes, triggers, RPC functions, storage buckets
-│   └── 02_rls.sql           #   Row Level Security policies for every table
-├── LICENCE                  # Proprietary license — see below
+├── LICENSE                  # PolyForm Noncommercial 1.0.0
 └── package.json              # npm workspaces root ("workspaces": ["web", "mobile", "packages/*"])
 ```
-
-> **Note:** the repo root also contains a legacy Expo entry point (`App.tsx`, `app.json`, `metro.config.js`, `babel.config.js`) left over from an earlier `react-native-web` experiment. The actively developed, feature-complete mobile app lives in `mobile/` — treat the root-level Expo files as historical scaffolding, not the real app.
 
 ---
 
 ## Database architecture
 
-The schema lives in `database/01_schema.sql` and `database/02_rls.sql` and is applied directly in the Supabase SQL editor (there's no separate migration tool — see [Getting started](#getting-started)).
+The SQL scripts that create the schema and its policies are not published in this repository. The generated TypeScript types in `web/types/database.ts` document every table, view and RPC function.
 
 - **~16 tables** covering users/profiles, questions, test attempts, study materials, traffic signs, Decision Trainer scenarios, orders, payment transactions, user plans, bug reports, and user feedback.
 - **Row Level Security everywhere.** Every table has explicit RLS policies — users can only read/write their own rows (test attempts, profile, orders); content tables are admin-write, public-read; feedback tables allow inserts but restrict reads to admins.
@@ -242,16 +236,12 @@ npm install
 
 ### 2. Set up the database
 
-1. Create a new Supabase project.
-2. Open the Supabase SQL editor and run, in order:
-   - `database/01_schema.sql` — tables, enums, indexes, triggers, RPC functions, storage buckets.
-   - `database/02_rls.sql` — Row Level Security policies for every table.
-3. Confirm RLS is **enabled** on every table (the script does this, but double-check in the Supabase dashboard).
+Create a Supabase project. The schema and Row Level Security scripts are not part of this public repository, so the tables described in `web/types/database.ts` must be created before the app can run.
 
 ### 3. Configure environment variables
 
 ```bash
-cp web/env.example web/.env.local
+cp web/.env.example web/.env.local
 ```
 
 Fill in the values — see [Environment variables](#environment-variables) below for the full list and what each one does.
@@ -284,7 +274,7 @@ npx expo start --tunnel
 
 ## Environment variables
 
-Copy `web/env.example` to `web/.env.local` and fill these in.
+Copy `web/.env.example` to `web/.env.local` and fill these in.
 
 ### Required (the app won't run correctly without these)
 
@@ -378,7 +368,7 @@ npm run web        # expo start --web
 
 ---
 
-## 🎬 Demo project & payments disclaimer
+## Demo project and payments disclaimer
 
 **DriveWise is a portfolio/demo project**, built to demonstrate full-stack product engineering — not a company selling driving lessons. To keep that honest end-to-end:
 
@@ -390,4 +380,6 @@ npm run web        # expo start --web
 
 ## License
 
-This project is proprietary software — see [`LICENCE`](./LICENCE). In short: personal viewing/evaluation is fine, but redistribution, modification, commercial use, and public hosting all require explicit permission from the copyright holder.
+Copyright (c) 2025-2026 Erdi Latifi.
+
+This project is source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE). You may use, study and modify it for personal, educational and other noncommercial purposes. Commercial use is not permitted without written permission from the author.
